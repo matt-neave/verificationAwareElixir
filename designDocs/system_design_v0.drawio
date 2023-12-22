@@ -1,0 +1,58 @@
+<mxfile host="app.diagrams.net" modified="2023-12-22T11:09:40.420Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" etag="0auWDH7RT0RRuOg6r1mY" version="22.1.11" type="device">
+  <diagram name="Page-1" id="kCYagGU4XM0_uK0bNRkK">
+    <mxGraphModel dx="1050" dy="653" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="hKJSRgzW-C0Z9rq3iLcQ-3" target="hKJSRgzW-C0Z9rq3iLcQ-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=classic;startFill=1;endArrow=none;endFill=0;" edge="1" parent="1" source="hKJSRgzW-C0Z9rq3iLcQ-3" target="hKJSRgzW-C0Z9rq3iLcQ-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-3" value="Elixir pre-processor&lt;br&gt;(Remove unsupported features / unroll loops ect)." style="whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="232" y="106" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="hKJSRgzW-C0Z9rq3iLcQ-5" target="hKJSRgzW-C0Z9rq3iLcQ-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-5" value="Generate Elixir AST" style="whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="432" y="106" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="hKJSRgzW-C0Z9rq3iLcQ-7" target="hKJSRgzW-C0Z9rq3iLcQ-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-7" value="Transformer&amp;nbsp;&lt;br&gt;(to intermediate representation)" style="whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="432" y="246" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="hKJSRgzW-C0Z9rq3iLcQ-9" target="hKJSRgzW-C0Z9rq3iLcQ-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-9" value="Model extraction" style="whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="432" y="386" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="hKJSRgzW-C0Z9rq3iLcQ-11" target="hKJSRgzW-C0Z9rq3iLcQ-13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-11" value="Promela code&lt;br&gt;generation" style="whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="232" y="386" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="hKJSRgzW-C0Z9rq3iLcQ-13" target="hKJSRgzW-C0Z9rq3iLcQ-17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-13" value="Spin model checker" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="32" y="376" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-15" value="Elixir program" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="32" y="96" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;" edge="1" parent="1" source="hKJSRgzW-C0Z9rq3iLcQ-17" target="hKJSRgzW-C0Z9rq3iLcQ-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hKJSRgzW-C0Z9rq3iLcQ-17" value="Error transformer&lt;br&gt;(assertion / deadlock)" style="whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="32" y="246" width="120" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
