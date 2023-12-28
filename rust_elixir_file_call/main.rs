@@ -1,5 +1,5 @@
 use std::process::Command;
-use std::io::{Write, Read};
+use std::io::{Read};
 
 fn main() {
     let output = Command::new("mix")
@@ -12,7 +12,7 @@ fn main() {
         let mut file = std::fs::File::open("./basic_deadlock/ast_output.txt").expect("Failed to open output file");
         let mut contents = String::new();
         file.read_to_string(&mut contents).expect("Failed to read output file");
-        println!("Elixir output: {}", contents);
+        println!("{}", contents);
     } else {
         println!("Error: {:?}", output.stderr);
     }

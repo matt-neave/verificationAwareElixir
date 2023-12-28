@@ -1,3 +1,33 @@
+# Elixir build outputs
 *.txt
 *.beam
 **/_build/
+
+# TeX build outputs
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.bbl
+*.blg
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
+*.dvi
+*.xdv
+*-converted-to.*
+*.fdb_latexmk
+*.synctex
+*.synctex(busy)
+*.synctex.gz
+*.synctex.gz(busy)
+*.pdfsync
+latex.out/
+
+# Rust build outputs
+**/target
