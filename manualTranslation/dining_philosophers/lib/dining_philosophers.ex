@@ -38,7 +38,7 @@ defmodule Table do
     next 0, [0, 0, 0, 0, 0]
   end
 
-  def next(finished, chopsticks) do
+  def next(finished, chopsticks) when finished < 5 do
     receive do
       {:take_chopstick, idx, p} ->
         if Enum.at(chopsticks, idx) == 0 do
