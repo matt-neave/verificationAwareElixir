@@ -47,3 +47,6 @@ msg_2.m1.data2 = (self + 1) % n;
 msg_2.m2.data2 = _pid
 mailbox[_pid] ! TAKE_CHOPSTICK, msg_2;
 ```
+
+### Variable naming
+Variable naming needs to be done carefully. With proceduraly generated code, need to be careful as variables cannot be redeclared, hence follow naming patterns such as `i_n` for iterators, `rec_v_n` for messages ect.
