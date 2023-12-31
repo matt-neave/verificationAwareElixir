@@ -1,7 +1,38 @@
 \chapter{Background}
 \section[]{Communicating Sequential Processes}
 \section[]{Model Checking}
+Model checking is the process of determining if a finite-state machine (FSM) is correct under a provided specification. It typically involves enumerating all possible states of an FSM and ensuring the correctness of each state. In software development, model checkers are beneficial in providing guarantees for safety-critical systems as well as concurrent systems. Concurrent systems can often cause issues with uncommon instruction execution interleavings that are not easily identifiable until long into a runtime. For example, deadlocks can occur when instructions being run by two processes are dependent on one another making progress. A simple example of a deadlock that can occur is the following interleaving of instructions executed by two processes, $\tau_1$ and $\tau_2$. 
+\[
+\begin{aligned}
+& \tau_1: \text{ acquire lock A} \\
+& \tau_2: \text{ acquire lock B} \\
+& \tau_1: \text{ acquire lock B} \\
+& \tau_2: \text{ acquire lock A}
+\end{aligned}
+\]
+This simple interleaving results in $\tau_1$ blocking until it can acquire lock B, and $\tau_2$ blocking until it can acquire lock A, hence the program is in a deadlock. Due to the nature of concurrent systems, we could run our program and never experience this interleaving of instructions from occurring, hence we could deem our program deadlock-free. By instead abstracting our program as a model, and verifying the correctness using a model checker, we could exhaustively check all possible states (interleavings of concurrent processes) and catch this deadlock. 
+\par
+Alongside determining progress can be made within a system, model checkers are also used to guarantee the correctness of a specification. To demonstrate, we model a very simple 24-hour clock, where at each time step, we progress time by an hour.
+\[
+\begin{aligned}
+& \tau_1: \text{time} \leftarrow \text{time} + 1
+\end{aligned}
+\]
+Unlike the previous example, this process can always make progress so will not result in a deadlock, however, it is not a correct implementation of a 24-hour clock. We would like our 24-hour clock to only represent times in the range 1 to 24. By introducing a specification alongside our model, we can use a model checker to determine if all the states of our program adhere to the specification. In this instance, we would just need to specify a bound over our time variable.
+\[
+\{ \text{time} \mid \text{time} \in \mathbb{N}, 1 \leq \text{time} \leq 24 \}
+\]
+This is a simple example of a specification, that we can write in a specification language and use in tandem with our model to check the correctness of using a model checker.
 \subsection[]{A Comparison Of Model Checkers}
+Many model checkers have been invented for this reason, each with different focuses and specification languages. This section will comment on some of the more common model checkers and discuss their functionalities. \\
+\textbf{PAT} \\
+this is a description of PAT \\
+\textbf{BLAST} \\
+\textbf{PRISM} \\
+\textbf{SPIN} \\
+\textbf{TAPAAL} \\
+\textbf{TLA+}
+
 \section[]{Elixir}
 \subsection[]{Shared Memory and Message Passing}
 \subsection[]{Quote and Unquote}
