@@ -25,19 +25,61 @@ Unlike the previous example, this process can always make progress so will not r
 This is a simple example of a specification, that we can write in a specification language and use in tandem with our model to check the correctness of using a model checker.
 \subsection[]{A Comparison Of Model Checkers}
 Many model checkers have been invented for this reason, each with different focuses and specification languages. This section will comment on some of the more common model checkers and discuss their functionalities. \\
-\textbf{PAT} \\
-this is a description of PAT \\
-\textbf{BLAST} \\
-\textbf{PRISM} \\
-\textbf{SPIN} \\
-\textbf{TAPAAL} \\
-\textbf{TLA+}
+\subsubsection*{\textbf{PAT}}
+Process Analysis Toolkit (PAT) is a self-contained framework to support composing, simulating and reasoning of concurrent, real-time systems \cite{pat}. PAT is based on Tony Hoare's CSP and extends the language using its library called CSP\#. CSP\# is a superset language of the original CSP, hence all classical CSP models can be verified with PAT. PAT has shown to be capable of verifying classical concurrent algorithms such as the dining philosophers problem. Alongside its verification capabilities, the PAT toolkit can be used to simulate real-world scenarios over specifications. 
+\par
+PAT's ability to determine the correctness of classical process algebra means it is a strong, widely applicable model checker.
 
+\subsubsection*{\textbf{BLAST}}
+BLAST is an automatic verification tool for checking the temporal safety properties of C programs. Given a C program and a temporal safety property, BLAST either statically proves the program satisfies the property or provides an execution path that exhibits a violation of the property \cite{blast}.
+\par
+Where BLAST is more interesting than PAT is that it no longer relies on process algebra. The model checker is capable of being run directly on a subset of C programs, no intermediate modelling is required. As an end-user tool, this is more generally applicable than PAT, there is no burden on developers to think about how to model their systems with process algebra and instead can directly get safety guarantees from their programs. BLAST handles the translation of C programs to an abstract reachability tree (ART), a labeled tree that represents a portion of the reachable state space of the program. Using a context-free reachability algorithm on this representation of a C program means temporal properties can be checked without the end programmer being required to think about what the control-flow automata for the program will look like.
+\par
+BLAST falls short when model-checking large C programs. More importantly, it is unable to provide any guarantees on concurrent programs. A strong driving factor in why developers choose to design systems in Elixir is its concurrent capabilities. 
+
+\subsubsection*{\textbf{PRISM}}
+PRISM is a probabilistic model checker, a tool for formal modelling and analysis of systems that exhibit random behavior or probabilistic behavior \cite{prism}. It has been used to analyse systems implementing random distributed algorithms.
+
+\subsubsection*{\textbf{TLC}}
+In 1980, Leslie Lamport discovered the Temporal Logic of Action (TLA) \cite{tla}. TLA is a logic system for specifying and reasoning about concurrent systems. Both the systems and their properties are represented in the same logic so that the assertion that a system meets its specification can be expressed by a logical implication.
+\par
+TLA is capable of specifying complex systems but in a typically verbose manner. Leslie Lamport introduced TLA+ \cite{tlaplus}, combining mathematical ideas with concepts from programming languages to create a specification language that would allow mathematicians to write specifications in 20 lines as opposed to 20 pages.
+\begin{figure}[h]
+    \centering
+    \begin{verbatim}
+    ---------------------- MODULE HourClock ----------------------
+    EXTENDS Naturals
+    VARIABLE hr
+    HCini == hr \in (1 .. 12)
+    HCnxt == hr' = IF hr # 12 THEN hr + 1 ELSE 1
+    HC == HCini /\ [][HCnxt]_hr
+    --------------------------------------------------------------
+    THEOREM HC => []HCini
+    ==============================================================
+    \end{verbatim}
+    \caption{An example TLA+ Specification for an HourClock \cite{tlaplus}}
+    \label{fig:hourclock_spec}
+\end{figure}
+\par
+Furthering on from Leslie Lamport's discovery of these specification languages, Lamport created TLC \cite{tlc}, a model checker for the verification of TLA+ specifications. Similarly to BLAST, TLC builds a finite-state machine from the specification so the model checker can verify and debug invariance properties over it. TLC has been used to verify many large-scale, real-world systems specified in TLA+. Not only does it verify temporal properties of TLA+ specifications, but it can also model check PlusCal \cite{pluscal} algorithms. PlusCal is an algorithm language aimed to resemble that of pseudocode, but PlusCal algorithms can be automatically translated to TLA+ specifications to be reasoned about formally with TLC. We have already come across the concept of model-checking algorithms as opposed to specifications with BLAST, but instead of being strictly bound to the C programming language, PlusCal provides a more general framework agnostic of a choice of programming language allowing developers to separate reasoning about algorithms from their respective programs.
+
+\subsubsection*{\textbf{SPIN}}
+SPIN is an efficient verification system for models of distributed software systems. It has been used to detect design errors in applications ranging from high-level descriptions of distributed algorithms to detailed code \cite{spin}. Spin has a specification language, Promela, which the model checker uses to prove the correctness of asynchronous process interactions. Spin supports asynchronous process communication through channels, where processes can send and receive messages. Spin constructs labeled transition systems for respective processes from Promela specifications which it goes on to use for scheduling and to reason about properties of the model. Because many programming languages, such as GO \cite{go} rely on the creation of channels for asynchronous communication between processes, Promela becomes a natural solution to modelling these systems. 
+\begin{lstlisting}[numbers=left, captionpos=b, caption={Example of a Promela specification that enqueues a message in a channel}]
+mtype = { HELLO };
+chan channel = [10] of { mtype };
+
+init {
+    channel ! HELLO;
+}
+\end{lstlisting}
 \section[]{Elixir}
 \subsection[]{Shared Memory and Message Passing}
 \subsection[]{Quote and Unquote}
 \subsection[]{Metaprogramming}
 \section[]{Existing Work}
+\subsection[]{Lean}
+\subsection[]{C Wolf}
 \subsection[]{Dafny}
 \subsection[]{Promela}
 \subsection[]{Gomela}
