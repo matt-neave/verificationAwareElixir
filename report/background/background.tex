@@ -97,7 +97,7 @@ Two key concepts in inter-process communication (IPC) are shared memory models a
 \end{figure}
 \par
 Elixir instead uses a message-passing model for IPC. More specifically, Elixir uses an actor-based model, where each process (actor) has its state and a message box to receive messages from other actors. Actors are responsible for sending a finite number of messages to other actors, spawning new actors and changing their behaviour based on the handling of messages received in the mailbox. Fig \ref{fig:actor_model} shows an example of how actors behave. The mailbox is not necessarily first in, first out (FIFO) but often implementations tend to be.
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.6\textwidth]{images/actor_model.png}
     \caption{An example of actors sending and receiving messages under the actor model}
@@ -105,7 +105,7 @@ Elixir instead uses a message-passing model for IPC. More specifically, Elixir u
 \end{figure}
 \par
 In Elixir, a receive statement is used to read messages in the mailbox. The receive block looks through the mailbox for a message that matches a given pattern, if no messages match a given pattern, the process will block until one does.
-\begin{lstlisting}[language=Erlang, xleftmargin=.2\linewidth, caption={An example of spawn/1 and spawn/4 in Elixir for spawning a new lightweight process and a new Elixir node}]
+\begin{lstlisting}[language=Erlang, xleftmargin=.4\linewidth, caption={An example of spawn/1 and spawn/4 in Elixir for spawning a new lightweight process and a new Elixir node}]
     % Example send in Elixir
     send self(), {:hello, "world"}
 
@@ -115,6 +115,15 @@ In Elixir, a receive statement is used to read messages in the mailbox. The rece
     end
 \end{lstlisting}
 \subsection[]{Quote and Unquote}
+The quote and unquote constructs in Elixir give us a deeper insight into how the programming language is implemented. Elixir is fundamentally made of tuples with three elements consisting of an atom\footnote{In Elixir, atoms are named constants, whose values are their own name. They can be identified by a preceding colon, for example, \texttt{:hello}.} that identifies the tuple, an array of metadata and finally the data. For example, the function call \texttt{sum(1, 2)} would be represented by the tuple \texttt{(:sum, [], [1, 2])} and similarly, the variable \texttt{total} would be represented by the tuple \texttt{(:total, [], Elixir)}. Using these building blocks, Elixir can begin to build what is known as a quoted expression, which is a nesting of tuples in a tree-like structure. In many other programming languages, this tree-like structure is referred to as an abstract syntax tree (AST).
+\par
+The quote and unquote constructs allow us to transition between Elixir syntax and quoted expressions. Using the \texttt{quote/2}\footnote{In Elixir, it is common to name functions or macros alongside their number of arguments. The function \texttt{spawn/1} refers to the function spawn, with 1 argument.} macro on an Elixir block, such as \texttt{quote do: sum(1, 2)} will return the quoted expression representing the block, in this case, \texttt{(:sum, [], [1, 2])}. Similarly, the \texttt{unquote/1} macro can be used within a quoted expression to inject code directly into the underlying expression. Fig.\ref{fig:quote_unquote} shows a small example of how unquote can be applied within a quoted expression to inject a variable.
+\begin{lstlisting}[language=Erlang, xleftmargin=.4\linewidth, caption={Elixir example of \texttt{quote/2} and \texttt{unquote/1}.}, label={fig:quote_unquote}]
+    x = 2
+    quote do: sum(1, unquote(x))
+\end{lstlisting}
+\par
+
 \subsection[]{Metaprogramming}
 \section[]{Existing Work}
 \subsection[]{Lean}
