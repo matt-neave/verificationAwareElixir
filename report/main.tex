@@ -13,8 +13,33 @@
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{listings}
+\usepackage{float}
+\usepackage{xcolor}
 \usepackage[colorinlistoftodos]{todonotes}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+% Code blocks
+\definecolor{dkgreen}{RGB}{0,128,0} % Define the dkgreen color using RGB values
+\lstset{
+  frame=none,
+  language=Promela,
+  aboveskip=5mm,
+  belowskip=5mm,
+  showstringspaces=false,
+  columns=flexible,
+  xleftmargin=.3\textwidth,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{orange},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3,
+  numbers=left, 
+  captionpos=b, 
+}
 
 \title{Verification Aware Elixir (Interim Report)}
 \author{Matthew Neave}
