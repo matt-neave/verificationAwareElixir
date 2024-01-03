@@ -160,10 +160,15 @@ Another useful feature often associated with the development of DSLs in Elixir i
 \end{lstlisting}
 
 \section[]{Existing Work}
+Much work has gone into model checking, theorem-proving and verifying the implementations of systems. For Elixir, there are tools such as dialyzer \cite{dialyzer}, which statically analyse Elixir programs for type errors or dead code. Whilst tools like such provide Elixir developers better guarantees their code is correct, it does not verify the correctness of a system as a whole. 
 \subsection[]{Lean}
+The Lean theorem prover is a proof assistant developed by Leonardo de Moura \cite{lean}. It is the first of a few theorem provers we will discuss to understand how Hoare Logic has developed into software tools. A proof assistant is a language that allows developers to define objects and specifications over them. They can be used to verify the correctness of programs (similar to a model checker) as they check proofs are correct using logical foundations.
+\par
+Lean is both a functional programming language and a theorem prover. This means we can define first-class functions and interactively operate the theorem prover to ensure correctness over them. This approach differs in implementation from other theorem provers, such as Dafny, which instead prove theorems using existing tools. 
+
+\subsection[]{Dafny}
 \subsection[]{C Wolf}
 \subsection[]{Boogie}
-\subsection[]{Dafny}
 \subsection[]{Promela}
 \subsection[]{Gomela}
 \section[]{Modelling Elixir Programs in Promela}
