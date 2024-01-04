@@ -164,15 +164,56 @@ Much work has gone into model checking, theorem-proving and verifying the implem
 \subsection[]{Lean}
 The Lean theorem prover is a proof assistant developed by Leonardo de Moura \cite{lean}. It is the first of a few theorem provers we will discuss to understand how Hoare Logic has developed into software tools. A proof assistant is a language that allows developers to define objects and specifications over them. They can be used to verify the correctness of programs (similar to a model checker) as they check proofs are correct using logical foundations.
 \par
-Lean is both a functional programming language and a theorem prover. This means we can define first-class functions and interactively operate the theorem prover to ensure correctness over them. This approach differs in implementation from other theorem provers, such as Dafny, which instead prove theorems using existing tools. 
+Lean is both a functional programming language and a theorem prover. This means we can define first-class functions and interactively operate the theorem prover to ensure correctness over them. This approach differs in implementation from other theorem provers, such as Dafny, which instead prove theorems using existing tools.
 
 \subsection[]{Dafny}
-\subsection[]{C Wolf}
+Dafny is a verification-aware programming language that has native support for inlining specifications that can be verified by a theorem prover \cite{dafny_paper}. Dafny aims to modernise the approach developers take to designing systems, by encouraging developers to write correct specifications instead of necessarily correct code. With the rise of modern theorem provers, this untraditional approach is now realistic. Dafny is an imperative language with methods, variables, loops and many other features of typical imperative programming languages. Dafny programs are equipped with supporting tools to translate to other imperative languages, such as Java and Python. 
+\par
+Dafny verifies the correctness of programs using the theorem prover, Z3 \cite{z3}. Developers can write specifications alongside code, such as methods, which can then be directly verified. The format of specifications typically follows those of a Hoare Triple, $\{P\}C\{Q\}$, such that given a precondition, $\{P\}$ holds, if $C$ terminates, a postcondition, $\{Q\}$, will hold. In Dafny, the language reserves the keywords \texttt{requires} and \texttt{ensures} for pre and postconditions. Listing \ref{fig:dafny_add} shows a basic example of a Dafny method, which introduces an \texttt{Add} method. The implementation unintentionally introduces a bug such that, any execution paths with an input $\{ a \in \mathbb{Z} \mid a < 0 \}$ do not necessarily return the sum of the two inputs. Because Dafny places the burden on writing good specifications as opposed to correct code, the underlying theorem prover can use our postcondition to flag that this program is not correct for all execution paths.
+\begin{lstlisting}[language=Dafny, xleftmargin=.3\linewidth, caption={Example of a method in Dafny}., label={fig:dafny_add}]
+    method Add(a: int, b: int) returns (c: int)
+        ensures c == a + b;
+    {
+        if  a < 0 {
+            c := -1;
+        } else {
+            c := a + b;
+        }
+    }
+\end{lstlisting}
+\par
+Listing \ref{fig:dafny_add} only gives a small insight into the power the Dafny specification language defines. Alongside the evaluation of basic expressions, Dafny allows the use of quantifiers such as the universal quantifier. The introduction of quantifiers allows us to write pre and postconditions over collections of objects, such as sets and arrays. Listing \ref{fig:dafny_quantifier} shows a basic example of how the universal quantifier can be used with the underlying theorem prover, to assert all the elements of an array, \texttt{a[]}, are strictly positive.
+\begin{lstlisting}[language=Dafny, numbers=none, xleftmargin=.3\linewidth, caption={\texttt{forall} quantifier in Dafny \cite{dafny_tutorial}}., label={fig:dafny_quantifier}]
+forall k: int :: 0 <= k < a.Length ==> 0 < a[k]
+\end{lstlisting}
+\par
+Dafny also uses other concepts that support the verification of programs. Assertions can be used to provide guarantees in the middle of a method. Loop invariants can annotate while loops to check a condition holds upon entering a loop and after every execution of the loop body. Similarly, loop variants can be used to determine termination of while loops, by checking that every execution of a loop body makes progress towards the bound of the loop.
 \subsection[]{Boogie}
+Boogie is a modeling language intended as an intermediate verification language (IVL), developed at Microsoft \cite{boogie}. The language is described as an intermediate language because it is designed to bridge the gap between a program and a program verifier. Many tools that rely on Boogie's intermediate representation are doing so to translate source code in a native language into a format that can be proved. Dafny is a prime example of a programming language which does so. The Dafny compiler generates Boogie programs that can then be verified by Z3. This provides multiple benefits for Dafny. Firstly, Dafny does not have to concern itself with being dependent on a specific SMT solver, such as Z3, instead, it can be designed agnostic to the choice of theorem prover as Boogie will take responsibility for handling interaction with theorem provers. Boogie also bears a closer resemblance to an imperative programming language (like Dafny), so translation between the two is easier than translating to Z3. Listing \ref{fig:boogie_add} shows an example Boogie program, defining a single procedure, \texttt{add}, that represents the translated code from the Dafny example in listing \ref{fig:dafny_add}. Note the similarities between both programming languages, both use \texttt{ensures} to capture preconditions and have very similar syntax and control flow. However, now that our program is written in the Boogie IVL, we can directly determine an execution path that violates the precondition using a theorem prover such as Z3.
+\begin{lstlisting}[language=boogie, xleftmargin=.3\linewidth, caption={An example Boogie IVL program}., label={fig:boogie_add}]
+procedure add(a: int, b: int) returns (c: int)
+    ensures c == a + b;
+{
+    if (a < 0) 
+    {
+        c := -1;
+    } else {
+        c := a + b;
+    }
+}
+\end{lstlisting}
+
+\subsection[]{C Wolf?}
 \subsection[]{Promela}
-\subsection[]{Gomela}
-\section[]{Modelling Elixir Programs in Promela}
+Promela is the verification modeling language used by the Spin model checker, to specify concurrent processes modeling distributed systems \cite{spin}. This section will discuss some of the core features that allow systems to be modeled and verified with Spin.  
+\subsubsection[]{Types and Variables}
+\subsubsection[]{Control Flow(run, if, skip)}
+\subsubsection[]{Processes}
+\subsubsection[]{Channels}
+\section[]{Modelling Elixir Programs}
 \subsection[]{Basic Deadlock}
 \subsection[]{Dining Philosophers}
 \subsection[]{Preconditions and Postconditions}
+\section{Summary}
+This section has provided an overview of core concepts related to concurrent programs and verification of them. We saw process algebra that can be used to model and reason about concurrent processes, as well as Hoare Logic and its definition of the Hoare Triple as a fundamental property in verification. We also looked at applications based on this theory, such as model checkers, theorem provers and programming languages. Much work related to the topic of verifying programming languages was explored, but importantly, we learned about SPIN, and how concurrent programs can be modeled in Promela to be model-checked for deadlocks, race conditions and incompleteness. We also learned about Boogie, the intermediate verification language that can verify programmatic assumptions using Z3. Finally, we learned about Elixir, the programming language built on top of Erlang and we explored so basic approaches to designing concurrent systems with it. The next section will explore how these core tools can be used in tandem to provide developers guarantees over large-scale, distributed Elixir-based systems.
 

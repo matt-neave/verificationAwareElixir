@@ -68,6 +68,34 @@
 	showstringspaces=false,
 	frame=none
 }
+\lstdefinelanguage{dafny}{
+    morekeywords={method, function, class, var, assert, ensures, requires, modifies, decreases, new, if, else, while, break, return, ghost, forall, exists, invariant, axiom, datatype},
+    sensitive=true,
+    morecomment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    morestring=[b]",
+    commentstyle=\color{green},
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    basicstyle=\ttfamily,
+    breaklines,
+    showstringspaces=false,
+    frame=none
+}
+\lstdefinelanguage{boogie}{
+    morekeywords={implementation, procedure, assert, assume, havoc, call, return, var, function, modifies, ensures, requires, if, else, while, break, continue},
+    sensitive=true,
+    morecomment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    morestring=[b]",
+    commentstyle=\color{green},
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    basicstyle=\ttfamily,
+    breaklines,
+    showstringspaces=false,
+    frame=none
+}
 \lstdefinelanguage{none}{}
 
 \title{Verification Aware Elixir (Interim Report)}
