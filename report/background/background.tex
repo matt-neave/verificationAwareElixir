@@ -1,5 +1,61 @@
 \chapter{Background}
 \section[]{Communicating Sequential Processes}
+Communicating Sequential Processes (CSP) was discovered by Tony Hoare, it provides us with a mathematical notation for defining processes and interactive systems \cite{csp_paper}. CSP provides a framework for reasoning about the behaviour of concurrent systems which has influenced distributed algorithms \cite{distributed_algorithms_na_lynch}, model checking \cite{model_checking} and many other related research fields. This section will give a brief introduction to some process algebra introduced to model some simple parallel processes.
+\par
+CSP defines processes and events. The alphabet of a process, $\alpha P$ is the set of all events. For example, the alphabet of a student process $S$ could consist of two events.
+\[
+\alpha S = \{study, sleep\}
+\]
+The process with the alphabet $A$ which never engages in the events of A is called $STOP_A$. We can now construct a sequence of events for a process.
+\[
+(study \rightarrow (sleep \rightarrow (study \rightarrow STOP_{\alpha S})))
+\]
+Using the same alphabet, we now define two simple processes modeling a student $S$ and a strict teacher $T$.
+\[
+\begin{aligned}
+& L = (study \rightarrow sleep \rightarrow L) \\
+& T = (study \rightarrow study \rightarrow T) 
+\end{aligned}
+\]
+We can now introduce the process algebra for concurrency, using the parallel composition operator (`||'). To help reason about concurrent processes, we also introduce $\mu X : F(X)$ to define recursive processes. This now lets us denote a process that behaves like a system of composed processes, where both processes have the same algebra $\alpha S$.
+\[
+(T \,||\, L)    
+\]
+Using the definitions for $T$ and $L$, and the recursive process definition, we have.
+\[
+(T \,||\, L) = (study \rightarrow STOP)    
+\]
+This is the composition of both processes. As both begin with a \texttt{study} event, so does the composition. However, after \texttt{study} each component process is prepared to take another event but as these are different, the processes can not agree on what event to take next. The resulting \texttt{STOP} is known as a deadlock. Alternatively, had the student and teacher processes been defined with behaviour that composes without deadlock, we could describe that behaviour with process algebra.
+\[
+\begin{aligned}
+& L = (study \rightarrow L \,|\, sleep \rightarrow L) \\
+& T = (study \rightarrow study \rightarrow T) \\
+& \\ 
+& (T \,||\, L) = \mu X \bullet (study \rightarrow study \rightarrow X)
+\end{aligned}
+\]
+Note how now under the composed behaviour, the sleep event never occurs. The composition can be described as a single process.
+\par
+Finally, we will briefly look at how Hoare modelled communication between processes. Hoare designed communication over channels. A pair $c.v$ represents communication taking place over a channel $c$ and $v$ is the value of a message being passed. Hoare describes the set of all messages that a process $P$ can communicate on channel $c$ as $\{ v \,|\, c.v \in \alpha P \}.$
+\[
+\alpha c(P) = \{ v \,|\, c.v \in \alpha P \}
+\]
+Functions to extract the channel and message components from the pair $c.v$ are also defined.
+\[
+\begin{aligned}
+& channel(c.v) = c \\
+& message(c.v) = v
+\end{aligned}
+\]
+With this understanding, we can finally model sending and receiving messages to channels. Given a process $P$ and a value $v \in \alpha c(P)$, a process can output $v$ on the channel $c$.
+\[
+(c!v \rightarrow P)
+\]
+Similarly, we can read messages from channels. A process can input any value $x$ on the channel $c$, and then behave under $P(x)$.
+\[
+(c?x \rightarrow P(x))
+\]
+That concludes a brief overview of the process algebra proposed by Tony Hoare. We saw how event sequencing constructs processes, how processes can be composed and the special communication event $c.v$ which allows message-passing over channels. Tools have been built from similar syntax and concepts, for example, Promela \ref{sec:promela}, which models channels and messages with a similar approach.
 \section[]{Model Checking}
 Model checking is the process of determining if a finite-state machine (FSM) is correct under a provided specification. It typically involves enumerating all possible states of an FSM and ensuring the correctness of each state. For example, given a model M and a property $\varphi$, if no state of M violates $\varphi$, then we can say M satisfies $\varphi$. In software development, model checkers are beneficial in providing guarantees for safety-critical systems as well as concurrent systems. Concurrent systems can often cause issues with uncommon instruction execution interleavings that are not easily identifiable until long into a runtime. For example, deadlocks can occur when instructions being run by two processes are dependent on one another making progress. A simple example of a deadlock that can occur is the following interleaving of instructions executed by two processes, $\tau_1$ and $\tau_2$. 
 \[
@@ -204,7 +260,7 @@ procedure add(a: int, b: int) returns (c: int)
 \end{lstlisting}
 
 \subsection[]{C Wolf?}
-\subsection[]{Promela}
+\subsection[]{Promela} \label{sec:promela}
 Promela is the verification modeling language used by the Spin model checker, to specify concurrent processes modeling distributed systems \cite{spin}. This section will discuss some of the core features that allow systems to be modeled and verified with Spin.  
 \subsubsection[]{Types and Variables}
 \subsubsection[]{Control Flow(run, if, skip)}
