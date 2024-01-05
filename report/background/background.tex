@@ -10,14 +10,16 @@ The process with the alphabet $A$ which never engages in the events of A is call
 \[
 (study \rightarrow (sleep \rightarrow (study \rightarrow STOP_{\alpha S})))
 \]
-Using the same alphabet, we now define two simple processes modeling a student $S$ and a strict teacher $T$.
+Using the same alphabet, we now define two simple processes modeling a student $S$ and a strict teacher $T$, who never accepts students sleeping.
 \[
 \begin{aligned}
 & L = (study \rightarrow sleep \rightarrow L) \\
 & T = (study \rightarrow study \rightarrow T) 
 \end{aligned}
 \]
-We can now introduce the process algebra for concurrency, using the parallel composition operator (`||'). To help reason about concurrent processes, we also introduce $\mu X : F(X)$ to define recursive processes. This now lets us denote a process that behaves like a system of composed processes, where both processes have the same algebra $\alpha S$.
+Note that both processes are recursively defined, hence a valid \texttt{trace} for $L$ could be $\langle study, sleep, study, sleep \rangle$.
+\par
+We can now introduce the process algebra for concurrency, using the parallel composition operator (`||'). To help reason about concurrent processes, we also introduce $\mu X \bullet F(X)$ to define recursive processes. This now lets us denote a process that behaves like a system of composed processes, where both processes have the same algebra $\alpha S$.
 \[
 (T \,||\, L)    
 \]
@@ -34,7 +36,7 @@ This is the composition of both processes. As both begin with a \texttt{study} e
 & (T \,||\, L) = \mu X \bullet (study \rightarrow study \rightarrow X)
 \end{aligned}
 \]
-Note how now under the composed behaviour, the sleep event never occurs. The composition can be described as a single process.
+Note how now under the composed behaviour, the sleep event never occurs. The composition can be described as a single process. Also, note the use of recursion with the fixed-point operator $\mu X \bullet F(X)$ \cite[p.74]{csp_paper}, where $X$ marks recursion under the composed process.
 \par
 Finally, we will briefly look at how Hoare modelled communication between processes. Hoare designed communication over channels. A pair $c.v$ represents communication taking place over a channel $c$ and $v$ is the value of a message being passed. Hoare describes the set of all messages that a process $P$ can communicate on channel $c$ as $\{ v \,|\, c.v \in \alpha P \}.$
 \[
