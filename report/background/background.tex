@@ -134,10 +134,12 @@ init {
 \section[]{Theorem Proving}
 Theorem proving is another process to verify programs. In theorem proving, axioms are applied to a set of statements to determine if a particular statement holds. For example, Z3 \cite{z3} is a satisfiability modulo theories (SMT) solver developed by Microsoft that can verify propositional logic assertions.
 \subsection[]{Hoare Logic}
-Hoare Logic was discovered in 1969 by Tony Hoare \cite{hoare_logic}. Hoare Logic defines the Hoare Triple, an essential idea in describing how code execution changes the state of a computation. A Hoare Triple is composed of a pre-condition assertion, $P$ a post-condition assertion, $Q$ and a command, $C$.
+Hoare Logic was discovered in 1969 by Tony Hoare \cite{hoare_logic}. Hoare Logic defines the Hoare Triple, an essential idea in describing how code execution changes the state of a computation. A Hoare Triple is composed of a pre-condition assertion $P$, a post-condition assertion $Q$, and a command $C$.
 \[
 \{P\}C\{Q\}
 \]
+Note how the postcondition is the same as the precondition for this command.
+\par
 Hoare Logic provides axioms and inference rules required to construct a simple imperative programming language. If $P$ holds in the given state and $C$ terminates, then $Q$ will hold after. Below is an example of a simple Hoare Triple for the \texttt{skip} command, which leaves the program state unchanged.
 \[
 \overline{\{P\}\text{skip}\{P\}}
