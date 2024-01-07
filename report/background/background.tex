@@ -1,5 +1,5 @@
 \chapter{Background}
-\section[]{Communicating Sequential Processes}
+\section[]{Communicating Sequential Processes} \label{csp_section}
 Communicating Sequential Processes (CSP) was discovered by Tony Hoare, it provides us with a mathematical notation for defining processes and interactive systems \cite{csp_paper}. CSP provides a framework for reasoning about the behaviour of concurrent systems which has influenced distributed algorithms \cite{distributed_algorithms_na_lynch}, model checking \cite{model_checking} and many other related research fields. This section will give a brief introduction to some process algebra introduced to model some simple parallel processes.
 \par
 CSP defines processes and events. The alphabet of a process, $\alpha P$ is the set of all events. For example, the alphabet of a student process $S$ could consist of two events.
@@ -265,11 +265,64 @@ procedure add(a: int, b: int) returns (c: int)
 
 \subsection[]{C Wolf?}
 \subsection[]{Promela} \label{sec:promela}
-Promela is the verification modeling language used by the Spin model checker, to specify concurrent processes modeling distributed systems \cite{spin}. This section will discuss some of the core features that allow systems to be modeled and verified with Spin.  
+Promela is the verification modeling language used by the Spin model checker, to specify concurrent processes modeling distributed systems \cite{spin}. This section will discuss some of the core features that allow systems to be modeled and verified with Spin. The aim of this section is to give a basic overview of the syntax and control of Promela, so any specifications in later sections or the code artifact can be read.
 \subsubsection[]{Types and Variables}
-\subsubsection[]{Control Flow(run, if, skip)}
+The types available in Promela, and assignment to variables of these types if similar to many imperative programming languages. Promela supports the types bit, bool, byte, pid, short, int and unsigned. Variable assignment then naturally follows.
+\[
+\begin{aligned}
+\text{int a} = 2;
+\end{aligned}
+\]
+\subsubsection[]{Control Flow}
+Promela supports some basic control flow concepts. Firstly, the \texttt{skip} expression can be used with no effect when executed, other than possibly changing the control of an executing process. The selection construct \texttt{if} can be used to evaluate expressions and execute sequences based on the evaluation of these expressions. The syntax of an if statement is unique in comparison to a typical programming language.
+\[
+\begin{aligned}
+& \text{if} \\
+& :: \text{exp\_1 ->} \dots \\
+& :: \text{exp\_2 ->} \dots \\
+& \text{fi} \\
+\end{aligned}    
+\]
+
 \subsubsection[]{Processes}
+An imperative component of understanding the power of the Spin model checker is understanding how processes can run concurrently. Every Promela model requires an initial process that is spawned in the initial system state and determines the control of the program from the initial state. The \texttt{init} keyword is reserved for this purpose. Other processes can be defined using the \texttt{proctype} keyword and then spawned with \texttt{run}. Each process is assigned a process id (pid) which can be accessed within the context of a process using globally defined read-only variable \texttt{\_pid}. We can now define two processes, a process active in the initial state and a second process that is spawned.
+\begin{lstlisting}[language=promela, xleftmargin=.3\linewidth, caption={Defining and spawning processes in Promela}., label={fig:promela_processes}]
+    proctype SomeProcess(int a) {
+        printf("Do something with %d\n", a);
+    }
+    
+    init {
+        int p1;
+        p1 = run SomeProcess(10);
+
+        printf("Init process spawned at %d\n", _pid);
+        printf("Process 1 spawned at %d\n", p1);
+    }
+\end{lstlisting}
+
 \subsubsection[]{Channels}
+The final concept to briefly discuss is the asynchronous communication primitive, channels. Recall Hoare's definition of channels \ref{csp_section}, defining a channel $c$ that can input and output values. Promela echos this definition, allowing channels to be specified using the predefined data type \texttt{chan}. To correctly specify communication, we often need to allow messages of multiple types to be written to channels, for this purpose Promela introduces \texttt{mtype} that allows for the introduction of symbolic names for constant values.
+\[
+\text{mtype = \{ BROADCAST \};}
+\]
+Now, we can define a channel that expects a message to contain multiple fields and is bound to contain a maximum of 10 messages at any time.
+\[
+\text{chan global\_broadcast = [10] of \{ mtype, int \};}
+\]
+We now input messages to the channel using the (!) operator.
+\[
+\text{global\_broadcast ! BROADCAST, 1;}
+\]
+Similarly, we read messages from the channel in a first-in, first-out (FIFO) order.
+\[
+\begin{aligned}
+& \text{int x;} \\
+& \text{global\_broadcast ? BROADCAST, x;}
+\end{aligned}
+\]
+Where the variable $x$ stores the resulting \texttt{int} assuming the first message in the channel is of type \texttt{BROADCAST}.
+\subsubsection[]{Summary}
+This basic introduction to the syntax of the Promela modelling language aims to make the reader familiar with the syntax and control involved in writing Promela specifications. It is not an exhaustive guide but should form a basis for understanding specifications present in a later section or the code artifact.
 \section[]{Modelling Elixir Programs}
 \subsection[]{Basic Deadlock}
 \subsection[]{Dining Philosophers}
