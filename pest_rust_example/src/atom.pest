@@ -1,0 +1,48 @@
+nil = { "nil" }
+
+unary_op = { "@" | "." | "+" | "-" | "!" | "^" | "not" | "~~~" }
+
+left_op = { "*" | "/" | "+" | "-" }
+
+right_op = { "++" | "--" | "+++" | "---" | ".." | "<>" | "in" | "not in" | "|>" | "<<<" | ">>>" | "<<~" | "~>>" | "<~" | "~>" | "<~>" | "<|>" | "<" | ">" | "<=" | ">=" | "==" | "!=" | "=~" | "===" | "!==" | "&&" | "&&&" | "and" | "||" | "|||" | "or" | "=" | "|" | "::" | "when" | "<-" | "\\" }
+
+map_op = { "=>" }
+
+operator = { unary_op | left_op | right_op | map_op }
+
+unused_characters = { "{" | "}" | "_" | "\\" }
+
+letters = { ( ASCII_ALPHANUMERIC | operator | unused_characters) * }
+
+whitespace_letters = { ( ASCII_ALPHANUMERIC | operator | unused_characters | " " ) * }
+
+string = { "\"" ~ whitespace_letters ~ "\"" }
+
+numbers = { ASCII_DIGIT+ }
+
+atom = { ":" ~ letters }
+
+ast_identifier = { atom | tuple }
+
+line_number = { "line: " ~ numbers }
+
+metadata = { ( "[" ~ line_number ~"]" | "[]" ) }
+
+do = { "do: " ~ tuple }
+
+do_multiple = { "do: [" ~ tuple ~ "]" }
+
+else = { "else: " ~ tuple }
+
+else_multiple = { "else: [" ~ tuple ~ "]" }
+
+argument = { tuple | atom | nil | arguments | numbers | do | do_multiple | else | else_multiple | string } 
+
+// Elixir can convert list to binaries: https://stackoverflow.com/questions/38177089/in-elixir-why-do-i-get-t-n-v-f-when-converting-range-to-a-list
+binary_list = { "'" ~ letters ~ "'" } 
+
+arguments = { ( "[" ~ ( argument ~ ", " )* ~ argument ~ "]" | "[]" | nil | binary_list )  }
+
+tuple = { "{" ~ ast_identifier ~ ", " ~ metadata ~ ", " ~ arguments ~ "}" }
+
+ast = { tuple }
