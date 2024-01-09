@@ -1,9 +1,9 @@
 defmodule BasicSequential do
 
   def start do
-    IO.puts add_positive(10, 12)
-    IO.puts add_positive(0, 12)
-    IO.puts add_positive(-2, 12)
+    IO.puts add(10, 12)
+    IO.puts add(0, 12)
+    IO.puts add(-2, 12)
   end
 
   @doc """
