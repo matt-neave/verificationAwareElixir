@@ -20,13 +20,19 @@ string = { "\"" ~ whitespace_letters ~ "\"" }
 
 numbers = { ASCII_DIGIT+ }
 
+defmodule = { ":defmodule" }
+
+def = { ":def" }
+
 atom = { ":" ~ letters }
 
-ast_identifier = { atom | tuple }
+ast_identifier = { defmodule | def | atom | tuple }
 
 line_number = { "line: " ~ numbers }
 
 metadata = { ( "[" ~ line_number ~"]" | "[]" ) }
+
+do_block = { "do: " ~ block_tuple }
 
 do = { "do: " ~ tuple }
 
@@ -36,12 +42,14 @@ else = { "else: " ~ tuple }
 
 else_multiple = { "else: [" ~ tuple ~ "]" }
 
-argument = { tuple | atom | nil | arguments | numbers | do | do_multiple | else | else_multiple | string } 
+argument = { tuple | atom | nil | arguments | numbers | do_block | do | do_multiple | else | else_multiple | string } 
 
 // Elixir can convert list to binaries: https://stackoverflow.com/questions/38177089/in-elixir-why-do-i-get-t-n-v-f-when-converting-range-to-a-list
 binary_list = { "'" ~ letters ~ "'" } 
 
 arguments = { ( "[" ~ ( argument ~ ", " )* ~ argument ~ "]" | "[]" | nil | binary_list )  }
+
+block_tuple = { "{" ~ ":__block__" ~ ", " ~ metadata ~ ", " ~ arguments ~ "}" }
 
 tuple = { "{" ~ ast_identifier ~ ", " ~ metadata ~ ", " ~ arguments ~ "}" }
 

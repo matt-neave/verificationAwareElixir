@@ -1,0 +1,66 @@
+defmodule = { "{:defmodule" ~ comma ~ metadata ~ " | [" ~ alias_name ~ comma ~ do_block ~ "]}" }
+
+nil = { "nil" }
+
+comma = ", "
+
+line_number = { "line: " ~ number }
+
+alias_status = { "alias: " ~ bool }
+
+number = { int | float }
+
+int = { ASCII_DIGIT+ }
+
+float = { ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ }
+
+string = { "\"" ~ ANY* ~ "\"" }
+
+condensed_list = { "'" ~ ANY* "'" }
+
+bool = { "true" | "false" }
+
+metadata = { nil | metadata_arguments }
+
+metadata_arguments = { "[" ~ (metadata_argument ~ comma)* ~ metadata_argument ~ "]" }
+
+metadata_argument = { line_number | alias_status }
+
+alias_name = { "{:__aliases__" ~ comma ~ metadata ~ comma ~ atoms ~ "}" }
+
+atoms = { "[" ~ (atom)* ~ "]" }
+
+atom = { ":" ~ (ANY)+ }
+
+do_block = { "[do: " ~ block ~ "]" }
+
+block = { "{:__block__" ~ comma ~ metadata ~ comma ~ block_statements ~  "}" }
+
+block_statements = { "[" ~ (block_statement ~ comma)* ~ block_statement ~ "]" }
+
+block_statement = { attribute | function_definition | macro | io | directive | expression_tuple }
+
+function_definition = { ("{:def" | "{:defp") ~ comma ~ metadata ~ "[" ~ function_name ~ comma ~ do_block ~ "]}" }
+
+io = { "{:." ~ comma ~ metadata ~ comma ~ "[" ~ alias_name ~ comma ~ ":puts" ~ "]" ~ "}" }
+
+expression_tuple = { "{" ~ (io | atom) ~ comma ~ metadata ~ comma ~ expression_arguments ~ "}" } 
+
+expression_arguments = { "[" ~ (expression_argument ~ comma)* ~ expression_argument* ~ "]" }
+
+expression_argument = { number | string | condensed_list | expression_tuple }
+
+//TODO complete
+attribute = { ":@" ~ comma ~ metadata ~ comma ~ attributes }
+
+attributes = { "["~ (single_attribute ~ comma)* ~ single_attribute ~ "]" }
+
+single_attribute = { doc_attribute }
+
+doc_attribute = { "{:doc" ~ comma ~ metadata ~ "[" ~ string ~ "]}" }
+
+//TODO complete
+macro = { "defmacro" }
+
+//TODO complete
+directive = { "import" | "alias" | "require" }
