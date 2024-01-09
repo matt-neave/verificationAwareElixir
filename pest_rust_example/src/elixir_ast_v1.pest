@@ -1,4 +1,4 @@
-defmodule = { "{:defmodule" ~ comma ~ metadata ~ " | [" ~ alias_name ~ comma ~ do_block ~ "]}" }
+defmodule = { "{:defmodule" ~ comma ~ metadata ~ comma ~ "[" ~ alias_name ~ comma ~ do_block ~ "]}" }
 
 nil = { "nil" }
 
@@ -22,7 +22,7 @@ bool = { "true" | "false" }
 
 metadata = { nil | metadata_arguments }
 
-metadata_arguments = { "[" ~ (metadata_argument ~ comma)* ~ metadata_argument ~ "]" }
+metadata_arguments = { "[" ~ (metadata_argument ~ comma)* ~ metadata_argument* ~ "]" }
 
 metadata_argument = { line_number | alias_status }
 
