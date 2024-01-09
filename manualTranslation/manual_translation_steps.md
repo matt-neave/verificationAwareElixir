@@ -48,5 +48,20 @@ msg_2.m2.data2 = _pid
 mailbox[_pid] ! TAKE_CHOPSTICK, msg_2;
 ```
 
+- Instances of `print` should evaluate the value of all expressions prior to making the call to print.
+- Non-recursive functions can be modelled like so:
+```
+proctype Add(int x; int y; chan ret) {
+    ret ! (x + y);
+}
+
+init {
+    chan ret1 = [1] of { int };
+    run Add(10, 12, ret1);
+    int ret1_v;
+    ret1 ? ret1_v;
+}
+```
+
 ### Variable naming
 Variable naming needs to be done carefully. With proceduraly generated code, need to be careful as variables cannot be redeclared, hence follow naming patterns such as `i_n` for iterators, `rec_v_n` for messages ect.
