@@ -43,13 +43,14 @@ metadata_argument = { line_number | alias_status }
 
 alias_name = { "{:__aliases__" ~ ", " ~ metadata ~ ", " ~ atoms ~ "}" }
 
+// TODO: confirm
 atoms = { "[" ~ (atom)* ~ "]" }
 
 atom = { ":" ~ letters }
 
-do_else =  { "[do: " ~ expression_tuple ~ ", " ~ "else: " ~ expression_tuple ~ "]" }
+do_else =  { "[do: " ~ tuple ~ ", " ~ "else: " ~ tuple ~ "]" }
 
-do_single = { "[do: " ~ expression_tuple ~ "]" }
+do_single = { "[do: " ~ tuple ~ "]" }
 
 do_block = { "[do: " ~ block ~ "]" }
 
@@ -59,7 +60,7 @@ block = { "{:__block__" ~ ", " ~ metadata ~ ", " ~ block_statements ~  "}" }
 
 block_statements = { "[" ~ (block_statement ~ ", ")* ~ block_statement* ~ "]" }
 
-block_statement = { attribute | function_definition | macro | io | directive | expression_tuple }
+block_statement = { attribute | function_definition | macro | io | directive | tuple }
 
 function_definition = { ("{:def" | "{:defp") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}" }
 
@@ -73,13 +74,15 @@ io = { "{:." ~ ", " ~ metadata ~ ", " ~ "[" ~ alias_name ~ ", " ~ ":puts" ~ "]" 
 
 if = { "{:if" ~ ", " ~ metadata ~ ", " ~ conditions ~ "}" }
 
-conditions = { "[" ~  expression_tuple ~ ", " ~ "[" ~ do ~ "]]"}
+conditions = { "[" ~  tuple ~ ", " ~ do ~ "]"}
 
-expression_tuple = { "{" ~ (io | if | atom) ~ ", " ~ metadata ~ ", " ~ expression_arguments ~ "}" } 
+tuple = { if | expression_tuple}
+
+expression_tuple = { "{" ~ (io | atom) ~ ", " ~ metadata ~ ", " ~ expression_arguments ~ "}" } 
 
 expression_arguments = { ("[" ~ (expression_argument ~ ", ")* ~ expression_argument ~ "]") | condensed_list | nil }
 
-expression_argument = { number | string | expression_tuple | do }
+expression_argument = { number | string | tuple | do }
 
 attribute = { ":@" ~ ", " ~ metadata ~ ", " ~ attributes }
 

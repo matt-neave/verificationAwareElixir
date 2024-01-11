@@ -17,6 +17,12 @@ fn main() {
         .next()
         .unwrap();
     
+    // let test = ASTParser::parse(Rule::r#tuple, "{{:., [], [{:__aliases__, [alias: false], [:IO]}, :puts]}, [], [\"Hello\"]}")
+    //     .expect("Couldnt parse")
+    //     .next()
+    //     .unwrap();
+    // println!("{}", test);
+
     // Match prog_ast on Rule::defmodule
     // prog_ast.into_inner() returns [comma, metadata, comma, alias, comma, do block]
     parse_defmodule(prog_ast);
