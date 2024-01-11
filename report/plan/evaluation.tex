@@ -1,1 +1,16 @@
-\chapter{Evaluation}
+\chapter{Evaluation Plan}
+This section will discuss what a successful project looks like and some methods that can be used to evaluate the success of the project.
+
+\section{Manual Translation}
+The first and easiest method for evaluating the performance of the tool will be comparing the results of the tool to manually designed models. It will be easy to introduce deadlocks into small programs, reason that there is an execution path that leads to the deadlock, and then use the verifier to confirm the program introduces a deadlock. This will form a basis for evaluating the correctness of the produced tool. It will be harder to evaluate cases where a deadlock is present in the program that the tool fails to identify. With a large test suite, hopefully, this will not often be the case however, these bugs may occasionally occur.
+\par
+Evaluating the effectiveness of other verification techniques, such as liveness and the introduction of pre- and post-conditions is more straightforward. Depending on the expressions that will be supported in pre- and post-conditions, it is likely these expressions will be constructed recursively where the base cases can be exhaustively tested (for example, the use of the addition operator in a post-condition can be shown to be correct with a unit test).
+
+\section{True Positives Vs False Positives}
+An important metric to track when evaluating the produced tool will be how many programs produce false positives. This has been shown as a relevant metric in related work. Determining if a deadlock, condition or liveness property violation are true or false positives will be difficult to reason about for larger systems. As a starting point, the tool can be run on programs that are known to violate a specification in a state and compare its performance before applying the tool to unknown programs that have been assumed to be correct under a specification.
+
+\section{Open Source Projects}
+There are some open source Elixir projects that can be used as real-world examples of determining if programs follow specifications. For example, Discord released Elixir libraries for various distributed network tasks that could be verified with a verifier. Finding errors in these programs would be a strong indication of the effectiveness of the tool. Likely, the verifier will not be able to run directly on these programs without modification, for example introducing bounds on execution in various places as many real-world applications of Elixir may be in long-lived processes.
+
+\section{Runtime}
+The runtime of the produced tool is not a focus of the project. However, with many modern verification tools being used on production-level code, it will be important to measure how the tool performs on small and large-scale applications to allow for comparison between other verifiers for other programming languages (i.e. Dafny or C).
