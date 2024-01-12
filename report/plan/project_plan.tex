@@ -40,6 +40,12 @@ The main challenge of the project is model extraction. It introduces many questi
 Unfortunately, the list goes on the more you look into the Elixir language. A starting point will be modelling sequential programs.
 \subsubsection{Promela code-gen (begin in term 2)}
 The first model checker I aim to target is Promela. Although it doesn't natively support function calls or definitions it does support concurrency, therefore I deem it an easier milestone to reach. Once code-gen for Promela is implemented, it should be possible to begin proving Elixir programs are deadlock-free, which is a massive step towards being a verification-aware language.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth]{images/system_design_v0.png}
+    \caption{v0 system design for deadlock detection.}
+    \label{fig:v0_system_design}
+\end{figure}
 \subsubsection{Extending Elixir with Metaprogramming (begin in term 3)}
 It will be difficult within the scope of the project to allow any Elixir program without modification to be verified. Using metaprogramming, steps can be taken to introduce an Elixir library that allows developers to write code that is easier to verify. For example, developers can introduce bounds to mailboxes and recursive calls that make model extracting a lot more direct. Anything unbounded won't be verifiable, so I want to put the burden on the developer writing specifications instead of the artifact to approximate bounds.
 \par
