@@ -218,7 +218,6 @@ Another useful feature often associated with the development of DSLs in Elixir i
         x + y
     end
 \end{lstlisting}
-
 \section{Existing Work}
 Much work has gone into model checking, theorem-proving and verifying the implementations of systems. For Elixir, there are tools such as dialyzer \cite{dialyzer}, which statically analyse Elixir programs for type errors or dead code. Whilst tools like such provide Elixir developers better guarantees their code is correct, it does not verify the correctness of a system as a whole. 
 \subsection{Lean}
@@ -323,10 +322,6 @@ Similarly, we read messages from the channel in a first-in, first-out (FIFO) ord
 Where the variable $x$ stores the resulting \texttt{int} assuming the first message in the channel is of type \texttt{BROADCAST}.
 \subsubsection[]{Summary}
 This basic introduction to the syntax of the Promela modelling language aims to make the reader familiar with the syntax and control involved in writing Promela specifications. It is not an exhaustive guide but should form a basis for understanding specifications present in a later section or the code artifact.
-\section{Modelling Elixir Programs?}
-\subsection{Basic Deadlock}
-\subsection{Dining Philosophers}
-\subsection{Preconditions and Postconditions}
 \section{Summary}
 This section has provided an overview of core concepts related to concurrent programs and verification of them. We saw process algebra that can be used to model and reason about concurrent processes, as well as Hoare Logic and its definition of the Hoare Triple as a fundamental property in verification. We also looked at applications based on this theory, such as model checkers, theorem provers and programming languages. Much work related to the topic of verifying programming languages was explored, but importantly, we learned about SPIN, and how concurrent programs can be modeled in Promela to be model-checked for deadlocks, race conditions and incompleteness. We also learned about Boogie, the intermediate verification language that can verify programmatic assumptions using Z3. Finally, we learned about Elixir, the programming language built on top of Erlang and we explored so basic approaches to designing concurrent systems with it. The next section will explore how these core tools can be used in tandem to provide developers guarantees over large-scale, distributed Elixir-based systems.
 
