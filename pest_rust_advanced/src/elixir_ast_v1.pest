@@ -48,6 +48,8 @@ atoms = { "[" ~ (atom)* ~ "]" }
 
 atom = { ":" ~ letters }
 
+annotation = { ":@" ~ letters }
+
 do_else =  { "[do: " ~ tuple ~ ", " ~ "else: " ~ tuple ~ "]" }
 
 do_single = { "[do: " ~ tuple ~ "]" }
@@ -78,7 +80,7 @@ conditions = { "[" ~  tuple ~ ", " ~ do ~ "]"}
 
 tuple = { if | expression_tuple}
 
-expression_tuple = { "{" ~ (io | atom) ~ ", " ~ metadata ~ ", " ~ expression_arguments ~ "}" } 
+expression_tuple = { "{" ~ (io | annotation | atom) ~ ", " ~ metadata ~ ", " ~ expression_arguments ~ "}" } 
 
 expression_arguments = { ("[" ~ (expression_argument ~ ", ")* ~ expression_argument ~ "]") | condensed_list | nil }
 

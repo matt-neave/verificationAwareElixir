@@ -1,4 +1,7 @@
-proctype start {
+init {
+add([1024, 12])
+add([0, 12])
+add([{:-, [line: 6], [2]}, 12])
 }
 proctype add {
 }

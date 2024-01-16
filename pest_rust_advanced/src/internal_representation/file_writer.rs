@@ -26,6 +26,13 @@ impl FileWriter {
         self.content.push_str(format!("{}\n", text).as_str());
     }
 
+    pub fn write_function_call(&mut self, func_name: &str, call_arguments: &str) {
+        // Track how many function calls have taken place 
+        // Create a channel for each
+        // Name the receive variables appropriately
+        self.content.push_str(format!("{}({})\n", func_name, call_arguments).as_str());
+    }
+
     // Method to commit the content to the file and reset the string
     pub fn commit(&mut self) -> io::Result<()> {
         self.file.write_all(self.content.as_bytes())?;
