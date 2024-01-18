@@ -1,7 +1,20 @@
 init {
-add([1024, 12])
-add([0, 12])
-add([{:-, [line: 6], [2]}, 12])
+chan ret1 = [1] of { int };
+chan ret2 = [1] of { int };
+chan ret3 = [1] of { int };
+
+run add(1024, 12));
+int val;
+ret1 ? val
+run add(0, 12));
+int val;
+ret2 ? val
+run add({:-, (line: 6), (2)}, 12));
+int val;
+ret3 ? val
 }
+
 proctype add {
+
 }
+

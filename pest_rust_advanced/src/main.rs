@@ -101,12 +101,8 @@ pub fn parse_function_definition(
     }
     
     get_function_name(func_name_node.unwrap(), &mut func_name);
-
-    // TODO: look into using annotation instead of matching on start
-    match &*func_name {
-        "start" => file_writer.writeln(&*format!("init {{")),
-        _       => file_writer.writeln(&*format!("proctype {} {{", &*func_name)),
-    }
+    file_writer.new_function(&*func_name, None);
+    
 
     // Write the body 
     // Start by setting up the channels
@@ -114,7 +110,7 @@ pub fn parse_function_definition(
     parse_do(func_body_node.unwrap(), file_writer);
 
     // Close the function 
-    file_writer.writeln("}");
+    file_writer.commit_function();
     file_writer.commit().expect("Failed to commit to file");
 }
 
@@ -196,9 +192,9 @@ fn parse_expression_tuple(
         let mut func_name = x.as_str().to_string();
         func_name.remove(0);
         if let Some(arguments) = arguments_node {
-            file_writer.write_function_call(&*func_name, &*arguments.as_str());
+            file_writer.write_function_call(&*func_name, &*arguments.as_str(), "val");
         } else {
-            file_writer.write_function_call(&*func_name, "");
+            file_writer.write_function_call(&*func_name, "", "val");
         }
     }
 }
