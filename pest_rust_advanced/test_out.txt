@@ -2,7 +2,6 @@ init {
 chan ret1 = [1] of { int };
 chan ret2 = [1] of { int };
 chan ret3 = [1] of { int };
-
 run add(1024, 12));
 int val;
 ret1 ? val
@@ -15,6 +14,17 @@ ret3 ? val
 }
 
 proctype add {
-
+chan ret1 = [1] of { int };
+chan ret2 = [1] of { int };
+if
+:: 1 -> 
+run *({:x, (line: 16), nil}, {:y, (line: 16), nil}));
+int val;
+ret1 ? val
+else ->
+run +({:x, (line: 18), nil}, {:y, (line: 18), nil}));
+int val;
+ret2 ? val
+fi
 }
 

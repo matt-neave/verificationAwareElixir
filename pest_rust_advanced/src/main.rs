@@ -4,6 +4,7 @@ use pest_derive::Parser;
 use pest::iterators::Pair;
 
 mod internal_representation;
+use internal_representation::formatted_condition;
 
 #[derive(Parser)]
 #[grammar = "elixir_ast_v1.pest"]
@@ -25,10 +26,13 @@ fn main() {
 }
 
 pub fn parse_defmodule(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter) {
+    
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
-            Rule::do_block => parse_do_block(pair, file_writer),
-            _              => (),
+            Rule::r#do       => parse_do(pair, file_writer),
+            Rule::metadata   => (),
+            Rule::alias_name => (),
+            _                => println!("undefined1"),
         };
     }
 }
@@ -39,7 +43,7 @@ pub fn parse_do_block(ast_node: Pair<Rule>, file_writer: &mut internal_represent
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::block => parse_block(pair, file_writer),
-            _           => (),
+            _           => println!("undefined2"),
         };
     }
 }
@@ -48,7 +52,7 @@ pub fn parse_block(ast_node: Pair<Rule>, file_writer: &mut internal_representati
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::block_statements => parse_block_statements(pair, file_writer),
-            _                      => (),
+            _                      => println!("undefined3"),
         };
     }
     
@@ -58,7 +62,7 @@ pub fn parse_block_statements(ast_node: Pair<Rule>, file_writer: &mut internal_r
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::block_statement => parse_block_statement(pair, file_writer),
-            _                     => (),
+            _                     => println!("undefined4"),
         }
     }
 }
@@ -68,7 +72,7 @@ pub fn parse_block_statement(ast_node: Pair<Rule>, file_writer: &mut internal_re
         match pair.as_rule() {
             Rule::function_definition => parse_function_definition(pair, file_writer),
             Rule::tuple               => parse_tuple(pair, file_writer),
-            _                         => (),
+            _                         => println!("undefined5"),
         }
     }
 }
@@ -96,7 +100,7 @@ pub fn parse_function_definition(
             Rule::function_arguments => _func_arg_node = Some(pair),
             Rule::r#do               => func_body_node = Some(pair),
             Rule::metadata           => _func_metadata_node = Some(pair),
-            _                        => (),
+            _                        => println!("undefined6"),
         }
     }
     
@@ -136,7 +140,7 @@ fn parse_do(
         match pair.as_rule() {
             Rule::do_single => parse_do_single(pair, file_writer),
             Rule::do_block  => parse_do_block(pair, file_writer),
-            _               => (), 
+            _               => println!("undefined7"), 
            }
     }
 }
@@ -148,7 +152,7 @@ fn parse_do_single(
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::tuple => parse_tuple(pair, file_writer),
-            _           => (), 
+            _           => println!("undefined8"), 
            }
     }
 }
@@ -161,9 +165,11 @@ fn parse_tuple(
     // is an "atom", we assume it is a function call
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
-            Rule::expression_tuple => parse_expression_tuple(pair, file_writer),  
-            Rule::r#if             => (),
-            _                      => (),
+            Rule::expression_tuple    => parse_expression_tuple(pair, file_writer),  
+            Rule::r#if                => parse_if(pair, file_writer),
+            Rule::function_definition => parse_function_definition(pair, file_writer),
+            Rule::metadata            => (),
+            _                         => println!("undefined9"),
         }
     }
 }
@@ -180,7 +186,7 @@ fn parse_expression_tuple(
             Rule::io                   => io_node = Some(pair), 
             Rule::atom                 => atom_node = Some(pair),
             Rule::expression_arguments => arguments_node = Some(pair),
-            _                          => (),
+            _                          => println!("undefined10"),
         }
     }
 
@@ -197,4 +203,90 @@ fn parse_expression_tuple(
             file_writer.write_function_call(&*func_name, "", "val");
         }
     }
+
+}
+
+fn parse_if(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter
+) {
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::conditions => parse_conditions(pair, file_writer),
+            _                => println!("undefined11"),
+        }
+    }
+}
+
+fn create_condition(
+    ast_node: Pair<Rule>
+) -> internal_representation::formatted_condition::FormattedCondition {
+    internal_representation::formatted_condition::FormattedCondition::Number(1)
+} 
+
+fn parse_conditions(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter
+) {
+    // TODO write the translation for conditions
+    let mut do_block: Option<Pair<Rule>> = None;
+    let mut do_else_block: Option<Pair<Rule>> = None;
+    let mut condition: Option<Pair<Rule>> = None;
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::tuple                => condition = Some(pair), 
+            Rule::r#do                 => do_block = Some(pair),
+            Rule::do_else              => do_else_block = Some(pair),
+            _                          => println!("undefined12"),
+        }
+    }
+
+    // To do, reformat so that parse block returns the
+    // list of instructions to write
+
+    let condition = condition
+        .unwrap_or_else(|| panic!("Unconditional if"));
+
+
+    // Write the if statement
+    let formatted_condition = create_condition(condition);
+    file_writer.write_if_condition(formatted_condition);
+
+    // Parse the do block
+    if let Some(x) = do_block {
+        parse_do(x, file_writer);
+        file_writer.commit_if();
+        return;
+    }
+    
+    // If required, write the else
+    let do_else_block = do_else_block       
+        .unwrap_or_else(|| panic!("No do or do else in if"));
+
+    let mut do_else_block = do_else_block.into_inner();
+    if let Some(pair) = do_else_block.next() {
+        println!("{}", pair.as_str());
+        match pair.as_rule() {
+            Rule::tuple     => parse_tuple(pair, file_writer),
+            Rule::primitive => parse_primitive(pair, file_writer),
+            _               => println!("undefined13"),
+        }            
+    }
+    file_writer.write_else();
+    
+    if let Some(pair) = do_else_block.next() {
+        match pair.as_rule() {
+            Rule::tuple     => parse_tuple(pair, file_writer),
+            Rule::primitive => parse_primitive(pair, file_writer),
+            _               => println!("undefined13"),
+        }
+    }
+    file_writer.commit_if();
+}
+
+fn parse_primitive(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter
+) {
+    file_writer.write_primitive(&*ast_node.as_str());
 }

@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::{self, Write};
-use std::collections::HashMap;
+
+use crate::formatted_condition;
 
 pub struct FileWriter {
     content: String,
@@ -30,7 +31,7 @@ impl FileWriter {
 
     // Method to append text to the string with new line
     pub fn writeln(&mut self, text: &str) {
-        self.content.push_str(format!("{}\n", text).as_str());
+        self.function_body.push_str(format!("{}\n", text).as_str());
     }
 
     pub fn new_function(&mut self, func_name: &str, arguments: Option<&str>) {
@@ -43,7 +44,7 @@ impl FileWriter {
 
     pub fn commit_function(&mut self) {
         // Commits the current function to the file
-        self.content.push_str(&*format!("{}\n", &*self.function_metabody));
+        self.content.push_str(&*format!("{}", &*self.function_metabody));
         self.content.push_str(&*format!("{}}}\n\n", &*self.function_body));
         self.function_metabody = String::new();
         self.function_body = String::new();
@@ -66,10 +67,41 @@ impl FileWriter {
         self.function_body.push_str(&*format!("ret{} ? {}\n", self.function_call_count, return_variable)); 
     }
 
+    fn condition_to_string(expr: &formatted_condition::FormattedCondition) -> String {
+        match expr {
+            formatted_condition::FormattedCondition::Number(n) => n.to_string(),
+            formatted_condition::FormattedCondition::Boolean(b) => b.to_string(),
+            formatted_condition::FormattedCondition::StringLiteral(s) => format!("\"{}\"", s),
+            formatted_condition::FormattedCondition::BinaryOperation(op, left, right) => {
+                format!("({} {} {})", Self::condition_to_string(left), op, Self::condition_to_string(right))
+            }
+        }
+    }
+
+    pub fn write_if_condition(
+        &mut self,
+        condition: formatted_condition::FormattedCondition
+    ) {
+        self.function_body.push_str("if\n");
+        self.function_body.push_str(format!(":: {} -> \n", Self::condition_to_string(&condition)).as_str());
+    }
+
+    pub fn write_else(&mut self) {
+        self.function_body.push_str("else ->\n");
+    }
+
+    pub fn commit_if(&mut self) {
+        self.function_body.push_str("fi\n");
+    }
+
     // Method to commit the content to the file and reset the string
     pub fn commit(&mut self) -> io::Result<()> {
         self.file.write_all(self.content.as_bytes())?;
         self.content.clear(); // Reset the string
         Ok(())
+    }
+
+    pub fn write_primitive(&mut self, primitive: &str) {
+        self.function_body.push_str(format!("{}\n", primitive).as_str());
     }
 }

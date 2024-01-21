@@ -1,4 +1,4 @@
-defmodule = { "{:defmodule" ~ ", " ~ metadata ~ ", " ~ "[" ~ alias_name ~ ", " ~ do_block ~ "]}" }
+defmodule = { "{:defmodule" ~ ", " ~ metadata ~ ", " ~ "[" ~ alias_name ~ ", " ~ do ~ "]}" }
 
 nil = { "nil" }
 
@@ -35,6 +35,8 @@ condensed_list = { "'" ~ letters ~ "'" }
 
 bool = { "true" | "false" }
 
+primitive = { bool | int | string | atom | variable }
+
 metadata = { nil | metadata_arguments }
 
 metadata_arguments = { ("[" ~ (metadata_argument ~ ", ")* ~ metadata_argument ~ "]") | "[]" }
@@ -50,13 +52,13 @@ atom = { ":" ~ letters }
 
 annotation = { ":@" ~ letters }
 
-do_else =  { "[do: " ~ tuple ~ ", " ~ "else: " ~ tuple ~ "]" }
+do_else =  { "[do: " ~ (tuple | primitive) ~ ", " ~ "else: " ~ (tuple | primitive) ~ "]" }
 
-do_single = { "[do: " ~ tuple ~ "]" }
+do_single = { "[do: " ~ (tuple | primitive ) ~ "]" }
 
 do_block = { "[do: " ~ block ~ "]" }
 
-do = { do_else | do_block | do_single }
+do = { do_block | do_single }
 
 block = { "{:__block__" ~ ", " ~ metadata ~ ", " ~ block_statements ~  "}" }
 
@@ -76,9 +78,22 @@ io = { "{:." ~ ", " ~ metadata ~ ", " ~ "[" ~ alias_name ~ ", " ~ ":puts" ~ "]" 
 
 if = { "{:if" ~ ", " ~ metadata ~ ", " ~ conditions ~ "}" }
 
-conditions = { "[" ~  tuple ~ ", " ~ do ~ "]"}
+variable = { letters }
 
-tuple = { if | expression_tuple}
+or = { "{:or" ~ ", " ~ metadata ~ ", " ~ boolean_expressions ~ "}" }
+
+and = { "{:and" ~ ", " ~ metadata ~ ", " ~ boolean_expressions ~ "}" }
+
+// TODO extract (variable | int) to more exhaustive type
+operation = { "{:" ~ ANY ~ ", " ~ metadata ~ ", " ~ "[" ~ primitive ~ ", " ~ primitive ~ "]" ~ "}" }
+
+boolean_expressions = { "[" ~ (boolean_expression ~ ", ")* ~ boolean_expression ~ "]" }
+
+boolean_expression = { bool | operation }
+
+conditions = { "[" ~  tuple ~ ", " ~ (do | do_else) ~ "]"}
+
+tuple = { function_definition | if | or | and | expression_tuple}
 
 expression_tuple = { "{" ~ (io | annotation | atom) ~ ", " ~ metadata ~ ", " ~ expression_arguments ~ "}" } 
 
