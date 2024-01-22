@@ -166,6 +166,7 @@ fn parse_tuple(
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::expression_tuple    => parse_expression_tuple(pair, file_writer),  
+            Rule::binary_operation    => parse_binary_operation(pair, file_writer),
             Rule::r#if                => parse_if(pair, file_writer),
             Rule::function_definition => parse_function_definition(pair, file_writer),
             Rule::metadata            => (),
@@ -265,7 +266,7 @@ fn parse_conditions(
 
     let mut do_else_block = do_else_block.into_inner();
     if let Some(pair) = do_else_block.next() {
-        println!("{}", pair.as_str());
+        println!("{}", pair);
         match pair.as_rule() {
             Rule::tuple     => parse_tuple(pair, file_writer),
             Rule::primitive => parse_primitive(pair, file_writer),
@@ -289,4 +290,27 @@ fn parse_primitive(
     file_writer: &mut internal_representation::file_writer::FileWriter
 ) {
     file_writer.write_primitive(&*ast_node.as_str());
+}
+
+fn parse_binary_operation(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter
+) {
+    let mut binary_operator: Option<Pair<Rule>> = None;
+    let mut operands: Vec<Pair<Rule>> = Vec::new();
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::binary_operator => binary_operator = Some(pair),
+            Rule::tuple => operands.push(pair), // Use push() to add elements to the vector
+            _ => println!(),
+        }
+    }
+
+    // TODO order the binary operation
+    // i.e. {} {} {} operands[0], operator, operands[1]
+    if let Some(x) = binary_operator {
+        file_writer.write_operation(x.as_str(), operands[0].as_str(), operands[1].as_str());
+    } else {
+        println!("oopsies");
+    }
 }

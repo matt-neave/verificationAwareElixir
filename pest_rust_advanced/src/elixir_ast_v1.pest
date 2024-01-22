@@ -21,6 +21,8 @@ left_op = { "*" | "/" | "+" | "-" }
 
 right_op = { "++" | "--" | "+++" | "---" | ".." | "<>" | "in" | "not in" | "|>" | "<<<" | ">>>" | "<<~" | "~>>" | "<~" | "~>" | "<~>" | "<|>" | "<" | ">" | "<=" | ">=" | "==" | "!=" | "=~" | "===" | "!==" | "&&" | "&&&" | "and" | "||" | "|||" | "or" | "=" | "|" | "::" | "when" | "<-" | "\\" }
 
+binary_operator = { "+" | "-" | "/" | "*" }
+
 map_op = { "=>" }
 
 operator = { unary_op | left_op | right_op | map_op }
@@ -93,7 +95,9 @@ boolean_expression = { bool | operation }
 
 conditions = { "[" ~  tuple ~ ", " ~ (do | do_else) ~ "]"}
 
-tuple = { function_definition | if | or | and | expression_tuple}
+tuple = { function_definition | if | or | and | binary_operation | expression_tuple}
+
+binary_operation = { "{:" ~ binary_operator ~ ", " ~ metadata ~ ", [" ~ tuple ~ ", " ~ tuple ~ "]}" }
 
 expression_tuple = { "{" ~ (io | annotation | atom) ~ ", " ~ metadata ~ ", " ~ expression_arguments ~ "}" } 
 

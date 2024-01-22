@@ -34,6 +34,10 @@ impl FileWriter {
         self.function_body.push_str(format!("{}\n", text).as_str());
     }
 
+    pub fn write_operation(&mut self, operand: &str, left_e: &str, right_e: &str) {
+        self.function_body.push_str(format!("{} {} {}\n", left_e, operand, right_e).as_str());
+    }
+
     pub fn new_function(&mut self, func_name: &str, arguments: Option<&str>) {
         // TODO: look into using annotation instead of matching on start
         match &*func_name {

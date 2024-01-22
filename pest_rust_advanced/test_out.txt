@@ -14,17 +14,12 @@ ret3 ? val
 }
 
 proctype add {
-chan ret1 = [1] of { int };
-chan ret2 = [1] of { int };
 if
 :: 1 -> 
-run *({:x, (line: 16), nil}, {:y, (line: 16), nil}));
-int val;
-ret1 ? val
+{:x, [line: 16], nil} * {:y, [line: 16], nil}
 else ->
-run +({:x, (line: 18), nil}, {:y, (line: 18), nil}));
-int val;
-ret2 ? val
+{:x, [line: 18], nil} + {:y, [line: 18], nil}
 fi
 }
+
 

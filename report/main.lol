@@ -4,7 +4,7 @@
 \contentsline {lstlisting}{\numberline {2.4}Elixir example of \texttt {quote/2} and \texttt {unquote/1}.}{13}{lstlisting.2.4}%
 \contentsline {lstlisting}{\numberline {2.5}{Elixir example of the \texttt {unless/2} macro as defined in the standard library \cite {defmacro}}.}{13}{lstlisting.2.5}%
 \contentsline {lstlisting}{\numberline {2.6}{Example use of attributes in Elixir}.}{14}{lstlisting.2.6}%
-\contentsline {lstlisting}{\numberline {2.7}{Example of a method in Dafny}.}{14}{lstlisting.2.7}%
+\contentsline {lstlisting}{\numberline {2.7}{Example of a method in Dafny}.}{15}{lstlisting.2.7}%
 \contentsline {lstlisting}{\numberline {2.8}{\texttt {forall} quantifier in Dafny \cite {dafny_tutorial}}.}{15}{lstlisting.2.8}%
-\contentsline {lstlisting}{\numberline {2.9}{An example Boogie IVL program}.}{15}{lstlisting.2.9}%
-\contentsline {lstlisting}{\numberline {2.10}{Defining and spawning processes in Promela}.}{16}{lstlisting.2.10}%
+\contentsline {lstlisting}{\numberline {2.9}{An example Boogie IVL program}.}{16}{lstlisting.2.9}%
+\contentsline {lstlisting}{\numberline {2.10}{Defining and spawning processes in Promela}.}{17}{lstlisting.2.10}%

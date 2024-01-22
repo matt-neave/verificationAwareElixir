@@ -131,6 +131,8 @@ init {
 }
 \end{lstlisting}
 
+\subsubsection{Summary}
+We have discussed a selection of model-checkers and what their primary focus is. Many existing model-checkers have been originally designed to prove specifications over sequential models. Some have taken this further and applied model checking directly over programming languages, such as BLAST. Other model-checkers have introduced some primitives for reasoning about concurrency. TLC allows for the specification of processes and using structures can begin to specify shared memory. Similarly, SPIN allows processes to be specified and supports the creation of channels for communication. Despite this, none of the model checkers discussed include message-passing as a first-class construct. To reason about message-passing models, such as the actor model, work has to be done to formalise actor-based constructs. This makes specifying actor-based systems, such as systems written in Elixir a non-trivial task.
 \section{Theorem Proving}
 Theorem proving is another process to verify programs. In theorem proving, axioms are applied to a set of statements to determine if a particular statement holds. For example, Z3 \cite{z3} is a satisfiability modulo theories (SMT) solver developed by Microsoft that can verify propositional logic assertions.
 \subsection{Hoare Logic}
@@ -145,7 +147,7 @@ Hoare Logic provides axioms and inference rules required to construct a simple i
 \overline{\{P\}\text{skip}\{P\}}
 \]
 Hoare describes many more rules that allow for assignment, composition, consequence and so forth. These rules have led to the development of modern-day theorem provers, such as Z3, which will detailed more later.
-\section{Elixir TODO = discuss array argument reductions, qualified calls}
+\section{Elixir}
 Elixir is a dynamic, functional language for building scalable and maintainable applications \cite{elixir}. Elixir programs run on the BEAM virtual machine\cite{beam}, which is also used to implement the Erlang programming language \cite{erlang}. Elixir was designed by José Valim and first released in 2012. Elixir is built on top of Erlang and hence inherits many of the abstractions designed for building distributed systems.
 \par
 BEAM is a virtual machine that executes user programs in the Erlang Runtime System (ERTS). BEAM is a register machine where all instructions operate on named registers containing Erlang terms such as integers or tuples.
@@ -161,7 +163,7 @@ Elixir supports multi-processing in two key ways: nodes and processes. Each node
     Node.spawn(:"node1@localhost", MyModule, :start, [])
 \end{lstlisting}
 \subsection{Shared Memory and Message Passing}
-Two key concepts in inter-process communication (IPC) are shared memory models and message passing models. They are two techniques used to allow processes to send signals or share data between each other. In a shared memory model, a shared memory region is established in which multiple processes can read and write. Figure \ref{fig:shared_memory} shows a basic example of two processes that write to a shared in-memory array. Due to how often we see shared memory used in large-scale distributed systems, much work has been done in the verification of these systems using shared memory models. For example, Jon Mediero Iturrioz used Dafny \cite{dafny} to prove the correctness of concurrent programs that implement shared memory \cite{shared_memory_verification}. 
+Two key concepts in inter-process communication (IPC) are shared memory models and message-passing models. They are two techniques used to allow processes to send signals or share data between each other. In a shared memory model, a shared memory region is established in which multiple processes can read and write. Figure \ref{fig:shared_memory} shows a basic example of two processes that write to a shared in-memory array. Due to how often we see shared memory used in large-scale distributed systems, much work has been done in the verification of these systems using shared memory models. For example, Jon Mediero Iturrioz used Dafny \cite{dafny} to prove the correctness of concurrent programs that implement shared memory \cite{shared_memory_verification}. 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.4\textwidth]{images/shared_memory.png}
@@ -195,6 +197,7 @@ The quote and unquote constructs allow us to transition between Elixir syntax an
     x = 2
     quote do: sum(1, unquote(x))
 \end{lstlisting}
+For ease of reading, we will use the terms quoted-expression and AST interchangeably for the remainder of the report.
 \par
 
 \subsection{Metaprogramming}
@@ -218,6 +221,15 @@ Another useful feature often associated with the development of DSLs in Elixir i
         x + y
     end
 \end{lstlisting}
+
+\subsection{Additional Contructs}
+Various other constructs in Elixir are useful to be aware of to understand the format of quoted expressions.
+\subsubsection{Return Values and Types}
+Elixir is a dynamically typed language, hence any introduced type specifications are never used by the compiler in optimisations or type-checks, however, using annotations\footnote{Annotations are used to add additional metadata to code. They are prefixed with an asperand, for example, \texttt{@type} or \texttt{@doc}.} Elixir does support type specification which can be relevant for documentation and additional tooling. Unlike many imperative programming languages where function return values must be explicitly defined using a keyword such as \texttt{return}, Elixir functions simply return the evaluation of a statement. This could also be the final statement if many statements are sequentially executed in a block.
+
+\subsubsection{Charlists}
+Elixir introduces linked lists as a data structure to store elements. Elixir lists are similar to other programming languages, where they are displayed as comma-separated values enclosed in square braces. If a list is made exclusively of non-negative integers, where every integer has a Unicode code point, then the list may be interpreted as a charlist. If the list contains only printable ASCII characters, then it is often stored and displayed in ASCII format. For example, the list \texttt{[97, 98, 99]} would be stored in the AST as \texttt{'abc'}.
+
 \section{Existing Work}
 Much work has gone into model checking, theorem-proving and verifying the implementations of systems. For Elixir, there are tools such as dialyzer \cite{dialyzer}, which statically analyse Elixir programs for type errors or dead code. Whilst tools like such provide Elixir developers better guarantees their code is correct, it does not verify the correctness of a system as a whole. 
 \subsection{Lean}
@@ -262,7 +274,6 @@ procedure add(a: int, b: int) returns (c: int)
 }
 \end{lstlisting}
 
-\subsection{C Wolf?}
 \subsection{Promela} \label{sec:promela}
 Promela is the verification modeling language used by the Spin model checker, to specify concurrent processes modeling distributed systems \cite{spin}. This section will discuss some of the core features that allow systems to be modeled and verified with Spin. This section aims to give an overview of the syntax and control of Promela, so any specifications in later sections or the code artifact can be read.
 \subsubsection[]{Types and Variables}
