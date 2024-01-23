@@ -43,9 +43,11 @@ metadata = { nil | metadata_arguments }
 
 metadata_arguments = { ("[" ~ (metadata_argument ~ ", ")* ~ metadata_argument ~ "]") | "[]" }
 
-metadata_argument = { line_number | alias_status }
+metadata_argument = { line_number | alias_status | context }
 
 alias_name = { "{:__aliases__" ~ ", " ~ metadata ~ ", " ~ atoms ~ "}" }
+
+context = { "context: Elixir" }
 
 // TODO: confirm
 atoms = { "[" ~ (atom)* ~ "]" }
@@ -82,18 +84,22 @@ if = { "{:if" ~ ", " ~ metadata ~ ", " ~ conditions ~ "}" }
 
 variable = { letters }
 
-or = { "{:or" ~ ", " ~ metadata ~ ", " ~ boolean_expressions ~ "}" }
+or = { "{:or" ~ ", " ~ metadata ~ ", " ~ "[" ~ if_condition ~ ", " ~ if_condition ~ "]" ~ "}" }
 
-and = { "{:and" ~ ", " ~ metadata ~ ", " ~ boolean_expressions ~ "}" }
+and = { "{:and" ~ ", " ~ metadata ~ ", " ~ "[" ~ if_condition ~ ", " ~ if_condition ~ "]" ~ "}" }
 
 // TODO extract (variable | int) to more exhaustive type
-operation = { "{:" ~ ANY ~ ", " ~ metadata ~ ", " ~ "[" ~ primitive ~ ", " ~ primitive ~ "]" ~ "}" }
+variable_argument = { tuple }
 
-boolean_expressions = { "[" ~ (boolean_expression ~ ", ")* ~ boolean_expression ~ "]" }
+operation = { "{:" ~ ANY ~ ", " ~ metadata ~ ", " ~ "[" ~ (variable_argument | primitive) ~ ", " ~ (variable_argument | primitive) ~ "]" ~ "}" }
 
 boolean_expression = { bool | operation }
 
-conditions = { "[" ~  tuple ~ ", " ~ (do | do_else) ~ "]"}
+not = { "{:not, " ~ metadata ~ ", " ~ "[" ~ if_condition ~ "]}" }
+
+if_condition = { not | or | and | boolean_expression | primitive }
+
+conditions = { "[" ~ if_condition ~ ", " ~ (do | do_else) ~ "]"}
 
 tuple = { function_definition | if | or | and | binary_operation | expression_tuple}
 

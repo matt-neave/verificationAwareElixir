@@ -1,1 +1,1 @@
-{:defmodule, [line: 1], [{:__aliases__, [line: 1], [:IfAst]}, [do: {:def, [line: 2], [{:my_function, [line: 2], nil}, [do: {:if, [line: 3], [{:or, [line: 3], [{:<, [line: 3], [1, 2]}, false]}, [do: "This works", else: "Now this"]]}]]}]]}
+{:def, [], [{:my_function, [], nil}, [do: {:if, [], [true, [do: {{:., [], [{:__aliases__, [alias: false], [:IO]}, :puts]}, [], ["Hello"]}]]}]]}

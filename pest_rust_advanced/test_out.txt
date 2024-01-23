@@ -13,13 +13,3 @@ int val;
 ret3 ? val
 }
 
-proctype add {
-if
-:: 1 -> 
-{:x, [line: 16], nil} * {:y, [line: 16], nil}
-else ->
-{:x, [line: 18], nil} + {:y, [line: 18], nil}
-fi
-}
-
-

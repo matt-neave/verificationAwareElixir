@@ -1,4 +1,5 @@
 use std::fs;
+use std::env;
 use pest::Parser;
 use pest_derive::Parser;
 use pest::iterators::Pair;
@@ -11,7 +12,15 @@ use internal_representation::formatted_condition;
 pub struct ASTParser;
 
 fn main() {
-    let path = "./simple_ast.txt";
+    let args: Vec<String> = env::args().collect();
+    let default_path = "./simple_ast.txt";
+
+    let path = if args.len() > 1 {
+        &args[1]
+    } else {
+        default_path
+    };
+
     let file_content = fs::read_to_string(path)
         .expect(format!("Failed to read {}", path).as_str());
 
@@ -222,6 +231,34 @@ fn parse_if(
 fn create_condition(
     ast_node: Pair<Rule>
 ) -> internal_representation::formatted_condition::FormattedCondition {
+    // Base case, we find a primitive
+    if let Some(condition) = ast_node.clone().into_inner().find(|x| x.as_rule() == Rule::primitive) {
+        return internal_representation::formatted_condition::FormattedCondition::Primitive(condition.to_string());
+    }
+
+    // Recursive case, we find a tuple
+    // Either the tuple if a conjuncton / disjunction (and / or)
+    // Or the tuple is an operation (expression_tuple)
+    if let Some(condition) = ast_node.clone().into_inner().find(|a| a.as_rule() == Rule::or) {
+        // Recurse left
+        let Some(l_condition) = condition.clone().into_inner().find(|a| a.as_rule() == Rule::if_condition) else { todo!() };
+        let l_expr = create_condition(l_condition);
+        
+        // Recurse right
+        let Some(r_condition) = condition.clone().into_inner().find(|a| a.as_rule() == Rule::if_condition) else { todo!() };
+        let r_expr = create_condition(r_condition);
+
+        // Return new FormattedCondition
+        return internal_representation::formatted_condition::FormattedCondition::BinaryOperation(&"or", Box::new(l_expr), Box::new(r_expr));
+    }
+    // else if let Some(y) = x.clone().into_inner().find(|a| a.as_rule() == Rule::expression_tuple) {
+        // println!("Expression tuple");
+    // }
+    else {
+        println!("{}", ast_node);
+        panic!("Failed to parse if condition");
+    }
+
     internal_representation::formatted_condition::FormattedCondition::Number(1)
 } 
 
@@ -235,7 +272,7 @@ fn parse_conditions(
     let mut condition: Option<Pair<Rule>> = None;
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
-            Rule::tuple                => condition = Some(pair), 
+            Rule::if_condition         => condition = Some(pair), 
             Rule::r#do                 => do_block = Some(pair),
             Rule::do_else              => do_else_block = Some(pair),
             _                          => println!("undefined12"),
@@ -266,7 +303,6 @@ fn parse_conditions(
 
     let mut do_else_block = do_else_block.into_inner();
     if let Some(pair) = do_else_block.next() {
-        println!("{}", pair);
         match pair.as_rule() {
             Rule::tuple     => parse_tuple(pair, file_writer),
             Rule::primitive => parse_primitive(pair, file_writer),
@@ -292,6 +328,26 @@ fn parse_primitive(
     file_writer.write_primitive(&*ast_node.as_str());
 }
 
+fn name_from_tuple_str(input: &str) -> &str {
+    // Check if the input string starts with "{:" and ends with "}"
+    if input.starts_with("{:") && input.ends_with("}") {
+        // Remove leading "{:" and trailing "}"
+        let content = &input[2..(input.len() - 1)];
+
+        // Split the content into parts separated by commas
+        let parts: Vec<&str> = content.split(',').map(|s| s.trim()).collect();
+
+        // Check if there are at least two parts (name and other content)
+        if parts.len() >= 2 {
+            // Extract and return the name (the first part)
+            return &parts[0];
+        }
+    }
+
+    // Return None if the input doesn't match the expected format
+    &"Failed translation"
+}
+
 fn parse_binary_operation(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter
@@ -307,10 +363,11 @@ fn parse_binary_operation(
     }
 
     // TODO order the binary operation
+    // TODO recursive function call to evaluate expression such as 1 + 1 + 1
     // i.e. {} {} {} operands[0], operator, operands[1]
     if let Some(x) = binary_operator {
-        file_writer.write_operation(x.as_str(), operands[0].as_str(), operands[1].as_str());
-    } else {
-        println!("oopsies");
+        let operand_left = name_from_tuple_str(&*operands[0].as_str());
+        let operand_right = name_from_tuple_str(&*operands[1].as_str());
+        file_writer.write_operation(x.as_str(), operand_left, operand_right);
     }
 }

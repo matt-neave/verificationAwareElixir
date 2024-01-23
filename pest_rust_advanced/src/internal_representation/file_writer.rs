@@ -76,6 +76,7 @@ impl FileWriter {
             formatted_condition::FormattedCondition::Number(n) => n.to_string(),
             formatted_condition::FormattedCondition::Boolean(b) => b.to_string(),
             formatted_condition::FormattedCondition::StringLiteral(s) => format!("\"{}\"", s),
+            formatted_condition::FormattedCondition::Primitive(s) => format!("\"{}\"", s),
             formatted_condition::FormattedCondition::BinaryOperation(op, left, right) => {
                 format!("({} {} {})", Self::condition_to_string(left), op, Self::condition_to_string(right))
             }
