@@ -11,7 +11,7 @@ defmodule BasicSequential do
   works for positive inputs
   """
   def add(x, y) do
-    if x < 0 or y < 0 do
+    if true or false do
       # Weird, unexpected behaviour
       x * y
     else

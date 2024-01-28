@@ -1,4 +1,5 @@
 use std::fs::File;
+use std::collections::HashMap;
 use std::io::{self, Write};
 
 use crate::formatted_condition;
@@ -34,15 +35,26 @@ impl FileWriter {
         self.function_body.push_str(format!("{}\n", text).as_str());
     }
 
-    pub fn write_operation(&mut self, operand: &str, left_e: &str, right_e: &str) {
-        self.function_body.push_str(format!("{} {} {}\n", left_e, operand, right_e).as_str());
+    pub fn write_operation(&mut self, operand: &str, left_e: &str, right_e: &str, ret: bool) {
+        let formatted_string = if ret {
+            format!("ret ! {} {} {}\n", left_e, operand, right_e)
+        } else {
+            format!("{} {} {}\n", left_e, operand, right_e)
+        };
+        self.function_body.push_str(formatted_string.as_str());
     }
+    
 
-    pub fn new_function(&mut self, func_name: &str, arguments: Option<&str>) {
+    pub fn new_function(&mut self, func_name: &str, arguments: &str) {
         // TODO: look into using annotation instead of matching on start
         match &*func_name {
             "start" => self.content.push_str(&*format!("init {{\n")),
-            _       => self.content.push_str(&*format!("proctype {} {{\n", &*func_name)),
+            _       => 
+                if arguments.is_empty() {
+                    self.content.push_str(&*format!("proctype {} (chan ret) {{\n", &*func_name));
+                } else {
+                    self.content.push_str(&*format!("proctype {} (chan ret, {}) {{\n", &*func_name, arguments));
+                },
         }
     }
 
@@ -55,7 +67,7 @@ impl FileWriter {
         self.function_call_count = 0;
     }
 
-    pub fn write_function_call(&mut self, func_name: &str, call_arguments: &str, return_variable: &str) {
+    pub fn write_function_call(&mut self, func_name: &str, call_arguments: &str, return_variable: &str, _ret: bool /* TODO */) {
         // Track how many function calls have taken place 
         // Create a channel for each
         // Name the receive variables appropriately
@@ -65,20 +77,23 @@ impl FileWriter {
         
         // TODO make a mapping of variable name
         let call_arguments = call_arguments.replace("[", "(");
-        let call_arguments = call_arguments.replace("]", ")");
-        self.function_body.push_str(&*format!("run {}{});\n", func_name, call_arguments));
+        let call_arguments = call_arguments.replace("]", "");
+        self.function_body.push_str(&*format!("run {}{}, ret{});\n", func_name, call_arguments, self.function_call_count));
         self.function_body.push_str(&*format!("int {};\n", return_variable));
         self.function_body.push_str(&*format!("ret{} ? {}\n", self.function_call_count, return_variable)); 
     }
 
     fn condition_to_string(expr: &formatted_condition::FormattedCondition) -> String {
+        let mut symbol_map = HashMap::new();
+        symbol_map.insert("or", "||");
+        symbol_map.insert("and", "&&");    
         match expr {
             formatted_condition::FormattedCondition::Number(n) => n.to_string(),
             formatted_condition::FormattedCondition::Boolean(b) => b.to_string(),
             formatted_condition::FormattedCondition::StringLiteral(s) => format!("\"{}\"", s),
             formatted_condition::FormattedCondition::Primitive(s) => format!("\"{}\"", s),
             formatted_condition::FormattedCondition::BinaryOperation(op, left, right) => {
-                format!("({} {} {})", Self::condition_to_string(left), op, Self::condition_to_string(right))
+                format!("({} {} {})", Self::condition_to_string(left), symbol_map.get(op).unwrap_or(&"Missing operator"), Self::condition_to_string(right))
             }
         }
     }
@@ -106,7 +121,13 @@ impl FileWriter {
         Ok(())
     }
 
-    pub fn write_primitive(&mut self, primitive: &str) {
-        self.function_body.push_str(format!("{}\n", primitive).as_str());
+    pub fn write_primitive(&mut self, primitive: &str, ret: bool) {
+        let formatted_string = if ret {
+            format!("ret ! {}\n", primitive)
+        } else {
+            format!("{}\n", primitive)
+        };
+        self.function_body.push_str(&formatted_string);
+        
     }
 }

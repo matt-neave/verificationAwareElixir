@@ -35,7 +35,7 @@ string = { "\"" ~ (ASCII_ALPHANUMERIC | operator | unused_characters | "," | " "
 
 condensed_list = { "'" ~ letters ~ "'" }
 
-bool = { "true" | "false" }
+bool = { true | false }
 
 primitive = { bool | int | string | atom | variable }
 
@@ -95,9 +95,13 @@ operation = { "{:" ~ ANY ~ ", " ~ metadata ~ ", " ~ "[" ~ (variable_argument | p
 
 boolean_expression = { bool | operation }
 
+true = { "true" }
+
+false = { "false" }
+
 not = { "{:not, " ~ metadata ~ ", " ~ "[" ~ if_condition ~ "]}" }
 
-if_condition = { not | or | and | boolean_expression | primitive }
+if_condition = { not | or | and | bool | boolean_expression | primitive }
 
 conditions = { "[" ~ if_condition ~ ", " ~ (do | do_else) ~ "]"}
 

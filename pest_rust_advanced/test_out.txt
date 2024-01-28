@@ -2,14 +2,23 @@ init {
 chan ret1 = [1] of { int };
 chan ret2 = [1] of { int };
 chan ret3 = [1] of { int };
-run add(1024, 12));
+run add(1024, 12, ret1);
 int val;
 ret1 ? val
-run add(0, 12));
+run add(0, 12, ret2);
 int val;
 ret2 ? val
-run add({:-, (line: 6), (2)}, 12));
+run add({:-, (line: 6, (2}, 12, ret3);
 int val;
 ret3 ? val
+}
+
+proctype add (chan ret, x,y) {
+if
+:: (true || true) -> 
+ret ! x * y
+else ->
+ret ! x + y
+fi
 }
 

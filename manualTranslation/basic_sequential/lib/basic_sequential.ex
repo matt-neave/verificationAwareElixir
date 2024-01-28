@@ -1,9 +1,9 @@
 defmodule BasicSequential do
 
   def start do
-    IO.puts add(10, 12)
-    IO.puts add(0, 12)
-    IO.puts add(-2, 12)
+    add(1024, 12)
+    add(0, 12)
+    add(-2, 12)
   end
 
   @doc """
@@ -11,11 +11,11 @@ defmodule BasicSequential do
   works for positive inputs
   """
   def add(x, y) do
-    if x < 0 or y < 0 do
+    if true or false do
       # Weird, unexpected behaviour
-      x * y
+      return x * y
     else
-      x + y
+      return x + y
     end
   end
 end
