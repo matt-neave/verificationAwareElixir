@@ -122,6 +122,53 @@ fn argument_list_as_str(argument_list: Pair<Rule>) -> String {
     out
 }
 
+fn get_symbol_type(
+    type_node: Pair<Rule>
+) -> internal_representation::sym_table::SymbolType {
+    match type_node.as_str() {
+        ":integer" => internal_representation::sym_table::SymbolType::Integer,
+        ":string"  => internal_representation::sym_table::SymbolType::String,
+        ":bool"    => internal_representation::sym_table::SymbolType::Boolean,
+        _          => internal_representation::sym_table::SymbolType::Integer,
+    }
+}
+
+fn create_function_symbol_table(
+    args: &str, 
+    type_spec: Pair<Rule>
+) -> internal_representation::sym_table::SymbolTable {
+    let mut sym_table = internal_representation::sym_table::SymbolTable::new();
+
+    let mut return_type: Option<Pair<Rule>> = None;
+    let mut argument_types: Option<Pair<Rule>> = None;
+    for pair in type_spec.into_inner() {
+        match pair.as_rule() {
+            Rule::argument_type           => return_type = Some(pair),
+            Rule::function_arguments_type => argument_types = Some(pair), 
+            _                             => println!("undefined14"),
+        }
+    }
+
+    if let Some(x) = return_type {
+        sym_table.add_entry("RET_V".to_string(), get_symbol_type(x));
+    }
+
+    let args_v: Vec<&str> = args.trim_matches(|c| c == '[' || c == ']').split(',').map(|s| s.trim()).collect();
+
+    if let Some(x) = argument_types.clone().expect("no argument types").into_inner().find(|y| y.as_rule() == Rule::argument_types) {
+        let mut i = 0;
+        for pair in x.into_inner() {
+            sym_table.add_entry(args_v.get(i).expect("arguments and types size misalign").to_string(), get_symbol_type(pair));
+            i += 1;
+        }
+    } else {
+        panic!("no argument types");
+    }
+
+    sym_table.pretty_print();
+    sym_table
+}
+
 pub fn parse_function_definition(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
@@ -133,6 +180,7 @@ pub fn parse_function_definition(
     let mut func_name_node: Option<Pair<Rule>> = None;
     let mut func_body_node: Option<Pair<Rule>> = None;
     let mut func_arg_node: Option<Pair<Rule>> = None;
+    let mut func_type_spec: Option<Pair<Rule>> = None;
     let mut _func_metadata_node: Option<Pair<Rule>> = None;
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
@@ -140,14 +188,20 @@ pub fn parse_function_definition(
             Rule::function_arguments => func_arg_node = Some(pair),
             Rule::r#do               => func_body_node = Some(pair),
             Rule::metadata           => _func_metadata_node = Some(pair),
+            Rule::type_spec          => func_type_spec = Some(pair),
             _                        => println!("undefined6"),
         }
     }
     
     get_function_name(func_name_node.unwrap(), &mut func_name);
-    file_writer.new_function(&*func_name, &*argument_list_as_str(func_arg_node.expect("no function arguments")));
+    let args = &*argument_list_as_str(func_arg_node.expect("no function arguments"));
+    if let Some(x) = func_type_spec {
+        let sym_table = create_function_symbol_table(args, x);
+    } else {
+        panic!("Missing type spec for function");
+    }
+    file_writer.new_function(&*func_name, args);
     
-
     // Write the body 
     // Start by setting up the channels
     // Use predefiend code blocks for send and recv
