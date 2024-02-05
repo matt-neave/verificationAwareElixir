@@ -30,9 +30,9 @@ impl SymbolTable {
     }
 
     // Unsafe
-    // pub fn lookup(&self, name: &str) -> SymbolType {
-    //     *self.entries.get(name).expect("Symbol not found")
-    // }
+    pub fn lookup(&self, name: &str) -> &SymbolType {
+        self.entries.get(name).expect("missing symbol")
+    }
 
     pub fn pretty_print(&self) {
         println!("Symbol Table:");
