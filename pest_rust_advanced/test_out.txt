@@ -1,8 +1,19 @@
-proctype add (chan ret, int x,int y) {
+init {
 chan ret1 = [1] of { int };
-run def({:start, (line: 3, nil}, (do: {:__block__, (, ({:add, (line: 4, (1024, 12}, {:add, (line: 5, (0, 12}, {:add, (line: 6, ({:-, (line: 6, (2}, 12}}, ret1);
+chan ret2 = [1] of { int };
+chan ret3 = [1] of { int };
+run add(1024, 12, ret1);
 int val;
 ret1 ? val
+run add(0, 12, ret2);
+int val;
+ret2 ? val
+run add({:-, (line: 6, (2}, 12, ret3);
+int val;
+ret3 ? val
+}
+
+proctype add (chan ret, int x,int y) {
 if
 :: (true || true) -> 
 ret ! x * y

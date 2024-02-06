@@ -35,6 +35,7 @@ fn main() {
 }
 
 pub fn parse_defmodule(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter) {
+    println!("{}", ast_node);
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::r#do       => parse_do(pair, file_writer, false, false),
@@ -199,7 +200,8 @@ pub fn parse_function_definition(
     if let Some(x) = func_type_spec {
         sym_table = create_function_symbol_table(args, x);
     } else {
-        panic!("Missing type spec for function");
+        sym_table = internal_representation::sym_table::SymbolTable::new();
+        println!("Missing type spec for function");
     }
     file_writer.new_function(&*func_name, args, sym_table);
     

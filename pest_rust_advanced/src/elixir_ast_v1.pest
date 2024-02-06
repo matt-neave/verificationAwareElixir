@@ -70,7 +70,7 @@ block_statements = { "[" ~ (block_statement ~ ", ")* ~ block_statement* ~ "]" }
 
 block_statement = { attribute | function_definition | macro | io | directive | tuple }
 
-function_definition = { type_spec ~ ", " ~ (("{:def" | "{:defp") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}") }
+function_definition = { type_spec? ~ ", "? ~ (("{:def" | "{:defp") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}") }
 
 type_spec = { "{:@, " ~ metadata ~ ", [{:spec, " ~ metadata ~ ", [{:\"::\", " ~ metadata ~ ", [" ~ function_arguments_type ~ ", " ~ argument_type ~"]}]}]}" } 
 
