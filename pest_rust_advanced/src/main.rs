@@ -195,12 +195,13 @@ pub fn parse_function_definition(
     
     get_function_name(func_name_node.unwrap(), &mut func_name);
     let args = &*argument_list_as_str(func_arg_node.expect("no function arguments"));
+    let mut sym_table;
     if let Some(x) = func_type_spec {
-        let sym_table = create_function_symbol_table(args, x);
+        sym_table = create_function_symbol_table(args, x);
     } else {
         panic!("Missing type spec for function");
     }
-    file_writer.new_function(&*func_name, args);
+    file_writer.new_function(&*func_name, args, sym_table);
     
     // Write the body 
     // Start by setting up the channels

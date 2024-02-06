@@ -1,4 +1,4 @@
-proctype add (chan ret, x,y) {
+proctype add (chan ret, int x,int y) {
 chan ret1 = [1] of { int };
 run def({:start, (line: 3, nil}, (do: {:__block__, (, ({:add, (line: 4, (1024, 12}, {:add, (line: 5, (0, 12}, {:add, (line: 6, ({:-, (line: 6, (2}, 12}}, ret1);
 int val;

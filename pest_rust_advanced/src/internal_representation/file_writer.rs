@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::io::{self, Write};
 
 use crate::formatted_condition;
+use crate::internal_representation::sym_table;
 
 pub struct FileWriter {
     content: String,
@@ -44,8 +45,31 @@ impl FileWriter {
         self.function_body.push_str(formatted_string.as_str());
     }
     
+    fn type_to_str(t: &sym_table::SymbolType) -> String {
+        match t {
+            sym_table::SymbolType::Integer => String::from("int"),
+            sym_table::SymbolType::String => String::from("byte"),
+            sym_table::SymbolType::Boolean => String::from("int"),
+            _ => String::new()
+        }
+    }
 
-    pub fn new_function(&mut self, func_name: &str, arguments: &str) {
+    fn format_arguments(arguments: &str, sym_table: sym_table::SymbolTable) -> String {
+    let mut out = String::new();
+    let arg_ls = arguments.split(",");
+    for arg in arg_ls {
+        let t = sym_table.lookup(arg);
+        out += &Self::type_to_str(t);
+        out += " ";
+        out += arg;
+        out += ",";
+    }
+    out.pop();
+    out
+}
+
+
+    pub fn new_function(&mut self, func_name: &str, arguments: &str, sym_table: sym_table::SymbolTable) {
         // TODO: look into using annotation instead of matching on start
         match &*func_name {
             "start" => self.content.push_str(&*format!("init {{\n")),
@@ -53,7 +77,8 @@ impl FileWriter {
                 if arguments.is_empty() {
                     self.content.push_str(&*format!("proctype {} (chan ret) {{\n", &*func_name));
                 } else {
-                    self.content.push_str(&*format!("proctype {} (chan ret, {}) {{\n", &*func_name, arguments));
+                    let formatted_args = Self::format_arguments(arguments, sym_table);
+                    self.content.push_str(&*format!("proctype {} (chan ret, {}) {{\n", &*func_name, &*formatted_args));
                 },
         }
     }
