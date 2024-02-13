@@ -1,5 +1,6 @@
 use std::fs;
 use std::env;
+use std::num;
 use pest::Parser;
 use pest_derive::Parser;
 use pest::iterators::Pair;
@@ -277,6 +278,51 @@ fn parse_tuple(
     }
 }
 
+/// Converts a tuple argument into a string representation
+/// For now, only support negative numbers
+/// TODO: support all expression types and do blocks
+fn resolve_tuple_argument(ast_node: Pair<Rule>) -> &str {
+    panic!("TODO implement tuple arguments");
+    ""
+}
+
+fn resolve_negative_number(ast_node: Pair<Rule>) -> &str {
+    println!("{}", ast_node);
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::number => {
+                let s = format!("-{}", pair.as_str());
+                return Box::leak(s.into_boxed_str());
+            },
+            _ => () 
+        }
+    }
+    ""
+}
+
+/// Takes an 'argument', likely to be an expression string and parses it as a string
+/// by applying the operations on the operators recursively
+/// returns a string representation of a list of arguments
+fn parse_call_arguments(ast_node: Pair<Rule>) -> String {
+    let mut out = String::from("[");
+    for pair in ast_node.into_inner() {
+        for arg in pair.into_inner() {
+            let arg_s = match arg.as_rule() {
+                Rule::r#number => arg.as_str(),
+                Rule::r#string => arg.as_str(),
+                Rule::negative_number => resolve_negative_number(arg),
+                Rule::tuple    => resolve_tuple_argument(arg),
+                _ => panic!("Failed to find argument in argument list"),
+            };
+            out.push_str(arg_s);
+            out.push_str(",");
+        }
+    }
+    out.pop();
+    out.push_str("]");
+    out
+}
+
 fn parse_expression_tuple(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
@@ -302,7 +348,9 @@ fn parse_expression_tuple(
         let mut func_name = x.as_str().to_string();
         func_name.remove(0);
         if let Some(arguments) = arguments_node {
-            file_writer.write_function_call(&*func_name, &*arguments.as_str(), "val" /* TODO, replace with var name if assignment */, ret);
+            println!("{}", arguments.as_str());
+            let call_args = parse_call_arguments(arguments);
+            file_writer.write_function_call(&*func_name, &call_args, "val" /* TODO, replace with var name if assignment */, ret);
         } else {
             file_writer.write_function_call(&*func_name, "", "val", ret);
         }
