@@ -350,9 +350,9 @@ fn parse_expression_tuple(
         if let Some(arguments) = arguments_node {
             println!("{}", arguments.as_str());
             let call_args = parse_call_arguments(arguments);
-            file_writer.write_function_call(&*func_name, &call_args, "val" /* TODO, replace with var name if assignment */, ret);
+            file_writer.write_function_call(&*func_name, &call_args, "" /* TODO, replace with var name if assignment */, ret);
         } else {
-            file_writer.write_function_call(&*func_name, "", "val", ret);
+            file_writer.write_function_call(&*func_name, "", "", ret);
         }
     }
 

@@ -62,7 +62,7 @@ impl FileWriter {
         out += &Self::type_to_str(t);
         out += " ";
         out += arg;
-        out += ",";
+        out += ";";
     }
     out.pop();
     out
@@ -78,7 +78,7 @@ impl FileWriter {
                     self.content.push_str(&*format!("proctype {} (chan ret) {{\n", &*func_name));
                 } else {
                     let formatted_args = Self::format_arguments(arguments, sym_table);
-                    self.content.push_str(&*format!("proctype {} (chan ret, {}) {{\n", &*func_name, &*formatted_args));
+                    self.content.push_str(&*format!("proctype {} ({}; chan ret) {{\n", &*func_name, &*formatted_args));
                 },
         }
     }
@@ -98,11 +98,15 @@ impl FileWriter {
         // Name the receive variables appropriately
         // TODO determine return type    
         self.function_call_count += 1;
-        self.function_metabody.push_str(&*format!("chan ret{} = [1] of {{ int }};\n", self.function_call_count));
+        self.function_metabody.push_str(&format!("chan ret{} = [1] of {{ int }};\n", self.function_call_count));
         
         // TODO make a mapping of variable name
         let call_arguments = call_arguments.replace("[", "(");
         let call_arguments = call_arguments.replace("]", "");
+        let mut return_variable = return_variable.to_owned();
+        if return_variable.is_empty() {
+           return_variable = format!("val{}", self.function_call_count); 
+        }
         self.function_body.push_str(&*format!("run {}{}, ret{});\n", func_name, call_arguments, self.function_call_count));
         self.function_body.push_str(&*format!("int {};\n", return_variable));
         self.function_body.push_str(&*format!("ret{} ? {}\n", self.function_call_count, return_variable)); 
