@@ -14,7 +14,7 @@ pub struct ASTParser;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let default_path = "./simple_ast.txt";
+    let default_path = "./distributed_ast.txt";
 
     let path = if args.len() > 1 {
         &args[1]
@@ -25,7 +25,7 @@ fn main() {
     let file_content = fs::read_to_string(path)
         .expect(format!("Failed to read {}", path).as_str());
 
-    let prog_ast = ASTParser::parse(Rule::defmodule, file_content.as_str())
+    let prog_ast = ASTParser::parse(Rule::elixir_program, file_content.as_str())
         .expect("Failed to parse the AST")
         .next()
         .unwrap();
@@ -35,8 +35,14 @@ fn main() {
     parse_defmodule(prog_ast, &mut writer);
 }
 
+pub fn parse_program(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter) {
+    match ast_node.as_rule() {
+        Rule::defmodule => parse_defmodule(ast_node, file_writer),
+        _ => ()
+    }
+}
+
 pub fn parse_defmodule(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter) {
-    println!("{}", ast_node);
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::r#do       => parse_do(pair, file_writer, false, false),

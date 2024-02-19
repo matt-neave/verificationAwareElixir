@@ -1,18 +1,17 @@
-defmodule BasicSequential do
-
+defmodule Student do
   def start do
-    add(1024, 12)
-    add(0, 12)
-    add(-2, 12)
+    c_p = spawn(Calculator, :add, [])
+    send c_p, {:sum, 10, 12, self()}
+    receive do
+      ans -> IO.puts ans
+    end
   end
+end
 
-  @spec add(integer(), integer()) :: integer()
-  def add(x, y) do
-    if true or false do
-      # Weird, unexpected behaviour
-      x * y
-    else
-      x + y
+defmodule Calculator do
+  def add do
+    receive do
+      {:sum, x, y, pid} -> send pid, x + y
     end
   end
 end

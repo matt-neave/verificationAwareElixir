@@ -1,5 +1,4 @@
 defmodule Student do
-
   def start do
     c_p = spawn(Calculator, :add, [])
     send c_p, {:sum, 10, 12, self()}
