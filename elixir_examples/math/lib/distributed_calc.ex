@@ -3,7 +3,8 @@ defmodule Student do
     c_p = spawn(Calculator, :add, [])
     send c_p, {:sum, 10, 12, self()}
     receive do
-      ans -> IO.puts ans
+      {:response, ans} -> IO.puts ans
+      {:other} -> IO.puts "Unknown message"
     end
   end
 end
@@ -11,7 +12,8 @@ end
 defmodule Calculator do
   def add do
     receive do
-      {:sum, x, y, pid} -> send pid, x + y
+      {:sum, x, y, pid} -> send pid, {:response, x + y}
+      {:other} -> IO.puts "Unknown message"
     end
   end
 end

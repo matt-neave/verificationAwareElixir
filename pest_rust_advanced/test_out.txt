@@ -1,0 +1,6 @@
+init {
+}
+
+proctype add (chan ret) {
+}
+

@@ -5,8 +5,25 @@ use pest::Parser;
 use pest_derive::Parser;
 use pest::iterators::Pair;
 
+// Logging
+use log::trace;
+use log::debug;
+use log::info;
+use log::warn;
+use log::error;
+use log::Level;
+
+use log::LevelFilter;
+use env_logger::fmt::Color;
+
+use std::io::Write;
+
 mod internal_representation;
 use internal_representation::formatted_condition;
+
+#[path = "macros/parse_macros.rs"]
+#[macro_use]
+mod parse_macros;
 
 #[derive(Parser)]
 #[grammar = "elixir_ast_v1.pest"]
@@ -22,6 +39,31 @@ fn main() {
         default_path
     };
 
+    // Initialise logger
+    env_logger::builder()
+        .format(|buf, record| {
+            let level = record.level();
+            let mut style = buf.style();
+            match record.level() {
+                Level::Error => style.set_color(Color::Red),
+                Level::Warn => style.set_color(Color::Yellow),
+                Level::Info => style.set_color(Color::Green),
+                Level::Debug => style.set_color(Color::Blue),
+                Level::Trace => style.set_color(Color::Cyan),
+            };
+
+            writeln!(
+                buf,
+                "{}:{} [{}] - {}",
+                record.file().unwrap_or("unknown"),
+                record.line().unwrap_or(0),
+                style.value(level),
+                record.args()
+            )
+        })
+        .filter_level(LevelFilter::Trace)
+        .init();
+
     let file_content = fs::read_to_string(path)
         .expect(format!("Failed to read {}", path).as_str());
 
@@ -32,13 +74,16 @@ fn main() {
     
     let mut writer = internal_representation::file_writer::FileWriter::new("test_out.txt").unwrap();
 
-    parse_defmodule(prog_ast, &mut writer);
+    parse_program(prog_ast, &mut writer);
 }
 
 pub fn parse_program(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter) {
-    match ast_node.as_rule() {
-        Rule::defmodule => parse_defmodule(ast_node, file_writer),
-        _ => ()
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::defmodule => parse_defmodule(pair, file_writer),
+            Rule::block     => parse_block(pair, file_writer, false, false),
+            _ => parse_warn!("program", pair.as_rule()),
+        }
     }
 }
 
@@ -48,7 +93,7 @@ pub fn parse_defmodule(ast_node: Pair<Rule>, file_writer: &mut internal_represen
             Rule::r#do       => parse_do(pair, file_writer, false, false),
             Rule::metadata   => (),
             Rule::alias_name => (),
-            _                => println!("undefined1"),
+            _                => parse_warn!("defmodule", pair.as_rule()),
         };
     }
 }
@@ -64,7 +109,7 @@ pub fn parse_do_block(
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::block => parse_block(pair, file_writer, ret, func_def),
-            _           => println!("undefined2"),
+            _           => parse_warn!("do block", pair.as_rule()),
         };
     }
 }
@@ -83,7 +128,7 @@ pub fn parse_block(
             Rule::block_statements => {
                 parse_block_statements(pair, file_writer, (last && func_def) || ret);
             },
-            _ => println!("undefined3"),
+            _ => parse_warn!("block", pair.as_rule()),
         }
     }
 }
@@ -93,7 +138,7 @@ pub fn parse_block_statements(ast_node: Pair<Rule>, file_writer: &mut internal_r
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::block_statement => parse_block_statement(pair, file_writer, ret),
-            _                     => println!("undefined4"),
+            _                     => parse_warn!("block statements", pair.as_rule()),
         }
     }
 }
@@ -102,8 +147,9 @@ pub fn parse_block_statement(ast_node: Pair<Rule>, file_writer: &mut internal_re
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::function_definition => parse_function_definition(pair, file_writer, ret),
+            Rule::defmodule           => parse_defmodule(pair, file_writer),
             Rule::tuple               => parse_tuple(pair, file_writer, ret),
-            _                         => println!("undefined5"),
+            _                         => parse_warn!("block statement", pair.as_rule()),
         }
     }
 }
@@ -153,7 +199,7 @@ fn create_function_symbol_table(
         match pair.as_rule() {
             Rule::argument_type           => return_type = Some(pair),
             Rule::function_arguments_type => argument_types = Some(pair), 
-            _                             => println!("undefined14"),
+            _                             => parse_warn!("create function symbol table", pair.as_rule()),
         }
     }
 
@@ -197,7 +243,7 @@ pub fn parse_function_definition(
             Rule::r#do               => func_body_node = Some(pair),
             Rule::metadata           => _func_metadata_node = Some(pair),
             Rule::type_spec          => func_type_spec = Some(pair),
-            _                        => println!("undefined6"),
+            _                        => parse_warn!("function definition", pair.as_rule()),
         }
     }
     
@@ -208,7 +254,7 @@ pub fn parse_function_definition(
         sym_table = create_function_symbol_table(args, x);
     } else {
         sym_table = internal_representation::sym_table::SymbolTable::new();
-        println!("Missing type spec for function");
+        error!("Missing type spec for function {}.", func_name);
     }
     file_writer.new_function(&*func_name, args, sym_table);
     
@@ -246,7 +292,7 @@ fn parse_do(
         match pair.as_rule() {
             Rule::do_single => parse_do_single(pair, file_writer, ret, func_def),
             Rule::do_block  => parse_do_block(pair, file_writer, ret, func_def),
-            _               => println!("undefined7"), 
+            _               => parse_warn!("do", pair.as_rule()), 
            }
     }
 }
@@ -259,8 +305,9 @@ fn parse_do_single(
 ) {
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
-            Rule::tuple => parse_tuple(pair, file_writer, ret || func_def),
-            _           => println!("undefined8"), 
+            Rule::tuple           => parse_tuple(pair, file_writer, ret || func_def),
+            Rule::block_statement => parse_block_statement(pair, file_writer, ret),
+            _                     => parse_warn!("do single", pair.as_rule()), 
            }
     }
 }
@@ -279,7 +326,7 @@ fn parse_tuple(
             Rule::r#if                => parse_if(pair, file_writer, ret),
             Rule::function_definition => parse_function_definition(pair, file_writer, ret),
             Rule::metadata            => (),
-            _                         => println!("undefined9"),
+            _                         => parse_warn!("tuple", pair.as_rule()),
         }
     }
 }
@@ -342,7 +389,7 @@ fn parse_expression_tuple(
             Rule::io                   => io_node = Some(pair), 
             Rule::atom                 => atom_node = Some(pair),
             Rule::expression_arguments => arguments_node = Some(pair),
-            _                          => println!("undefined10"),
+            _                          => parse_warn!("expression tuple", pair.as_rule()),
         }
     }
 
@@ -371,7 +418,7 @@ fn parse_if(
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::conditions => parse_conditions(pair, file_writer, ret),
-            _                => println!("undefined11"),
+            _                => parse_warn!("if", pair.as_rule()),
         }
     }
 }
@@ -442,7 +489,7 @@ fn parse_conditions(
             Rule::if_condition         => condition = Some(pair), 
             Rule::r#do                 => do_block = Some(pair),
             Rule::do_else              => do_else_block = Some(pair),
-            _                          => println!("undefined12"),
+            _                          => parse_warn!("conditions", pair.as_rule()),
         }
     }
 
@@ -473,7 +520,7 @@ fn parse_conditions(
         match pair.as_rule() {
             Rule::tuple     => parse_tuple(pair, file_writer, ret),
             Rule::primitive => parse_primitive(pair, file_writer, ret),
-            _               => println!("undefined13"),
+            _               => parse_warn!("conditions", pair.as_rule()),
         }            
     }
     file_writer.write_else();
@@ -482,7 +529,7 @@ fn parse_conditions(
         match pair.as_rule() {
             Rule::tuple     => parse_tuple(pair, file_writer, ret),
             Rule::primitive => parse_primitive(pair, file_writer, ret),
-            _               => println!("undefined13"),
+            _               => parse_warn!("conditions", pair.as_rule()),
         }
     }
     file_writer.commit_if();

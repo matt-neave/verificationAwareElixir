@@ -1,6 +1,1 @@
-{:__block__, [], [{:defmodule, [line: 1], [{:__aliases__, [line: 1], [:Student]}, [do: {:def, [line: 2], [{:start, [line: 2], nil}, [do: {:__block__, [], [{:=, [line: 3], [{:c_p, [line: 3], nil}, {:spawn, [line: 3], [{:__aliases__, [line: 3], [:Calculator]}, :add, []]}]}, {:send, [line: 4], [{:c_p, [line: 4], nil}, {:{}, [line: 4], [:sum, 10, 12, {:self, [line: 4], []}]}]}, {:receive, [line: 5], [[do: [{:->, [line: 6], [[{:ans, [line: 6], nil}], {{:., [line: 6], [{:__aliases__, [line: 6], [:IO]}, :puts]}, [line: 6], [{:ans, [line: 6], nil}]}]}]]]}]}]]}]]}, {:defmodule, [line: 11], [{:__aliases__, [line: 11], [:Calculator]}, [do: {:def, [line: 12], [{:add, [line: 12], nil}, [do: {:receive, [line: 13], [[do: [{:->, [line: 14], [[{:{}, [line: 14], [:sum, {:x, [line: 14], nil}, {:y, [line: 14], nil}, {:pid, [line: 14], nil}]}], {:send, [line: 14], [{:pid, [line: 14], nil}, {:+, [line: 14], [{:x, [line: 14], nil}, {:y, [line: 14], nil}]}]}]}]]]}]]}]]}]}
-
-{:receive, [line: 5], [[do: [{:->, [line: 6], [[{:ans, [line: 6], nil}], {{:., [line: 6], [{:__aliases__, [line: 6], [:IO]}, :puts]}, [line: 6], [{:ans, [line: 6], nil}]}]}]]]}
-
-{:receive, [line: 13], [[do: [{:->, [line: 14], [[{:{}, [line: 14], [:sum, {:x, [line: 14], nil}, {:y, [line: 14], nil}, {:pid, [line: 14], nil}]}], {:send, [line: 14], [{:pid, [line: 14], nil}, {:+, [line: 14], [{:x, [line: 14], nil}, {:y, [line: 14], nil}]}]}]}]]]}
-
+{:send, [line: 15], [{:pid, [line: 15], nil}, {:res, {:+, [line: 15], [{:x, [line: 15], nil}, {:y, [line: 15], nil}]}}]}

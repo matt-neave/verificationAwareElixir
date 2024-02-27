@@ -33,6 +33,8 @@ unused_characters = { "{" | "}" | "_" | "\\" }
 
 letters = { ( ASCII_ALPHANUMERIC | operator | unused_characters ) * }
 
+alpha_letters = { ASCII_ALPHA+ }
+
 string = { "\"" ~ (ASCII_ALPHANUMERIC | operator | unused_characters | "," | " ")* ~ "\"" }
 
 condensed_list = { "'" ~ letters ~ "'" }
@@ -127,7 +129,7 @@ tuple = { function_definition | if | or | and | binary_operation | expression_tu
 
 binary_operation = { "{:" ~ binary_operator ~ ", " ~ metadata ~ ", [" ~ tuple ~ ", " ~ tuple ~ "]}" }
 
-expression_tuple = { "{" ~ (io | annotation | atom) ~ ", " ~ metadata ~ ", " ~ expression_arguments ~ "}" } 
+expression_tuple = { "{" ~ (annotation | atom) ~ ", " ~ metadata ~ ", " ~ expression_arguments ~ "}" } 
 
 expression_arguments = { ("[" ~ (expression_argument ~ ", ")* ~ expression_argument ~ "]") | condensed_list | nil }
 
@@ -135,20 +137,29 @@ expression_arguments = { ("[" ~ (expression_argument ~ ", ")* ~ expression_argum
 negative_number = { "{:-, " ~ metadata ~ ", [" ~ number ~ "]}" }
 
 //  --------- MESSAGE PASSING --------- 
-send = { "{:send, " ~ metadata ~ ", [" ~ send_target ~ ", " ~ send_arguments ~ "]}" }
+send = { "{:send, " ~ metadata ~ ", [" ~ send_target ~ ", " ~ (send_arguments | send_tupled_arguments) ~ "]}" }
 
 send_target = { "{" ~ atom ~ ", " ~ metadata ~ ", nil}" }
 
 send_arguments = { "{:{}, " ~ metadata ~ ", " ~ ( "[]" | "[" ~ (send_argument ~ ", ")* ~ send_argument ~ "]" ) ~ "}" }
 
-send_argument = { atom | number | string | self_pid }
+send_tupled_arguments = { "{" ~ ((atom | number | string | self_pid | expression_tuple) ~ ", ")* ~ (atom | number | string | self_pid | expression_tuple) ~ "}" }
+
+send_argument = { atom | number | string | self_pid | expression_tuple }
 
 self_pid = { "{:self, " ~ metadata ~ ", []}" }
 
-receive = { "{:receive, " ~ metadata ~ ", [[do: [{:->, " ~ metadata ~ ", [" ~ (single_assignment | multi_assignment) ~ ", "  ~ (block_statement | block) ~ "]}]]]}" }
+receive = { "{:receive, " ~ metadata ~ ", [[do: " ~ (receive_statements) ~ "]]}" }
+
+receive_statements = { "[" ~ (receive_statement ~ ", ")* ~ receive_statement ~ "]" }
+
+receive_statement = { "{:->, " ~ metadata ~ ", [" ~ (single_assignment | pair_assignment | multi_assignment) ~ ", "  ~ (block_statement | block) ~ "]}"}
 
 // Case where receive only assigns to single variable
 single_assignment = { "[{" ~ atom ~ ", " ~ metadata ~ ", " ~ nil ~ "}]" }
+
+// Case where receive is a pair, format of [response: {:ans, [line: 6], nil}]
+pair_assignment = { "[" ~ alpha_letters ~ ": {" ~ (atom | assigned_variable) ~ ", " ~ metadata ~ ", nil}]" }
 
 // Case where receive assings to multiple variables
 // TODO can be refactored such that the first element is always an mtype
@@ -162,7 +173,7 @@ spawn_process = { "{:spawn, " ~ metadata ~ ", [" ~ process_name ~ ", " ~ atom ~ 
 // {:__aliases__, [line: 3], [:Calculator]}
 process_name = { "{:__aliases__, " ~ metadata ~ ", [" ~ atom ~ "]}" }
 
-expression_argument = { number | negative_number | string | spawn_process | tuple | do }
+expression_argument = { number | negative_number | string | spawn_process | assigned_variable | tuple | do }
 
 attribute = { ":@" ~ ", " ~ metadata ~ ", " ~ attributes }
 
