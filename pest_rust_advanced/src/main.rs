@@ -1,3 +1,4 @@
+use std::f32::consts::E;
 use std::fs;
 use std::env;
 use std::num;
@@ -149,8 +150,44 @@ pub fn parse_block_statement(ast_node: Pair<Rule>, file_writer: &mut internal_re
             Rule::function_definition => parse_function_definition(pair, file_writer, ret),
             Rule::defmodule           => parse_defmodule(pair, file_writer),
             Rule::tuple               => parse_tuple(pair, file_writer, ret),
+            Rule::assignment          => parse_assignment(pair, file_writer, ret),
             _                         => parse_warn!("block statement", pair.as_rule()),
         }
+    }
+}
+
+fn get_variable_name(ast_node: Pair<Rule>) -> String {
+    if ast_node.as_rule() != Rule::assigned_variable {
+        panic!("Can't get variable name unless type assigned_variable");
+    }
+    if let Some(x) = ast_node.into_inner().find(|y| y.as_rule() == Rule::atom) {
+        return x.as_str().replace(":", "");
+    } else {
+        panic!("No atom in assigned variable");
+    }
+}
+
+fn parse_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter, ret: bool) {
+    let mut assigned_variable = None;
+    let mut expression = None;
+
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::assigned_variable   => assigned_variable = Some(pair),
+            Rule::expression_argument => expression = Some(pair),
+            _                         => (),
+        }
+    }
+    if let Some(x) = assigned_variable {
+        let variable_name = get_variable_name(x);
+        file_writer.write_assignment_variable(&*variable_name);
+    } else {
+        panic!("No variable name in assignment expression");
+    }
+    if let Some(x) = expression {
+        parse_expression_tuple(x, file_writer, ret);
+    } else {
+        panic!("No expression in assignment expression");
     }
 }
 
@@ -389,6 +426,7 @@ fn parse_expression_tuple(
             Rule::io                   => io_node = Some(pair), 
             Rule::atom                 => atom_node = Some(pair),
             Rule::expression_arguments => arguments_node = Some(pair),
+            Rule::spawn_process        => parse_spawn_process(pair, file_writer, ret),
             _                          => parse_warn!("expression tuple", pair.as_rule()),
         }
     }
@@ -411,9 +449,39 @@ fn parse_expression_tuple(
 
 }
 
+fn parse_spawn_process(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    ret: bool
+) {
+    let mut process_type = None;
+    let mut process_arguments = None;
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::atom                 => process_type = Some(pair),
+            Rule::function_arguments   => process_arguments = Some(pair),
+            _                          => parse_warn!("spawn process", pair.as_rule())
+        }
+    }
+
+    // TODO: refactor nesting
+    if let Some(x) = process_type {
+        if let Some(y) = process_arguments {
+            let args = &*argument_list_as_str(y);
+            file_writer.write_spawn_process(&*x.as_str().replace(":", ""), args);
+        } else {
+            panic!("No process type provided in spawn");
+        }        
+    } else {
+        panic!("No process type provided in spawn");
+    }
+
+}
+
 fn parse_if(
     ast_node: Pair<Rule>, 
-    file_writer: &mut internal_representation::file_writer::FileWriter, ret: bool
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    ret: bool
 ) {
     for pair in ast_node.into_inner() {
         match pair.as_rule() {

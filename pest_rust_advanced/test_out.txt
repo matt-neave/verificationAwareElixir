@@ -1,4 +1,5 @@
 init {
+c_p = run add();
 }
 
 proctype add (chan ret) {

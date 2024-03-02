@@ -159,4 +159,12 @@ impl FileWriter {
         self.function_body.push_str(&formatted_string);
         
     }
+
+    pub fn write_assignment_variable(&mut self, var: &str) {
+        self.function_body.push_str(&*format!("{} = ", var))
+    }
+
+    pub fn write_spawn_process(&mut self, proctype: &str, args: &str) {
+        self.function_body.push_str(&*format!("run {}({});\n", proctype, args));
+    }
 }
