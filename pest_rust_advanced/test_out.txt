@@ -1,4 +1,4 @@
-mtype = {};
+mtype = {SUM};
 typedef MessageType {
 byte data1[20];
 int data2;
@@ -15,13 +15,18 @@ chan mailbox[1] = [10] of { mtype, MessageList };
 
 init {
 chan p0_mailbox = [10] of { mtype, MessageList };
-chan p1_mailbox = [10] of { mtype, MessageList };mailbox[0] = p0_mailbox;
+chan p1_mailbox = [10] of { mtype, MessageList };
+mailbox[0] = p0_mailbox;
 int c_p;
 c_p = run add();
-mailbox[c_p] = p1_mailbox;
+mailbox[1] = p1_mailbox;
+MessageList msg_0;
+msg_0.m1.data2 = 10;
+msg_0.m2.data2 = 12;
+msg_0.m3.data2 = _pid;
+mailbox[1] ! SUM, msg_0;
 }
 
 proctype add (chan ret) {
-mailbox[0] = p0_mailbox;
 }
 

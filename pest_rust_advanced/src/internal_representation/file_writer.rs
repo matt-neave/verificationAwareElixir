@@ -18,6 +18,7 @@ pub struct FileWriter {
     var_stack: Vec<String>,
     mtype: Vec<String>,
     maximum_message_size: u32,
+    function_messages: u32,
     file: File,
 }
 
@@ -37,6 +38,7 @@ impl FileWriter {
             var_stack: Vec::new(),
             mtype: Vec::new(),
             maximum_message_size: 1,
+            function_messages: 0,
             file,
         })
     }
@@ -90,6 +92,8 @@ impl FileWriter {
             "start" => {
                 self.content.push_str(&*format!("init {{\n"));
                 self.function_metabody.push_str("chan p0_mailbox = [10] of { mtype, MessageList };\n");
+                self.function_body.push_str("mailbox[0] = p0_mailbox;\n");
+
             },
             _       => 
                 if arguments.is_empty() {
@@ -104,11 +108,11 @@ impl FileWriter {
     pub fn commit_function(&mut self) {
         // Commits the current function to the file
         self.content.push_str(&*format!("{}", &*self.function_metabody));
-        self.content.push_str("mailbox[0] = p0_mailbox;\n");
         self.content.push_str(&*format!("{}}}\n\n", &*self.function_body));
         self.function_metabody = String::new();
         self.function_body = String::new();
         self.function_call_count = 0;
+        self.function_messages = 0;
     }
 
     pub fn write_function_call(&mut self, func_name: &str, call_arguments: &str, return_variable: &str, _ret: bool /* TODO */) {
@@ -208,7 +212,7 @@ impl FileWriter {
             // Create a mailbox for each process
             self.function_metabody.push_str(&*format!("chan p{}_mailbox = [10] of {{ mtype, MessageList }};\n", self.process_count));
             
-            self.function_body.push_str(&*format!("mailbox[{}] = p{}_mailbox;\n", x, i));
+            self.function_body.push_str(&*format!("mailbox[{}] = p{}_mailbox;\n", i, i));
 
             // Add to the lookup tables
             self.process_name.insert(i, x.clone());
@@ -218,7 +222,24 @@ impl FileWriter {
         }
     }
 
-    pub fn write_send(&mut self, target: &str, args: Vec<&str>) {
-        
+    pub fn write_send(&mut self, target: &str, mut args: Vec<&str>) {
+        let mailbox = self.mailbox_id.get(target).unwrap();
+        let mtype = args.remove(0).replace(":", "").to_uppercase();
+        self.mtype.push(mtype.clone());
+
+        // Create the message component
+        let mut i = 1;
+        self.function_body.push_str(&*format!("MessageList msg_{};\n", self.function_messages));
+        for mut arg in args {
+            // TODO: replace third argument with type
+            if arg.starts_with("{:self,") {
+                arg = "_pid";
+            }
+
+            self.function_body.push_str(&*format!("msg_{}.m{}.data{} = {};\n", self.function_messages, i, 2, arg));
+            i += 1;
+        }
+        self.function_body.push_str(&*format!("mailbox[{}] ! {}, msg_{};\n", mailbox, mtype, self.function_messages));
+        self.function_messages += 1;
     }
 }

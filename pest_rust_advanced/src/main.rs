@@ -169,10 +169,10 @@ fn parse_send(
     let mut send_tupled_arguments = None;
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
-            Rule::atom                 => send_target = Some(pair),
-            Rule::function_arguments   => send_arguments = Some(pair),
-            Rule::tuple                => send_tupled_arguments = Some(pair),
-            _                          => parse_warn!("send", pair.as_rule()),
+            Rule::send_target           => send_target = Some(pair),
+            Rule::send_arguments        => send_arguments = Some(pair),
+            Rule::send_tupled_arguments => send_tupled_arguments = Some(pair),
+            _                           => parse_warn!("send", pair.as_rule()),
         }
     }
 
@@ -181,7 +181,8 @@ fn parse_send(
 
     // Write the send to the file
     if let Some(x) = send_target {
-        file_writer.write_send(x.as_str(), send_args);
+        let var = get_variable_name(x);
+        file_writer.write_send(&*var, send_args);
     } else {
         panic!("No send target in send expression");
     }
@@ -191,18 +192,22 @@ fn extract_send_arguments<'a>(send_arguments: Option<Pair<'a, Rule>>, send_tuple
     let mut send_args = Vec::new();
     if let Some(x) = send_arguments {
         for pair in x.into_inner() {
-            send_args.push(pair.as_str());
+            if (pair.as_rule() != Rule::metadata) {
+                send_args.push(pair.as_str());
+            }
         }
     } else if let Some(x) = send_tupled_arguments {
         for pair in x.into_inner() {
-            send_args.push(pair.as_str());
+            if (pair.as_rule() != Rule::metadata) {
+                send_args.push(pair.as_str());
+            }
         }
     }
     send_args
 }
 
 fn get_variable_name(ast_node: Pair<Rule>) -> String {
-    if ast_node.as_rule() != Rule::assigned_variable {
+    if ast_node.as_rule() != Rule::assigned_variable && ast_node.as_rule() != Rule::send_target {
         panic!("Can't get variable name unless type assigned_variable");
     }
     if let Some(x) = ast_node.into_inner().find(|y| y.as_rule() == Rule::atom) {
