@@ -76,6 +76,8 @@ fn main() {
     let mut writer = internal_representation::file_writer::FileWriter::new("test_out.txt").unwrap();
 
     parse_program(prog_ast, &mut writer);
+
+    writer.commit().expect("Failed to commit to file");
 }
 
 pub fn parse_program(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter) {
@@ -151,9 +153,52 @@ pub fn parse_block_statement(ast_node: Pair<Rule>, file_writer: &mut internal_re
             Rule::defmodule           => parse_defmodule(pair, file_writer),
             Rule::tuple               => parse_tuple(pair, file_writer, ret),
             Rule::assignment          => parse_assignment(pair, file_writer, ret),
+            Rule::send                => parse_send(pair, file_writer, ret),
             _                         => parse_warn!("block statement", pair.as_rule()),
         }
     }
+}
+
+fn parse_send(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    ret: bool
+) {
+    let mut send_target = None;
+    let mut send_arguments = None;
+    let mut send_tupled_arguments = None;
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::atom                 => send_target = Some(pair),
+            Rule::function_arguments   => send_arguments = Some(pair),
+            Rule::tuple                => send_tupled_arguments = Some(pair),
+            _                          => parse_warn!("send", pair.as_rule()),
+        }
+    }
+
+    // Create a vector of tuples of argument types and identifiers
+    let send_args = extract_send_arguments(send_arguments, send_tupled_arguments);
+
+    // Write the send to the file
+    if let Some(x) = send_target {
+        file_writer.write_send(x.as_str(), send_args);
+    } else {
+        panic!("No send target in send expression");
+    }
+}
+
+fn extract_send_arguments<'a>(send_arguments: Option<Pair<'a, Rule>>, send_tupled_arguments: Option<Pair<'a, Rule>>) -> Vec<&'a str> {
+    let mut send_args = Vec::new();
+    if let Some(x) = send_arguments {
+        for pair in x.into_inner() {
+            send_args.push(pair.as_str());
+        }
+    } else if let Some(x) = send_tupled_arguments {
+        for pair in x.into_inner() {
+            send_args.push(pair.as_str());
+        }
+    }
+    send_args
 }
 
 fn get_variable_name(ast_node: Pair<Rule>) -> String {
@@ -302,7 +347,7 @@ pub fn parse_function_definition(
 
     // Close the function 
     file_writer.commit_function();
-    file_writer.commit().expect("Failed to commit to file");
+    // file_writer.commit().expect("Failed to commit to file");
 }
 
 // fn parse_function_body(

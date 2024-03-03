@@ -1,15 +1,23 @@
 use std::fs::File;
 use std::collections::HashMap;
+
 use std::io::{self, Write};
 
 use crate::formatted_condition;
 use crate::internal_representation::sym_table;
 
 pub struct FileWriter {
+    header: String,
     content: String,
     function_body: String,
     function_metabody: String,
     function_call_count: u32,
+    process_count: u32,
+    mailbox_id: HashMap<String, u32>,
+    process_name: HashMap<u32, String>,
+    var_stack: Vec<String>,
+    mtype: Vec<String>,
+    maximum_message_size: u32,
     file: File,
 }
 
@@ -18,10 +26,17 @@ impl FileWriter {
     pub fn new(file_path: &str) -> io::Result<Self> {
         let file = File::create(file_path)?;
         Ok(Self {
+            header: String::new(),
             content: String::new(),
             function_body: String::new(),
             function_metabody: String::new(),
             function_call_count: 0,
+            process_count: 0,
+            mailbox_id: HashMap::new(),
+            process_name: HashMap::new(),
+            var_stack: Vec::new(),
+            mtype: Vec::new(),
+            maximum_message_size: 1,
             file,
         })
     }
@@ -72,7 +87,10 @@ impl FileWriter {
     pub fn new_function(&mut self, func_name: &str, arguments: &str, sym_table: sym_table::SymbolTable) {
         // TODO: look into using annotation instead of matching on start
         match &*func_name {
-            "start" => self.content.push_str(&*format!("init {{\n")),
+            "start" => {
+                self.content.push_str(&*format!("init {{\n"));
+                self.function_metabody.push_str("chan p0_mailbox = [10] of { mtype, MessageList };\n");
+            },
             _       => 
                 if arguments.is_empty() {
                     self.content.push_str(&*format!("proctype {} (chan ret) {{\n", &*func_name));
@@ -86,6 +104,7 @@ impl FileWriter {
     pub fn commit_function(&mut self) {
         // Commits the current function to the file
         self.content.push_str(&*format!("{}", &*self.function_metabody));
+        self.content.push_str("mailbox[0] = p0_mailbox;\n");
         self.content.push_str(&*format!("{}}}\n\n", &*self.function_body));
         self.function_metabody = String::new();
         self.function_body = String::new();
@@ -145,6 +164,17 @@ impl FileWriter {
 
     // Method to commit the content to the file and reset the string
     pub fn commit(&mut self) -> io::Result<()> {
+
+        // Write header meta information
+        // TODO: paramatise mailbox length and byte array lengths
+        // TODO: use maximum_message_size to determine number of messages in list
+        let var_name = &format!("mtype = {{{}}};\ntypedef MessageType {{\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n}};\ntypedef\nMessageList {{\nMessageType m1;\nMessageType m2;\nMessageType m3;\n}};\nchan mailbox[{}] = [10] of {{ mtype, MessageList }};\n\n", self.mtype.concat(), self.process_count);
+        let header_buf = var_name
+            .as_bytes();
+
+        self.file.write_all(header_buf);
+
+        // Write parsed content
         self.file.write_all(self.content.as_bytes())?;
         self.content.clear(); // Reset the string
         Ok(())
@@ -161,10 +191,34 @@ impl FileWriter {
     }
 
     pub fn write_assignment_variable(&mut self, var: &str) {
-        self.function_body.push_str(&*format!("{} = ", var))
+        self.function_body.push_str(&*format!("int {};\n", var));
+        self.function_body.push_str(&*format!("{} = ", var));
+
+        // Push the variable name to the stack to be applied by spawn
+        self.var_stack.push(String::from(var));
     }
 
     pub fn write_spawn_process(&mut self, proctype: &str, args: &str) {
+        self.process_count += 1;
         self.function_body.push_str(&*format!("run {}({});\n", proctype, args));
+
+        let var_name = self.var_stack.pop();
+        let i = self.process_count;
+        if let Some(x) = var_name {
+            // Create a mailbox for each process
+            self.function_metabody.push_str(&*format!("chan p{}_mailbox = [10] of {{ mtype, MessageList }};\n", self.process_count));
+            
+            self.function_body.push_str(&*format!("mailbox[{}] = p{}_mailbox;\n", x, i));
+
+            // Add to the lookup tables
+            self.process_name.insert(i, x.clone());
+            self.mailbox_id.insert(x.clone(), i);
+        } else {
+            panic!("Missing variable name in process stack");
+        }
+    }
+
+    pub fn write_send(&mut self, target: &str, args: Vec<&str>) {
+        
     }
 }
