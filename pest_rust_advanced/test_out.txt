@@ -25,8 +25,30 @@ msg_0.m1.data2 = 10;
 msg_0.m2.data2 = 12;
 msg_0.m3.data2 = _pid;
 mailbox[1] ! SUM, msg_0;
+do
+:: true ->
+MessageList rev_v_0;
+mailbox[_pid] ? messageType, rev_v_0;
+if
+:: messageType == other ->
+:: else -> mailbox[_pid] ! messageType, rec_v_0;
+fi;
+od;
 }
 
 proctype add (chan ret) {
+do
+:: true ->
+MessageList rev_v_1;
+mailbox[_pid] ? messageType, rev_v_1;
+if
+:: messageType == sum ->
+x = rev_v_1.m1.data2
+y = rev_v_1.m2.data2
+pid = rev_v_1.m3.data2
+:: messageType == other ->
+:: else -> mailbox[_pid] ! messageType, rec_v_1;
+fi;
+od;
 }
 

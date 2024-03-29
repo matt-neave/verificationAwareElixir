@@ -19,6 +19,7 @@ pub struct FileWriter {
     mtype: Vec<String>,
     maximum_message_size: u32,
     function_messages: u32,
+    receive_count: u32,
     file: File,
 }
 
@@ -39,6 +40,7 @@ impl FileWriter {
             mtype: Vec::new(),
             maximum_message_size: 1,
             function_messages: 0,
+            receive_count: 0,
             file,
         })
     }
@@ -241,5 +243,28 @@ impl FileWriter {
         }
         self.function_body.push_str(&*format!("mailbox[{}] ! {}, msg_{};\n", mailbox, mtype, self.function_messages));
         self.function_messages += 1;
+    }
+
+    pub fn write_receive(&mut self) {
+        self.function_body.push_str("do\n:: true ->\n");
+        self.function_body.push_str(&*format!("MessageList rev_v_{};\n", self.receive_count));
+        self.function_body.push_str(&*format!("mailbox[_pid] ? messageType, rev_v_{};\nif\n", self.receive_count));
+        self.receive_count += 1;
+    }
+
+    pub fn commit_receive(&mut self) {
+        self.function_body.push_str(&*format!(":: else -> mailbox[_pid] ! messageType, rec_v_{};\n", self.receive_count - 1));
+        self.function_body.push_str("fi;\nod;\n");
+    }
+
+    pub fn write_receive_assignment(&mut self, assignments: Vec<String>) {
+        // First element is the message type
+        for (i, assignment) in assignments.iter().enumerate() {
+            if i == 0 {
+                self.function_body.push_str(&*format!(":: messageType == {} ->\n", assignment));
+            } else {
+                self.function_body.push_str(&*format!("{} = rev_v_{}.m{}.{}\n", assignment, self.receive_count - 1, i, "data2"));
+            }
+        }
     }
 }

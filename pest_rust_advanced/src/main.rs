@@ -154,8 +154,116 @@ pub fn parse_block_statement(ast_node: Pair<Rule>, file_writer: &mut internal_re
             Rule::tuple               => parse_tuple(pair, file_writer, ret),
             Rule::assignment          => parse_assignment(pair, file_writer, ret),
             Rule::send                => parse_send(pair, file_writer, ret),
+            Rule::receive             => parse_receive(pair, file_writer, ret),
             _                         => parse_warn!("block statement", pair.as_rule()),
         }
+    }
+}
+
+fn parse_receive(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    ret: bool
+) {
+    // Find the receive_statement node and panic if does not exist
+    let receive_statement = ast_node
+        .clone()
+        .into_inner()
+        .find(|x| x.as_rule() == Rule::receive_statements)
+        .expect("No receive_statements in receive expression");
+
+    file_writer.write_receive();
+
+    // Parse receive statements
+    let mut mtypes = Vec::new();
+    for pair in receive_statement.into_inner() {
+        match pair.as_rule() {
+            Rule::receive_statement => {
+                let mtype = parse_receive_statement(pair, file_writer, ret);
+                mtypes.push(mtype);
+            },
+            _ => parse_warn!("receive", pair.as_rule()),
+        }
+    }
+    file_writer.commit_receive();
+}
+
+fn parse_receive_statement(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    ret: bool
+) -> String {
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::single_assignment => return parse_receive_single(pair, file_writer, ret),
+            Rule::pair_assignment   => return parse_receive_pair(pair, file_writer, ret),
+            Rule::multi_assignment  => return parse_receive_multi(pair, file_writer, ret),
+            _ => parse_warn!("receive statement", pair.as_rule()),
+        }
+    }
+    panic!("Failed to find assignment in receive");
+}
+
+fn parse_receive_single(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    ret: bool
+) -> String {
+    // Find the atom node
+    if let Some(x) = ast_node.into_inner().find(|y| y.as_rule() == Rule::atom) {
+        let mut assignments = Vec::new();
+        let mtype = x.as_str().replace(":", "");
+        assignments.push(mtype.clone());
+        file_writer.write_receive_assignment(assignments);
+        return mtype;
+    } else {
+        panic!("No atom in assigned variable");
+    }
+}
+
+fn parse_receive_pair(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    ret: bool
+) -> String {
+    // Pair guaranteed of the form alpha_letters followed by atom or assigned_variable
+    let mut assignments = Vec::new();
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::alpha_letters => assignments.push(pair.as_str().to_string()),
+            Rule::atom          => assignments.push(pair.as_str().to_string().replace(":", "")),
+            Rule::assigned_variable => assignments.push(get_variable_name(pair)),
+            _ => parse_warn!("receive pair", pair.as_rule()),
+        }
+    }
+    if assignments.is_empty() {
+        panic!("No assignments in receive pair");
+    } else {
+        assignments[0].as_str().to_string() 
+    }
+}
+
+fn parse_receive_multi(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    ret: bool
+) -> String {
+    // Extract all instances of recv_binding to a vector
+    let mut assignments = Vec::new();
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::recv_binding => {
+                assignments.push(get_variable_name(pair));
+            },
+            _ => parse_warn!("receive multi", pair.as_rule()),
+        }
+    }
+    // File writing for receive multi
+    file_writer.write_receive_assignment(assignments.clone());
+    if assignments.is_empty() {
+        panic!("No assignments in receive multi");
+    } else {
+        assignments[0].as_str().to_string() 
     }
 }
 
@@ -207,11 +315,15 @@ fn extract_send_arguments<'a>(send_arguments: Option<Pair<'a, Rule>>, send_tuple
 }
 
 fn get_variable_name(ast_node: Pair<Rule>) -> String {
-    if ast_node.as_rule() != Rule::assigned_variable && ast_node.as_rule() != Rule::send_target {
+    if ast_node.as_rule() != Rule::assigned_variable && 
+        ast_node.as_rule() != Rule::send_target &&
+        ast_node.as_rule() != Rule::recv_binding {
         panic!("Can't get variable name unless type assigned_variable");
     }
-    if let Some(x) = ast_node.into_inner().find(|y| y.as_rule() == Rule::atom) {
+    if let Some(x) = ast_node.clone().into_inner().find(|y| y.as_rule() == Rule::atom) {
         return x.as_str().replace(":", "");
+    } else if let Some(x) = ast_node.clone().into_inner().find(|y| y.as_rule() == Rule::assigned_variable) {
+        return get_variable_name(x);
     } else {
         panic!("No atom in assigned variable");
     }
