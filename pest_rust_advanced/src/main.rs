@@ -193,15 +193,27 @@ fn parse_receive_statement(
     file_writer: &mut internal_representation::file_writer::FileWriter, 
     ret: bool
 ) -> String {
-    for pair in ast_node.into_inner() {
+
+    // Preserve order and type
+    for pair in ast_node.clone().into_inner() {
         match pair.as_rule() {
-            Rule::single_assignment => return parse_receive_single(pair, file_writer, ret),
-            Rule::pair_assignment   => return parse_receive_pair(pair, file_writer, ret),
-            Rule::multi_assignment  => return parse_receive_multi(pair, file_writer, ret),
-            _ => parse_warn!("receive statement", pair.as_rule()),
-        }
-    }
-    panic!("Failed to find assignment in receive");
+            Rule::single_assignment => parse_receive_single(pair, file_writer, ret),
+            Rule::pair_assignment   => parse_receive_pair(pair, file_writer, ret),
+            Rule::multi_assignment  => parse_receive_multi(pair, file_writer, ret),
+            _ => "".to_string(),
+        };
+    };
+
+    for pair in ast_node.clone().into_inner() {
+        match pair.as_rule() {
+            Rule::block_statement => parse_block_statement(pair, file_writer, ret),
+            Rule::block           => parse_block(pair, file_writer, ret, false),
+            _                     => (),
+        };
+    };
+
+    // TODO: this may require to be the mtype from parsing receive (single/pair/multi)  
+    "".to_string()
 }
 
 fn parse_receive_single(
