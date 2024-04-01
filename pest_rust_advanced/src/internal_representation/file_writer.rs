@@ -6,6 +6,7 @@ use std::io::{self, Write};
 use crate::formatted_condition;
 use crate::internal_representation::sym_table;
 
+// Todo: bodies should be stack based to handle nesting
 pub struct FileWriter {
     header: String,
     content: String,
@@ -178,7 +179,8 @@ impl FileWriter {
         // Write header meta information
         // TODO: paramatise mailbox length and byte array lengths
         // TODO: use maximum_message_size to determine number of messages in list
-        let var_name = &format!("mtype = {{{}}};\ntypedef MessageType {{\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n}};\ntypedef\nMessageList {{\nMessageType m1;\nMessageType m2;\nMessageType m3;\n}};\nchan mailbox[{}] = [10] of {{ mtype, MessageList }};\n\n", self.mtype.join(","), self.process_count + 1);
+        let unique_mtypes = self.mtype.iter().cloned().collect::<std::collections::HashSet<String>>().iter().cloned().collect::<Vec<String>>();
+        let var_name = &format!("mtype = {{{}}};\ntypedef MessageType {{\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n}};\ntypedef\nMessageList {{\nMessageType m1;\nMessageType m2;\nMessageType m3;\n}};\nchan mailbox[{}] = [10] of {{ mtype, MessageList }};\n\n", unique_mtypes.join(","), self.process_count + 1);
         let header_buf = var_name
             .as_bytes();
 
@@ -222,7 +224,7 @@ impl FileWriter {
             // Create a mailbox for each process
             self.function_metabody.push_str(&*format!("chan p{}_mailbox = [10] of {{ mtype, MessageList }};\n", self.process_count));
             
-            self.function_body.push_str(&*format!("mailbox[{}] = p{}_mailbox;\n", i, i));
+            self.function_metabody.push_str(&*format!("mailbox[{}] = p{}_mailbox;\n", i, i));
             
             self.function_body.push_str(&*format!("run {}({});\n", proctype, formatted_args));
 
@@ -260,31 +262,36 @@ impl FileWriter {
     }
 
     pub fn write_receive(&mut self) {
-        self.receive_body.push_str("do\n:: true ->\n");
-        self.receive_body.push_str("mtype messageType;\n");
-        self.receive_body.push_str(&*format!("MessageList rec_v_{};\n", self.receive_count));
-        self.receive_body.push_str(&*format!("mailbox[_pid] ? messageType, rec_v_{};\nif\n", self.receive_count));
+        self.function_body.push_str("do\n:: true ->\n");
+        self.function_body.push_str("mtype messageType;\n");
+        self.function_body.push_str(&*format!("MessageList rec_v_{};\n", self.receive_count));
+        self.function_body.push_str(&*format!("mailbox[_pid] ? messageType, rec_v_{};\nif\n", self.receive_count));
         self.receive_count += 1;
     }
 
     pub fn commit_receive(&mut self) {
-        self.receive_body.push_str(&*format!(":: else -> mailbox[_pid] ! messageType, rec_v_{};\n", self.receive_count - 1));
-        self.receive_body.push_str("fi;\nod;\n");
-        self.function_body.push_str(&*self.receive_metabody);
-        self.function_body.push_str(&*self.receive_body);
-        self.receive_body = String::new();
-        self.receive_metabody = String::new();
+        self.function_body.push_str(&format!(":: else -> mailbox[_pid] ! messageType, rec_v_{};\n", self.receive_count - 1));
+        self.function_body.push_str("fi;\nod;\n");
     }
 
     pub fn write_receive_assignment(&mut self, assignments: Vec<String>) {
         // First element is the message type
         for (i, assignment) in assignments.iter().enumerate() {
             if i == 0 {
-                self.receive_body.push_str(&*format!(":: messageType == {} ->\n", assignment));
+                self.mtype.push(assignment.to_uppercase());
+                self.function_body.push_str(&format!(":: messageType == {} ->\n", assignment.to_uppercase()));
             } else {
-                self.receive_metabody.push_str(&*format!("int {};\n", assignment));
-                self.receive_body.push_str(&*format!("{} = rec_v_{}.m{}.{}\n", assignment, self.receive_count - 1, i, "data2"));
+                self.function_body.push_str(&format!("int {};\n", assignment));
+                self.function_body.push_str(&format!("{} = rec_v_{}.m{}.{}\n", assignment, self.receive_count - 1, i, "data2"));
             }
         }
+    }
+    
+    pub fn write_end_receive_statement(&mut self) {
+        self.function_body.push_str("break;\n");
+    }
+
+    pub fn write_io(&mut self, io_put: &str) {
+        self.function_body.push_str(&format!("printf(\"{}\\n\");\n", io_put));
     }
 }

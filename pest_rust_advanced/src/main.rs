@@ -155,9 +155,36 @@ pub fn parse_block_statement(ast_node: Pair<Rule>, file_writer: &mut internal_re
             Rule::assignment          => parse_assignment(pair, file_writer, ret),
             Rule::send                => parse_send(pair, file_writer, ret),
             Rule::receive             => parse_receive(pair, file_writer, ret),
+            Rule::io                  => parse_io(pair, file_writer, ret),
             _                         => parse_warn!("block statement", pair.as_rule()),
         }
     }
+}
+
+fn parse_io(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    _ret: bool
+) {
+    // Get the block_statement, and print it's string representation
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::block_statement => file_writer.write_io(&io_to_str(pair)),
+            _ => parse_warn!("io", pair.as_rule()),
+        }
+    }
+}
+
+fn io_to_str(ast_node: Pair<Rule>) -> String {
+    let mut out = String::new();
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::string => out.push_str(&pair.as_str().replace('\"', "")),
+            Rule::assigned_variable => out.push_str(&get_variable_name(pair)),
+            _ => (),
+        }
+    }
+    out
 }
 
 fn parse_receive(
@@ -212,6 +239,8 @@ fn parse_receive_statement(
         };
     };
 
+    file_writer.write_end_receive_statement();
+
     // TODO: this may require to be the mtype from parsing receive (single/pair/multi)  
     "".to_string()
 }
@@ -251,6 +280,7 @@ fn parse_receive_pair(
     if assignments.is_empty() {
         panic!("No assignments in receive pair");
     } else {
+        file_writer.write_receive_assignment(assignments.clone());
         assignments[0].as_str().to_string() 
     }
 }
