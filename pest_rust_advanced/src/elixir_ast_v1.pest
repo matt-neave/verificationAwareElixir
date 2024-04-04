@@ -143,9 +143,9 @@ send_target = { "{" ~ atom ~ ", " ~ metadata ~ ", nil}" }
 
 send_arguments = { "{:{}, " ~ metadata ~ ", " ~ ( "[]" | "[" ~ (send_argument ~ ", ")* ~ send_argument ~ "]" ) ~ "}" }
 
-send_tupled_arguments = { "{" ~ ((atom | number | string | self_pid | expression_tuple) ~ ", ")* ~ (atom | number | string | self_pid | expression_tuple) ~ "}" }
+send_tupled_arguments = { "{" ~ ((atom | number | string | self_pid | binary_operation | expression_tuple) ~ ", ")* ~ (atom | number | string | self_pid | binary_operation | expression_tuple) ~ "}" }
 
-send_argument = { atom | number | string | self_pid | expression_tuple }
+send_argument = { atom | number | string | self_pid | binary_operation | expression_tuple }
 
 self_pid = { "{:self, " ~ metadata ~ ", []}" }
 

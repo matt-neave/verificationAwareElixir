@@ -11,8 +11,6 @@ pub struct FileWriter {
     header: String,
     content: String,
     function_body: String,
-    receive_body: String,
-    receive_metabody: String,
     function_metabody: String,
     function_call_count: u32,
     process_count: i32,
@@ -35,8 +33,6 @@ impl FileWriter {
             content: String::new(),
             function_body: String::new(),
             function_metabody: String::new(),
-            receive_body: String::new(),
-            receive_metabody: String::new(),
             function_call_count: 0,
             process_count: 0,
             mailbox_id: HashMap::new(),
@@ -236,7 +232,7 @@ impl FileWriter {
         }
     }
 
-    pub fn write_send(&mut self, target: &str, mut args: Vec<&str>) {
+    pub fn write_send(&mut self, target: &str, mut args: Vec<String>) {
         let mailbox: i32 = *self.mailbox_id.get(target).unwrap_or_else(|| &-1);
         let mtype = args.remove(0).replace(":", "").to_uppercase();
         self.mtype.push(mtype.clone());
@@ -247,7 +243,7 @@ impl FileWriter {
         for mut arg in args {
             // TODO: replace third argument with type
             if arg.starts_with("{:self,") {
-                arg = "_pid";
+                arg = String::from("_pid");
             }
 
             self.function_body.push_str(&*format!("msg_{}.m{}.data{} = {};\n", self.function_messages, i, 2, arg));

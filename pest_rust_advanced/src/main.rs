@@ -69,7 +69,7 @@ end", dir.to_str().unwrap(), out_file);
     let lib = format!("{}/lib", source);
     let extractor = &*format!("{}/ast_extactor.ex", lib);
     
-    let _ = std::fs::create_dir(lib)
+    let _ = std::fs::create_dir(lib.clone())
         .expect("Failed to create lib directory at source");
     
     let ast_extractor = File::create(extractor);
@@ -93,8 +93,8 @@ end", dir.to_str().unwrap(), out_file);
     } else {
         println!("Error: {:?}", output.stderr);
     }
-    // let _ = std::fs::remove_file(extractor);
-    // let _ = std::fs::remove_dir(lib);
+    let _ = std::fs::remove_file(extractor);
+    let _ = std::fs::remove_dir(lib);
 }
 
 fn init_logger() {
@@ -383,18 +383,60 @@ fn parse_send(
     }
 }
 
-fn extract_send_arguments<'a>(send_arguments: Option<Pair<'a, Rule>>, send_tupled_arguments: Option<Pair<'a, Rule>>) -> Vec<&'a str> {
+/* Takes an operation and produces a string representation that can be evalutated in the frontend */
+fn operation_as_string(ast_node: Pair<Rule>) -> String {
+    let mut repr = String::new();
+    if (ast_node.as_rule() == Rule::binary_operation) {
+        /* Recursive case */
+        let mut op = "";
+        let mut args = Vec::new(); 
+        for pair in ast_node.into_inner() {
+            match pair.as_rule() {
+                Rule::binary_operator => op = pair.as_str(),
+                Rule::tuple    => args.push(pair),
+                _              => (),
+            }
+        }
+        let str1 = operation_as_string(args[0].to_owned());
+        let str2 = operation_as_string(args[1].to_owned());
+        repr = String::from(format!("{} {} {}", str1, op, str2));
+    } else if (ast_node.as_rule() == Rule::expression_tuple) {
+        /* Base case */
+        for pair in ast_node.into_inner() {
+            if pair.as_rule() == Rule::atom {
+                repr = String::from(pair.as_str().replace(":", ""));
+            }
+        }
+    } else if (ast_node.as_rule() == Rule::tuple) {
+        for pair in ast_node.into_inner() {
+            match pair.as_rule() {
+                Rule::binary_operation => return operation_as_string(pair),
+                Rule::expression_tuple => return operation_as_string(pair),
+                _                      => (),
+            }
+        }
+    } else {
+        panic!("Unhandled string representation of expression type");
+    }
+    repr
+}
+
+fn extract_send_arguments<'a>(send_arguments: Option<Pair<'a, Rule>>, send_tupled_arguments: Option<Pair<'a, Rule>>) -> Vec<String> {
     let mut send_args = Vec::new();
     if let Some(x) = send_arguments {
         for pair in x.into_inner() {
-            if (pair.as_rule() != Rule::metadata) {
-                send_args.push(pair.as_str());
+            if pair.as_rule() == Rule::binary_operation {
+                send_args.push(operation_as_string(pair));
+            } else if pair.as_rule() != Rule::metadata {
+                send_args.push(pair.as_str().to_string());
             }
         }
     } else if let Some(x) = send_tupled_arguments {
         for pair in x.into_inner() {
-            if (pair.as_rule() != Rule::metadata) {
-                send_args.push(pair.as_str());
+            if pair.as_rule() == Rule::binary_operation {
+                send_args.push(operation_as_string(pair));
+            } else if pair.as_rule() != Rule::metadata {
+                send_args.push(pair.as_str().to_string());
             }
         }
     }
@@ -419,7 +461,6 @@ fn get_variable_name(ast_node: Pair<Rule>) -> String {
 fn parse_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter, ret: bool) {
     let mut assigned_variable = None;
     let mut expression = None;
-
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::assigned_variable   => assigned_variable = Some(pair),

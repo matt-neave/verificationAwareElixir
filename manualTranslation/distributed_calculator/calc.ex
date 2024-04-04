@@ -13,7 +13,7 @@ end
 defmodule Calculator do
   def add do
     receive do
-      {:sum, x, y, pid} -> send pid, {:res, x + y}
+      {:sum, x, y, from} -> send from, {:res, x + y}
       {:other} -> IO.puts "Unknown message"
     end
   end

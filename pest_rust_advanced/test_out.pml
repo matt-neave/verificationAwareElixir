@@ -1,4 +1,4 @@
-mtype = {RES,OTHER,SUM};
+mtype = {OTHER,RES,SUM};
 typedef MessageType {
 byte data1[20];
 int data2;
@@ -57,11 +57,11 @@ int x;
 x = rec_v_1.m1.data2
 int y;
 y = rec_v_1.m2.data2
-int p_id;
-p_id = rec_v_1.m3.data2
+int from;
+from = rec_v_1.m3.data2
 MessageList msg_0;
 msg_0.m1.data2 = x + y;
-mailbox[p_id] ! RES, msg_0;
+mailbox[from] ! RES, msg_0;
 break;
 :: messageType == OTHER ->
 printf("Unknown message\n");
