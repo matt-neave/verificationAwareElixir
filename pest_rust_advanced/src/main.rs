@@ -5,6 +5,10 @@ use std::num;
 use pest::Parser;
 use pest_derive::Parser;
 use pest::iterators::Pair;
+use std::process::Command;
+use std::io::{Read, Write};
+use std::path::Path;
+use std::fs::File;
 
 // Logging
 use log::trace;
@@ -16,8 +20,6 @@ use log::Level;
 
 use log::LevelFilter;
 use env_logger::fmt::Color;
-
-use std::io::Write;
 
 mod internal_representation;
 use internal_representation::formatted_condition;
@@ -31,15 +33,71 @@ mod parse_macros;
 pub struct ASTParser;
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    let default_path = "./distributed_ast.txt";
+    let path = "./ast_output.txt";
+    extract_elixir_ast(path);
+    init_logger();
 
-    let path = if args.len() > 1 {
-        &args[1]
+    let file_content = fs::read_to_string(path)
+        .expect(format!("Failed to read {}", path).as_str());
+
+    let prog_ast = ASTParser::parse(Rule::elixir_program, file_content.as_str())
+        .expect("Failed to parse the AST")
+        .next()
+        .unwrap();
+    
+    let mut writer = internal_representation::file_writer::FileWriter::new("test_out.txt").unwrap();
+
+    parse_program(prog_ast, &mut writer);
+
+    writer.commit().expect("Failed to commit to file");
+}
+
+fn extract_elixir_ast(out_file: &str) {
+    let arg_error = "Incorrect usage: cargo run -- \"target_file\"";
+    let arg_binding = std::env::args().nth(1).expect(arg_error);
+    let dir = Path::new(&arg_binding);
+    // TODO this could be a file now... can parse the target file as arg to mix
+    let ast_extractor_code = &*format!("defmodule AstExtractor do
+  def main do
+    {{:ok, ast}} = Code.string_to_quoted(File.read!(\"../{}\"))
+    File.write!(\"../{}\", inspect(ast)) # Writing AST to a file
+    ast
+  end
+end", dir.to_str().unwrap(), out_file);
+
+    let source = "./src";
+    let lib = format!("{}/lib", source);
+    let extractor = &*format!("{}/ast_extactor.ex", lib);
+    
+    let _ = std::fs::create_dir(lib)
+        .expect("Failed to create lib directory at source");
+    
+    let ast_extractor = File::create(extractor);
+
+    let _ = ast_extractor
+        .expect("Failed to create AST extractor")
+        .write_all(ast_extractor_code.as_bytes())
+        .expect("Failed to write to AST extractor");
+
+    let output = Command::new("mix")
+        .args(&["run", "-e", "AstExtractor.main"])
+        .current_dir(source)
+        .output()
+        .expect("Failed to execute Elixir script");
+
+    if output.status.success() {
+        let mut file = File::open(out_file).expect("Failed to open output file");
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).expect("Failed to read output file");
+        println!("{}", contents);
     } else {
-        default_path
-    };
+        println!("Error: {:?}", output.stderr);
+    }
+    // let _ = std::fs::remove_file(extractor);
+    // let _ = std::fs::remove_dir(lib);
+}
 
+fn init_logger() {
     // Initialise logger
     env_logger::builder()
         .format(|buf, record| {
@@ -65,19 +123,6 @@ fn main() {
         .filter_level(LevelFilter::Trace)
         .init();
 
-    let file_content = fs::read_to_string(path)
-        .expect(format!("Failed to read {}", path).as_str());
-
-    let prog_ast = ASTParser::parse(Rule::elixir_program, file_content.as_str())
-        .expect("Failed to parse the AST")
-        .next()
-        .unwrap();
-    
-    let mut writer = internal_representation::file_writer::FileWriter::new("test_out.txt").unwrap();
-
-    parse_program(prog_ast, &mut writer);
-
-    writer.commit().expect("Failed to commit to file");
 }
 
 pub fn parse_program(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter) {
