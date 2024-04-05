@@ -25,6 +25,9 @@ right_op = { "++" | "--" | "+++" | "---" | ".." | "<>" | "in" | "not in" | "|>" 
 
 binary_operator = { "+" | "-" | "/" | "*" }
 
+// TODO: non-exhaustive
+boolean_operator = { "==" | "<=" | ">=" | "<" | ">" }
+
 map_op = { "=>" }
 
 operator = { unary_op | left_op | right_op | map_op }
@@ -78,7 +81,7 @@ assignment = { "{:=, " ~ metadata ~ ", [" ~ assigned_variable ~ ", " ~ expressio
 
 assigned_variable = { "{" ~ atom ~ ", " ~ metadata ~ ", nil}"  }
 
-function_definition = { type_spec? ~ ", "? ~ (("{:def" | "{:defp") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}") }
+function_definition = { (type_spec ~ ", ")? ~ (( "{:defp" | "{:def") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}") }
 
 type_spec = { "{:@, " ~ metadata ~ ", [{:spec, " ~ metadata ~ ", [{:\"::\", " ~ metadata ~ ", [" ~ function_arguments_type ~ ", " ~ argument_type ~"]}]}]}" } 
 
@@ -90,7 +93,7 @@ integer_type = { ":integer" }
 
 type = { integer_type }
 
-argument_type = { "{" ~ type ~ ", " ~ metadata ~ ", []}" }
+argument_type = { ("{" ~ type ~ ", " ~ metadata ~ ", []}") | atom }
 
 function_arguments = { nil | "[]" | ("[" ~ (function_argument ~ ", ")* ~ function_argument ~ "]") }
 
@@ -102,6 +105,8 @@ io = { "{{:., " ~ metadata ~ ", " ~ "[" ~ alias_name ~ ", " ~ ":puts" ~ "]}, " ~
 
 if = { "{:if" ~ ", " ~ metadata ~ ", " ~ conditions ~ "}" }
 
+unless = { "{:unless" ~ ", " ~ metadata ~ ", " ~ conditions ~ "}" }
+
 variable = { letters }
 
 or = { "{:or" ~ ", " ~ metadata ~ ", " ~ "[" ~ if_condition ~ ", " ~ if_condition ~ "]" ~ "}" }
@@ -111,7 +116,7 @@ and = { "{:and" ~ ", " ~ metadata ~ ", " ~ "[" ~ if_condition ~ ", " ~ if_condit
 // TODO extract (variable | int) to more exhaustive type
 variable_argument = { tuple }
 
-operation = { "{:" ~ ANY ~ ", " ~ metadata ~ ", " ~ "[" ~ (variable_argument | primitive) ~ ", " ~ (variable_argument | primitive) ~ "]" ~ "}" }
+operation = { "{:" ~ boolean_operator ~ ", " ~ metadata ~ ", " ~ "[" ~ (variable_argument | primitive) ~ ", " ~ (variable_argument | primitive) ~ "]" ~ "}" }
 
 boolean_expression = { bool | operation }
 
@@ -125,7 +130,7 @@ if_condition = { not | or | and | bool | boolean_expression | primitive }
 
 conditions = { "[" ~ if_condition ~ ", " ~ (do | do_else) ~ "]"}
 
-tuple = { function_definition | if | or | and | binary_operation | expression_tuple}
+tuple = { function_definition | if | unless | or | and | binary_operation | expression_tuple}
 
 binary_operation = { "{:" ~ binary_operator ~ ", " ~ metadata ~ ", [" ~ tuple ~ ", " ~ tuple ~ "]}" }
 
@@ -137,15 +142,17 @@ expression_arguments = { ("[" ~ (expression_argument ~ ", ")* ~ expression_argum
 negative_number = { "{:-, " ~ metadata ~ ", [" ~ number ~ "]}" }
 
 //  --------- MESSAGE PASSING --------- 
-send = { "{:send, " ~ metadata ~ ", [" ~ send_target ~ ", " ~ (send_arguments | send_tupled_arguments) ~ "]}" }
+send = { "{:send, " ~ metadata ~ ", [" ~ send_target ~ ", " ~ (send_atom | send_arguments | send_tupled_arguments) ~ "]}" }
+
+send_atom = { atom }
 
 send_target = { "{" ~ atom ~ ", " ~ metadata ~ ", nil}" }
 
 send_arguments = { "{:{}, " ~ metadata ~ ", " ~ ( "[]" | "[" ~ (send_argument ~ ", ")* ~ send_argument ~ "]" ) ~ "}" }
 
-send_tupled_arguments = { "{" ~ ((atom | number | string | self_pid | binary_operation | expression_tuple) ~ ", ")* ~ (atom | number | string | self_pid | binary_operation | expression_tuple) ~ "}" }
+send_tupled_arguments = { "{" ~ ((atom | number | string | self_pid | binary_operation | assigned_variable | expression_tuple) ~ ", ")* ~ (atom | number | string | self_pid | binary_operation | assigned_variable | expression_tuple) ~ "}" }
 
-send_argument = { atom | number | string | self_pid | binary_operation | expression_tuple }
+send_argument = { atom | number | string | self_pid | binary_operation | assigned_variable | expression_tuple }
 
 self_pid = { "{:self, " ~ metadata ~ ", []}" }
 
@@ -153,7 +160,10 @@ receive = { "{:receive, " ~ metadata ~ ", [[do: " ~ (receive_statements) ~ "]]}"
 
 receive_statements = { "[" ~ (receive_statement ~ ", ")* ~ receive_statement ~ "]" }
 
-receive_statement = { "{:->, " ~ metadata ~ ", [" ~ (single_assignment | pair_assignment | multi_assignment) ~ ", "  ~ (block_statement | block) ~ "]}"}
+receive_statement = { "{:->, " ~ metadata ~ ", [" ~ (receive_atom | single_assignment | pair_assignment | multi_assignment) ~ ", "  ~ (block_statement | block) ~ "]}"}
+
+// Case where receive is purely an atom to match
+receive_atom = { "[" ~ atom ~ "]" }
 
 // Case where receive only assigns to single variable
 single_assignment = { "[{" ~ atom ~ ", " ~ metadata ~ ", " ~ nil ~ "}]" }

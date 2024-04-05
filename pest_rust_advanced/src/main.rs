@@ -45,7 +45,7 @@ fn main() {
         .next()
         .unwrap();
     
-    let mut writer = internal_representation::file_writer::FileWriter::new("test_out.txt").unwrap();
+    let mut writer = internal_representation::file_writer::FileWriter::new("test_out.pml").unwrap();
 
     parse_program(prog_ast, &mut writer);
 
@@ -362,17 +362,19 @@ fn parse_send(
     let mut send_target = None;
     let mut send_arguments = None;
     let mut send_tupled_arguments = None;
+    let mut send_atom = None;
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::send_target           => send_target = Some(pair),
             Rule::send_arguments        => send_arguments = Some(pair),
             Rule::send_tupled_arguments => send_tupled_arguments = Some(pair),
+            Rule::send_atom             => send_atom = Some(pair),
             _                           => parse_warn!("send", pair.as_rule()),
         }
     }
 
     // Create a vector of tuples of argument types and identifiers
-    let send_args = extract_send_arguments(send_arguments, send_tupled_arguments);
+    let send_args = extract_send_arguments(send_arguments, send_tupled_arguments, send_atom);
 
     // Write the send to the file
     if let Some(x) = send_target {
@@ -421,13 +423,16 @@ fn operation_as_string(ast_node: Pair<Rule>) -> String {
     repr
 }
 
-fn extract_send_arguments<'a>(send_arguments: Option<Pair<'a, Rule>>, send_tupled_arguments: Option<Pair<'a, Rule>>) -> Vec<String> {
+fn extract_send_arguments<'a>(send_arguments: Option<Pair<'a, Rule>>, send_tupled_arguments: Option<Pair<'a, Rule>>, send_atom: Option<Pair<'a, Rule>>) -> Vec<String> {
     let mut send_args = Vec::new();
     if let Some(x) = send_arguments {
         for pair in x.into_inner() {
             if pair.as_rule() == Rule::binary_operation {
                 send_args.push(operation_as_string(pair));
+            } else if pair.as_rule() == Rule::assigned_variable {
+                send_args.push(get_variable_name(pair));
             } else if pair.as_rule() != Rule::metadata {
+                println!("Send argument type: {:?}", pair.as_rule());
                 send_args.push(pair.as_str().to_string());
             }
         }
@@ -435,10 +440,15 @@ fn extract_send_arguments<'a>(send_arguments: Option<Pair<'a, Rule>>, send_tuple
         for pair in x.into_inner() {
             if pair.as_rule() == Rule::binary_operation {
                 send_args.push(operation_as_string(pair));
+            } else if pair.as_rule() == Rule::assigned_variable {
+                send_args.push(get_variable_name(pair));
             } else if pair.as_rule() != Rule::metadata {
+                println!("Send argument type: {:?}", pair.as_rule());
                 send_args.push(pair.as_str().to_string());
             }
         }
+    } else if let Some(x) = send_atom { 
+        send_args.push(x.as_str().to_string());
     }
     send_args
 }
@@ -662,6 +672,7 @@ fn parse_tuple(
 /// For now, only support negative numbers
 /// TODO: support all expression types and do blocks
 fn resolve_tuple_argument(ast_node: Pair<Rule>) -> &str {
+    println!("{}\n{}", ast_node, ast_node.as_str());
     panic!("TODO implement tuple arguments");
     ""
 }
@@ -687,14 +698,18 @@ fn parse_call_arguments(ast_node: Pair<Rule>) -> String {
     let mut out = String::from("[");
     for pair in ast_node.into_inner() {
         for arg in pair.into_inner() {
-            let arg_s = match arg.as_rule() {
-                Rule::r#number => arg.as_str(),
-                Rule::r#string => arg.as_str(),
-                Rule::negative_number => resolve_negative_number(arg),
-                Rule::tuple    => resolve_tuple_argument(arg),
-                _ => panic!("Failed to find argument in argument list"),
+            let arg_s: String = match arg.as_rule() {
+                Rule::r#number => arg.as_str().to_string(),
+                Rule::r#string => arg.as_str().to_string(),
+                Rule::negative_number => resolve_negative_number(arg).to_string(),
+                Rule::tuple    => resolve_tuple_argument(arg).to_string(),
+                Rule::assigned_variable => {
+                    let variable_name = get_variable_name(arg);
+                    variable_name.to_string()
+                },
+                _ => panic!("Failed to find argument in argument list")
             };
-            out.push_str(arg_s);
+            out.push_str(&arg_s);
             out.push_str(",");
         }
     }

@@ -31,7 +31,7 @@ impl SymbolTable {
 
     // Unsafe
     pub fn lookup(&self, name: &str) -> &SymbolType {
-        self.entries.get(name).expect("missing symbol")
+        self.entries.get(name).expect(format!("missing symbol: {}", name).as_str())
     }
 
     pub fn pretty_print(&self) {

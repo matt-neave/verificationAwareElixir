@@ -1,4 +1,4 @@
-mtype = {OTHER,RES,SUM};
+mtype = {BIND,MESSAGE};
 typedef MessageType {
 byte data1[20];
 int data2;
@@ -11,63 +11,76 @@ MessageType m1;
 MessageType m2;
 MessageType m3;
 };
-chan mailbox[2] = [10] of { mtype, MessageList };
+chan mailbox[3] = [10] of { mtype, MessageList };
 
 init {
-chan p0_mailbox = [10] of { mtype, MessageList };
 chan ret1 = [1] of { int };
 chan p1_mailbox = [10] of { mtype, MessageList };
+chan ret2 = [1] of { int };
+chan p2_mailbox = [10] of { mtype, MessageList };
+chan ret3 = [1] of { int };
 mailbox[1] = p1_mailbox;
-mailbox[0] = p0_mailbox;
-int c_p;
-c_p = run add(ret1);
+mailbox[2] = p2_mailbox;
+printf("BasicDeadlock running\n");
+int p1;
+p1 = run start_2(ret1);
+int p2;
+p2 = run start_2(ret2);
 MessageList msg_0;
-msg_0.m1.data2 = 10;
-msg_0.m2.data2 = 12;
-msg_0.m3.data2 = _pid;
-mailbox[1] ! SUM, msg_0;
+msg_0.m1.data2 = p2;
+mailbox[1] ! BIND, msg_0;
+MessageList msg_1;
+msg_1.m1.data2 = p1;
+mailbox[2] ! BIND, msg_1;
+run next(0, ret3);
+int val3;
+ret3 ? val3
+}
+
+proctype next_1 (int ps; chan ret) {
+skip;
+}
+
+
+proctype start_2 (chan ret) {
+chan ret1 = [1] of { int };
+printf("Process started\n");
 do
 :: true ->
 mtype messageType;
 MessageList rec_v_0;
 mailbox[_pid] ? messageType, rec_v_0;
 if
-:: messageType == RES ->
-int ans;
-ans = rec_v_0.m1.data2
-printf("ans\n");
-break;
-:: messageType == OTHER ->
-printf("Unknown message\n");
+:: messageType == BIND ->
+int pid_other;
+pid_other = rec_v_0.m1.data2
+printf("Bound\n");
+run next(pid_other, ret1);
+int val1;
+ret1 ? val1
 break;
 :: else -> mailbox[_pid] ! messageType, rec_v_0;
 fi;
 od;
 }
 
-proctype add (chan ret) {
+proctype next_2 (int pid_other; chan ret) {
+chan ret1 = [1] of { int };
 do
 :: true ->
 mtype messageType;
 MessageList rec_v_1;
 mailbox[_pid] ? messageType, rec_v_1;
 if
-:: messageType == SUM ->
-int x;
-x = rec_v_1.m1.data2
-int y;
-y = rec_v_1.m2.data2
-int from;
-from = rec_v_1.m3.data2
+:: messageType == MESSAGE ->
 MessageList msg_0;
-msg_0.m1.data2 = x + y;
-mailbox[from] ! RES, msg_0;
-break;
-:: messageType == OTHER ->
-printf("Unknown message\n");
+mailbox[pid_other] ! MESSAGE, msg_0;
 break;
 :: else -> mailbox[_pid] ! messageType, rec_v_1;
 fi;
 od;
+run next_2(pid_other, ret1);
+int val1;
+ret1 ? val1
 }
 

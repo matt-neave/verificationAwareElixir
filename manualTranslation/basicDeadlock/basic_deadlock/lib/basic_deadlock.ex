@@ -1,24 +1,25 @@
 defmodule BasicDeadlock do
-  def start(:run) do
+  def start_1 do
     IO.puts "BasicDeadlock running"
-    p1 = spawn(BasicProcess, :start, [])
-    p2 = spawn(BasicProcess, :start, [])
+    p1 = spawn(BasicProcess, :start_2, [])
+    p2 = spawn(BasicProcess, :start_2, [])
     send p1, {:bind, p2}
     send p2, {:bind, p1}
     next 0
   end
 
-  defp next ps do
+  @spec next_1(integer()) :: :ok
+  defp next_1 ps do
     unless ps >= 2 do
       receive do
-        :finished -> next ps + 1
+        :finished -> next_1 ps + 1
       end
     end
   end
 end
 
 defmodule BasicProcess do
-  def start do
+  def start_2 do
     IO.puts "Process started"
     receive do
       {:bind, pid_other} ->
@@ -27,10 +28,11 @@ defmodule BasicProcess do
     end
   end
 
-  defp next(pid_other) do
+  @spec next_2(integer()) :: :ok
+  defp next_2(pid_other) do
     receive do
       {:message} -> send pid_other, :message
     end
-    next pid_other
+    next_2 pid_other
   end
 end

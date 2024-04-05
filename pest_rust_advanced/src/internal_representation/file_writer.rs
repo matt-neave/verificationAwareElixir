@@ -11,6 +11,7 @@ pub struct FileWriter {
     header: String,
     content: String,
     function_body: String,
+    function_channels: String,
     function_metabody: String,
     function_call_count: u32,
     process_count: i32,
@@ -32,6 +33,7 @@ impl FileWriter {
             header: String::new(),
             content: String::new(),
             function_body: String::new(),
+            function_channels: String::new(),
             function_metabody: String::new(),
             function_call_count: 0,
             process_count: 0,
@@ -94,7 +96,7 @@ impl FileWriter {
         match &*func_name {
             "start" => {
                 self.content.push_str(&*format!("init {{\n"));
-                self.function_metabody.push_str("chan p0_mailbox = [10] of { mtype, MessageList };\n");
+                self.function_channels.push_str("chan p0_mailbox = [10] of { mtype, MessageList };\n");
                 self.function_body.push_str("mailbox[0] = p0_mailbox;\n");
 
             },
@@ -110,8 +112,10 @@ impl FileWriter {
 
     pub fn commit_function(&mut self) {
         // Commits the current function to the file
+        self.content.push_str(&*format!("{}", &*self.function_channels));
         self.content.push_str(&*format!("{}", &*self.function_metabody));
         self.content.push_str(&*format!("{}}}\n\n", &*self.function_body));
+        self.function_channels = String::new();
         self.function_metabody = String::new();
         self.function_body = String::new();
         self.function_call_count = 0;
@@ -124,7 +128,7 @@ impl FileWriter {
         // Name the receive variables appropriately
         // TODO determine return type    
         self.function_call_count += 1;
-        self.function_metabody.push_str(&format!("chan ret{} = [1] of {{ int }};\n", self.function_call_count));
+        self.function_channels.push_str(&format!("chan ret{} = [1] of {{ int }};\n", self.function_call_count));
         
         // TODO make a mapping of variable name
         let call_arguments = call_arguments.replace("[", "(");
@@ -209,7 +213,7 @@ impl FileWriter {
     pub fn write_spawn_process(&mut self, proctype: &str, mut args: &str) {
         self.process_count += 1;
         self.function_call_count += 1;
-        self.function_metabody.push_str(&format!("chan ret{} = [1] of {{ int }};\n", self.function_call_count));
+        self.function_channels.push_str(&format!("chan ret{} = [1] of {{ int }};\n", self.function_call_count));
         // add the channel as an argument (consider if args is empty or not)
 
         let formatted_args = format!("ret{}{}{}", self.function_call_count, if args.is_empty() {""} else {","} ,args);
@@ -218,8 +222,9 @@ impl FileWriter {
         let i = self.process_count;
         if let Some(x) = var_name {
             // Create a mailbox for each process
-            self.function_metabody.push_str(&*format!("chan p{}_mailbox = [10] of {{ mtype, MessageList }};\n", self.process_count));
+            self.function_channels.push_str(&*format!("chan p{}_mailbox = [10] of {{ mtype, MessageList }};\n", self.process_count));
             
+            // TODO: does function_body instead of function_metabody preserve semantics
             self.function_metabody.push_str(&*format!("mailbox[{}] = p{}_mailbox;\n", i, i));
             
             self.function_body.push_str(&*format!("run {}({});\n", proctype, formatted_args));
