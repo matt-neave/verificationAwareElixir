@@ -10,13 +10,13 @@ defmodule BasicSequential do
   Adds two numbers together but only
   works for positive inputs
   """
-  @spec add?(integer(), integer()) :: integer()
+  @spec add(integer(), integer()) :: integer()
   def add(x, y) do
     if true or false do
       # Weird, unexpected behaviour
-      return x * y
+      x * y
     else
-      return x + y
+      x + y
     end
   end
 end

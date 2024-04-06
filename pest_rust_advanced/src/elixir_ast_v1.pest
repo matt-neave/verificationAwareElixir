@@ -109,30 +109,31 @@ unless = { "{:unless" ~ ", " ~ metadata ~ ", " ~ conditions ~ "}" }
 
 variable = { letters }
 
-or = { "{:or" ~ ", " ~ metadata ~ ", " ~ "[" ~ if_condition ~ ", " ~ if_condition ~ "]" ~ "}" }
+or = { "{:or" ~ ", " ~ metadata ~ ", " ~ "[" ~ boolean_operand ~ ", " ~ boolean_operand ~ "]" ~ "}" }
 
-and = { "{:and" ~ ", " ~ metadata ~ ", " ~ "[" ~ if_condition ~ ", " ~ if_condition ~ "]" ~ "}" }
+and = { "{:and" ~ ", " ~ metadata ~ ", " ~ "[" ~ boolean_operand ~ ", " ~ boolean_operand ~ "]" ~ "}" }
 
 // TODO extract (variable | int) to more exhaustive type
 variable_argument = { tuple }
 
-operation = { "{:" ~ boolean_operator ~ ", " ~ metadata ~ ", " ~ "[" ~ (variable_argument | primitive) ~ ", " ~ (variable_argument | primitive) ~ "]" ~ "}" }
+// TODO need variable_argument
+boolean_operand = { boolean_operation | not | or | and | assigned_variable | primitive }
 
-boolean_expression = { bool | operation }
+boolean_operation = { "{:" ~ boolean_operator ~ ", " ~ metadata ~ ", " ~ "[" ~ boolean_operand ~ ", " ~ boolean_operand ~ "]" ~ "}" }
 
 true = { "true" }
 
 false = { "false" }
 
-not = { "{:not, " ~ metadata ~ ", " ~ "[" ~ if_condition ~ "]}" }
+not = { "{:not, " ~ metadata ~ ", " ~ "[" ~ boolean_operand ~ "]}" }
 
-if_condition = { not | or | and | bool | boolean_expression | primitive }
+conditions = { "[" ~ boolean_operand ~ ", " ~ (do | do_else) ~ "]"}
 
-conditions = { "[" ~ if_condition ~ ", " ~ (do | do_else) ~ "]"}
+tuple = { function_definition | if | unless | or | and | assigned_variable | binary_operation | expression_tuple}
 
-tuple = { function_definition | if | unless | or | and | binary_operation | expression_tuple}
+binary_operand   = { number | string | assigned_variable | binary_operation | expression_tuple }
 
-binary_operation = { "{:" ~ binary_operator ~ ", " ~ metadata ~ ", [" ~ tuple ~ ", " ~ tuple ~ "]}" }
+binary_operation = { "{:" ~ binary_operator ~ ", " ~ metadata ~ ", [" ~ binary_operand ~ ", " ~ binary_operand ~ "]}" }
 
 expression_tuple = { "{" ~ (annotation | atom) ~ ", " ~ metadata ~ ", " ~ expression_arguments ~ "}" } 
 
@@ -183,7 +184,7 @@ spawn_process = { "{:spawn, " ~ metadata ~ ", [" ~ process_name ~ ", " ~ atom ~ 
 // {:__aliases__, [line: 3], [:Calculator]}
 process_name = { "{:__aliases__, " ~ metadata ~ ", [" ~ atom ~ "]}" }
 
-expression_argument = { number | negative_number | string | spawn_process | assigned_variable | tuple | do }
+expression_argument = { number | negative_number | string | spawn_process | assigned_variable | binary_operation | tuple | do }
 
 attribute = { ":@" ~ ", " ~ metadata ~ ", " ~ attributes }
 

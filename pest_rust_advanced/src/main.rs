@@ -269,6 +269,7 @@ fn parse_receive_statement(
     // Preserve order and type
     for pair in ast_node.clone().into_inner() {
         match pair.as_rule() {
+            Rule::receive_atom      => parse_receive_atom(pair, file_writer, ret),
             Rule::single_assignment => parse_receive_single(pair, file_writer, ret),
             Rule::pair_assignment   => parse_receive_pair(pair, file_writer, ret),
             Rule::multi_assignment  => parse_receive_multi(pair, file_writer, ret),
@@ -290,10 +291,22 @@ fn parse_receive_statement(
     "".to_string()
 }
 
+fn parse_receive_atom(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    _ret: bool
+) -> String {
+    let mut assignments = Vec::new();
+    let mtype = ast_node.into_inner().next().unwrap().as_str().replace(":", "");
+    assignments.push(mtype.clone());
+    file_writer.write_receive_assignment(assignments);
+    mtype
+}
+
 fn parse_receive_single(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
-    ret: bool
+    _ret: bool
 ) -> String {
     // Find the atom node
     if let Some(x) = ast_node.into_inner().find(|y| y.as_rule() == Rule::atom) {
@@ -395,7 +408,7 @@ fn operation_as_string(ast_node: Pair<Rule>) -> String {
         for pair in ast_node.into_inner() {
             match pair.as_rule() {
                 Rule::binary_operator => op = pair.as_str(),
-                Rule::tuple    => args.push(pair),
+                Rule::binary_operand    => args.push(pair),
                 _              => (),
             }
         }
@@ -409,15 +422,25 @@ fn operation_as_string(ast_node: Pair<Rule>) -> String {
                 repr = String::from(pair.as_str().replace(":", ""));
             }
         }
-    } else if (ast_node.as_rule() == Rule::tuple) {
+    } else if (ast_node.as_rule() == Rule::assigned_variable) {
+        /* Base case */
+        repr = get_variable_name(ast_node);
+    } else if (ast_node.as_rule() == Rule::string || ast_node.as_rule() == Rule::number) {
+        repr = ast_node.as_str().to_string();
+    } else if (ast_node.as_rule() == Rule::binary_operand) {
         for pair in ast_node.into_inner() {
             match pair.as_rule() {
-                Rule::binary_operation => return operation_as_string(pair),
-                Rule::expression_tuple => return operation_as_string(pair),
-                _                      => (),
+                Rule::binary_operation  => return operation_as_string(pair),
+                Rule::expression_tuple  => return operation_as_string(pair),
+                Rule::binary_operand    => return operation_as_string(pair),
+                Rule::assigned_variable => return operation_as_string(pair),
+                Rule::number            => return operation_as_string(pair),
+                Rule::string            => return operation_as_string(pair),
+                _                       => panic!("Unexpected type in binary operation string repr"),
             }
         }
     } else {
+        println!("Error on:\n{}", ast_node);
         panic!("Unhandled string representation of expression type");
     }
     repr
@@ -598,7 +621,7 @@ pub fn parse_function_definition(
     // Write the body 
     // Start by setting up the channels
     // Use predefiend code blocks for send and recv
-    parse_do(func_body_node.unwrap(), file_writer, ret, true);
+    parse_do(func_body_node.unwrap(), file_writer, true, true);
 
     // Close the function 
     file_writer.commit_function();
@@ -661,6 +684,7 @@ fn parse_tuple(
             Rule::expression_tuple    => parse_expression_tuple(pair, file_writer, ret),  
             Rule::binary_operation    => parse_binary_operation(pair, file_writer, ret),
             Rule::r#if                => parse_if(pair, file_writer, ret),
+            Rule::unless              => parse_unless(pair, file_writer, ret),
             Rule::function_definition => parse_function_definition(pair, file_writer, ret),
             Rule::metadata            => (),
             _                         => parse_warn!("tuple", pair.as_rule()),
@@ -707,6 +731,7 @@ fn parse_call_arguments(ast_node: Pair<Rule>) -> String {
                     let variable_name = get_variable_name(arg);
                     variable_name.to_string()
                 },
+                Rule::binary_operation => operation_as_string(arg),
                 _ => panic!("Failed to find argument in argument list")
             };
             out.push_str(&arg_s);
@@ -783,6 +808,19 @@ fn parse_spawn_process(
 
 }
 
+fn parse_unless(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    ret: bool
+) {
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::conditions => parse_unless_conditions(pair, file_writer, ret),
+            _                => parse_warn!("unless", pair.as_rule()),
+        }
+    }
+}
+
 fn parse_if(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
@@ -799,59 +837,102 @@ fn parse_if(
 fn create_condition(
     ast_node: Pair<Rule>
 ) -> internal_representation::formatted_condition::FormattedCondition {
-    // Base case, we find a primitive
-    if let Some(condition) = ast_node.clone().into_inner().find(|x| x.as_rule() == Rule::primitive) {
-        return internal_representation::formatted_condition::FormattedCondition::Primitive(condition.to_string());
-    }
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::primitive => {
+                // Check if primitive is bool
+                match pair.as_str() {
+                    "true"  => return internal_representation::formatted_condition::FormattedCondition::Boolean(true),
+                    "false" => {
+                        return internal_representation::formatted_condition::FormattedCondition::Boolean(false)
+                    },
+                    _       => return internal_representation::formatted_condition::FormattedCondition::Primitive(pair.as_str().to_string()),
+                }
+            },
+            Rule::assigned_variable => return internal_representation::formatted_condition::FormattedCondition::Primitive(pair.as_str().to_string()),
+            Rule::or => {
+                let mut operands = Vec::new();
+                for cond in pair.into_inner() {
+                    if let Rule::boolean_operand = cond.as_rule() {
+                        operands.push(create_condition(cond))
+                    }
+                }
+                
+                if operands.len() < 2 {
+                    panic!("Not enough operands for 'or' operation");
+                }
+            
+                // Take ownership of the operands
+                let l_op = operands.remove(0);
+                let r_op = operands.remove(0);
+            
+                // Return new FormattedCondition
+                return internal_representation::formatted_condition::FormattedCondition::BinaryOperation("or", Box::new(l_op), Box::new(r_op));
+            },            
+            Rule::and => {
+                let mut operands = Vec::new(); 
+                for cond in pair.into_inner() {
+                    if let Rule::boolean_operand = cond.as_rule() {
+                        operands.push(create_condition(cond))
+                    }
+                }
 
-    // Recursive case, we find a tuple
-    // Either the tuple if a conjuncton / disjunction (and / or)
-    // Or the tuple is an operation (expression_tuple)
-    else if let Some(condition) = ast_node.clone().into_inner().find(|a| a.as_rule() == Rule::or) {
-        // Recurse left
-        let Some(l_condition) = condition.clone().into_inner().find(|a| a.as_rule() == Rule::if_condition) else { todo!() };
-        let l_expr = create_condition(l_condition);
-        
-        // Recurse right
-        let Some(r_condition) = condition.clone().into_inner().find(|a| a.as_rule() == Rule::if_condition) else { todo!() };
-        let r_expr = create_condition(r_condition);
+                if operands.len() < 2 {
+                    panic!("Not enough operands for 'or' operation");
+                }
+            
+                // Take ownership of the operands
+                let l_op = operands.remove(0);
+                let r_op = operands.remove(0);
+ 
+                // Return new FormattedCondition
+                return internal_representation::formatted_condition::FormattedCondition::BinaryOperation(&"and", Box::new(l_op), Box::new(r_op));
+            },
+            Rule::not => {
+                // Recurse into the condition
+                let Some(condition) = pair.clone().into_inner().find(|a| a.as_rule() == Rule::boolean_operand) else { todo!() };
+                let expr = create_condition(condition);
 
-        // Return new FormattedCondition
-        return internal_representation::formatted_condition::FormattedCondition::BinaryOperation(&"or", Box::new(l_expr), Box::new(r_expr));
-    }
-    // else if let Some(y) = x.clone().into_inner().find(|a| a.as_rule() == Rule::expression_tuple) {
-        // println!("Expression tuple");
-    // }
-    else if ast_node.as_rule() == Rule::if_condition {
-        // Recurse into the condition
-        // Could be { not | or | and | true | false | boolean_expression | primitive }
-        for pair in ast_node.into_inner() {
-            match pair.as_rule() {
-                Rule::r#bool => return create_condition(pair),
-                _            => todo!(),
-            };
-        };
-    }
-    else if ast_node.as_rule() == Rule::bool {
-        match ast_node.as_str() {
-            "true"  => return internal_representation::formatted_condition::FormattedCondition::Boolean(true),
-            "false" => return internal_representation::formatted_condition::FormattedCondition::Boolean(false),             
-            _       => (),
+                // Return new FormattedCondition
+                return internal_representation::formatted_condition::FormattedCondition::Not(Box::new(expr));
+            },
+            Rule::boolean_operation => {
+                // Operation
+                let Some(operator) = pair.clone().into_inner().find(|a| a.as_rule() == Rule::boolean_operator) else { todo!() };
+                
+                // Recursve into operands
+                let mut operands = Vec::new(); 
+                for cond in pair.into_inner() {
+                    if let Rule::boolean_operand = cond.as_rule() {
+                        operands.push(create_condition(cond))
+                    }
+                }
+
+                if operands.len() < 2 {
+                    panic!("Not enough operands for 'or' operation");
+                }
+            
+                // Take ownership of the operands
+                let l_op = operands.remove(0);
+                let r_op = operands.remove(0);
+ 
+                // Return new FormattedCondition
+                return internal_representation::formatted_condition::FormattedCondition::BinaryOperation(operator.as_str(), Box::new(l_op), Box::new(r_op));
+            },
+            Rule::boolean_operand => {
+                return create_condition(pair);
+            },
+            _ => panic!("Failed to create condition from node")
         }
-    }   
-    else {
-        println!("{}", ast_node);
-        println!("{}", ast_node.as_str());
-        panic!("Failed to parse if condition");
     }
-
+    
     internal_representation::formatted_condition::FormattedCondition::Number(1)
 } 
 
 fn parse_conditions(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
-    ret: bool
+    ret: bool,
 ) {
     // TODO write the translation for conditions
     let mut do_block: Option<Pair<Rule>> = None;
@@ -859,7 +940,7 @@ fn parse_conditions(
     let mut condition: Option<Pair<Rule>> = None;
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
-            Rule::if_condition         => condition = Some(pair), 
+            Rule::boolean_operand      => condition = Some(pair), 
             Rule::r#do                 => do_block = Some(pair),
             Rule::do_else              => do_else_block = Some(pair),
             _                          => parse_warn!("conditions", pair.as_rule()),
@@ -893,6 +974,7 @@ fn parse_conditions(
         match pair.as_rule() {
             Rule::tuple     => parse_tuple(pair, file_writer, ret),
             Rule::primitive => parse_primitive(pair, file_writer, ret),
+            Rule::block_statement => parse_block_statement(pair, file_writer, ret),
             _               => parse_warn!("conditions", pair.as_rule()),
         }            
     }
@@ -907,6 +989,39 @@ fn parse_conditions(
     }
     file_writer.commit_if();
 }
+
+fn parse_unless_conditions(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    ret: bool,
+) {
+    let mut do_block: Option<Pair<Rule>> = None;
+    let mut do_else_block: Option<Pair<Rule>> = None;
+    let mut condition: Option<Pair<Rule>> = None;
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::boolean_operand      => condition = Some(pair), 
+            Rule::r#do                 => do_block = Some(pair),
+            Rule::do_else              => do_else_block = Some(pair),
+            _                          => parse_warn!("conditions", pair.as_rule()),
+        }
+    }
+
+    file_writer.start_unless();
+
+    let condition = condition
+        .unwrap_or_else(|| panic!("Unconditional if"));
+    
+    // Parse the do block
+    if let Some(x) = do_block {
+        parse_do(x, file_writer, ret, false);
+    }
+    
+    // Write the unless statement
+    let formatted_condition = create_condition(condition);
+    file_writer.write_unless_condition(formatted_condition);
+}
+
 
 fn parse_primitive(
     ast_node: Pair<Rule>, 
@@ -931,8 +1046,8 @@ fn name_from_tuple_str(input: &str) -> &str {
         }
     }
 
-    // Return None if the input doesn't match the expected format
-    &"Failed translation"
+    // If not a tuple, likely already primitive
+    input
 }
 
 fn parse_binary_operation(
@@ -945,8 +1060,8 @@ fn parse_binary_operation(
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::binary_operator => binary_operator = Some(pair),
-            Rule::tuple => operands.push(pair), // Use push() to add elements to the vector
-            _ => println!(),
+            Rule::binary_operand => operands.push(pair), 
+            _ => (),
         }
     }
 
@@ -954,8 +1069,8 @@ fn parse_binary_operation(
     // TODO recursive function call to evaluate expression such as 1 + 1 + 1
     // i.e. {} {} {} operands[0], operator, operands[1]
     if let Some(x) = binary_operator {
-        let operand_left = name_from_tuple_str(&*operands[0].as_str());
-        let operand_right = name_from_tuple_str(&*operands[1].as_str());
+        let operand_left = name_from_tuple_str(operands[0].as_str());
+        let operand_right = name_from_tuple_str(operands[1].as_str());
         file_writer.write_operation(x.as_str(), operand_left, operand_right, ret);
     }
 }

@@ -145,14 +145,25 @@ impl FileWriter {
     fn condition_to_string(expr: &formatted_condition::FormattedCondition) -> String {
         let mut symbol_map = HashMap::new();
         symbol_map.insert("or", "||");
-        symbol_map.insert("and", "&&");    
+        symbol_map.insert("and", "&&");   
+        symbol_map.insert(">=", ">="); 
         match expr {
             formatted_condition::FormattedCondition::Number(n) => n.to_string(),
-            formatted_condition::FormattedCondition::Boolean(b) => b.to_string(),
+            formatted_condition::FormattedCondition::Boolean(b) => {
+                if *b {
+                    String::from("true")
+                } else {
+                    String::from("false")
+                }
+            
+            },
             formatted_condition::FormattedCondition::StringLiteral(s) => format!("\"{}\"", s),
             formatted_condition::FormattedCondition::Primitive(s) => format!("\"{}\"", s),
             formatted_condition::FormattedCondition::BinaryOperation(op, left, right) => {
                 format!("({} {} {})", Self::condition_to_string(left), symbol_map.get(op).unwrap_or(&"Missing operator"), Self::condition_to_string(right))
+            },
+            formatted_condition::FormattedCondition::Not(inner) => {
+                format!("!({})", Self::condition_to_string(inner))
             }
         }
     }
@@ -180,7 +191,11 @@ impl FileWriter {
         // TODO: paramatise mailbox length and byte array lengths
         // TODO: use maximum_message_size to determine number of messages in list
         let unique_mtypes = self.mtype.iter().cloned().collect::<std::collections::HashSet<String>>().iter().cloned().collect::<Vec<String>>();
-        let var_name = &format!("mtype = {{{}}};\ntypedef MessageType {{\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n}};\ntypedef\nMessageList {{\nMessageType m1;\nMessageType m2;\nMessageType m3;\n}};\nchan mailbox[{}] = [10] of {{ mtype, MessageList }};\n\n", unique_mtypes.join(","), self.process_count + 1);
+        let mut var_name = String::new();
+        if unique_mtypes.len() > 0 {
+            var_name = String::from(&format!("mtype = {{{}}};\n", unique_mtypes.join(",")));
+        }
+        var_name.push_str(&format!("typedef MessageType {{\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n}};\ntypedef\nMessageList {{\nMessageType m1;\nMessageType m2;\nMessageType m3;\n}};\nchan mailbox[{}] = [10] of {{ mtype, MessageList }};\n\n", self.process_count + 1));
         let header_buf = var_name
             .as_bytes();
 
@@ -294,5 +309,18 @@ impl FileWriter {
 
     pub fn write_io(&mut self, io_put: &str) {
         self.function_body.push_str(&format!("printf(\"{}\\n\");\n", io_put));
+    }
+
+    pub fn start_unless(&mut self) {
+        self.function_body.push_str("{\n")
+    }
+
+    pub fn write_unless_condition(
+        &mut self,
+        condition: formatted_condition::FormattedCondition
+    ) {
+        self.function_body.push_str("}\nunless\n{");
+        self.function_body.push_str(format!("{}\n", Self::condition_to_string(&condition)).as_str());
+        self.function_body.push_str("}\n")
     }
 }
