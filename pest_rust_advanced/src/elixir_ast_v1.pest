@@ -44,7 +44,7 @@ condensed_list = { "'" ~ letters ~ "'" }
 
 bool = { true | false }
 
-primitive = { bool | int | string | atom | variable }
+primitive = { bool | number | string | atom | variable }
 
 metadata = { nil | metadata_arguments }
 

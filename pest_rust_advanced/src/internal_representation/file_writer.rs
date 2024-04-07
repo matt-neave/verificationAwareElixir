@@ -159,6 +159,7 @@ impl FileWriter {
             },
             formatted_condition::FormattedCondition::StringLiteral(s) => format!("\"{}\"", s),
             formatted_condition::FormattedCondition::Primitive(s) => format!("\"{}\"", s),
+            formatted_condition::FormattedCondition::Variable(v) => v.clone(),
             formatted_condition::FormattedCondition::BinaryOperation(op, left, right) => {
                 format!("({} {} {})", Self::condition_to_string(left), symbol_map.get(op).unwrap_or(&"Missing operator"), Self::condition_to_string(right))
             },

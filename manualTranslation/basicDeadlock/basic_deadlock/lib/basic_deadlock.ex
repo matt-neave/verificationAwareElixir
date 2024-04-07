@@ -5,7 +5,7 @@ defmodule BasicDeadlock do
     p2 = spawn(BasicProcess, :start_2, [])
     send p1, {:bind, p2}
     send p2, {:bind, p1}
-    next 0
+    next_1 0
   end
 
   @spec next_1(integer()) :: :ok
@@ -24,7 +24,7 @@ defmodule BasicProcess do
     receive do
       {:bind, pid_other} ->
         IO.puts "Bound"
-        next pid_other
+        next_2 pid_other
     end
   end
 

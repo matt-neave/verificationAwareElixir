@@ -841,15 +841,14 @@ fn create_condition(
         match pair.as_rule() {
             Rule::primitive => {
                 // Check if primitive is bool
-                match pair.as_str() {
-                    "true"  => return internal_representation::formatted_condition::FormattedCondition::Boolean(true),
-                    "false" => {
-                        return internal_representation::formatted_condition::FormattedCondition::Boolean(false)
-                    },
-                    _       => return internal_representation::formatted_condition::FormattedCondition::Primitive(pair.as_str().to_string()),
+                let cond = pair.into_inner().next().unwrap();
+                match cond.as_rule() {
+                    Rule::bool   => return internal_representation::formatted_condition::FormattedCondition::Boolean(cond.as_str().parse().unwrap()),
+                    Rule::number => return internal_representation::formatted_condition::FormattedCondition::Number(cond.as_str().parse().unwrap()),
+                    _            => return internal_representation::formatted_condition::FormattedCondition::Primitive(cond.as_str().to_string()),       
                 }
             },
-            Rule::assigned_variable => return internal_representation::formatted_condition::FormattedCondition::Primitive(pair.as_str().to_string()),
+            Rule::assigned_variable => return internal_representation::formatted_condition::FormattedCondition::Variable(get_variable_name(pair)),
             Rule::or => {
                 let mut operands = Vec::new();
                 for cond in pair.into_inner() {

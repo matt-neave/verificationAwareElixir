@@ -3,6 +3,7 @@ pub enum FormattedCondition<'a> {
     Boolean(bool),
     StringLiteral(String),
     Primitive(String),
+    Variable(String),
     Not(Box<FormattedCondition<'a>>),
     BinaryOperation(&'a str, Box<FormattedCondition<'a>>, Box<FormattedCondition<'a>>),
 }
