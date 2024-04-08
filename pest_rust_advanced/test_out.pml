@@ -37,7 +37,7 @@ ret4 ? val4;
 if
 :: (maj > 1) -> 
 printf("Majority reached\n");
-else ->
+:: else ->
 printf("Majority not reached\n");
 fi
 }
@@ -47,7 +47,7 @@ chan ret1 = [1] of { int };
 if
 :: (n == 0) -> 
 ret ! i
-else ->
+:: else ->
 do
 :: true ->
 mtype messageType;

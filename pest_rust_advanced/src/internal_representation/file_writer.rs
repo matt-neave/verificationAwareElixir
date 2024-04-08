@@ -180,7 +180,7 @@ impl FileWriter {
     }
 
     pub fn write_else(&mut self) {
-        self.function_body.push_str("else ->\n");
+        self.function_body.push_str(":: else ->\n");
     }
 
     pub fn commit_if(&mut self) {

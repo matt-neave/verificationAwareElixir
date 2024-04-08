@@ -177,12 +177,6 @@ pub fn parse_block_statements(ast_node: Pair<Rule>, file_writer: &mut internal_r
     let mut inner_iter = ast_node.into_inner().peekable();
     while let Some(pair) = inner_iter.next() {
         let last = inner_iter.peek().is_none();
-        if (last && func_def) {
-            println!("BLOCK last & func_def: {}", pair.as_str());
-        } 
-        if ret {
-            println!("BLOCK ret: {}", pair.as_str());
-        }
         match pair.as_rule() {
             Rule::block_statement => parse_block_statement(pair, file_writer, (last && func_def) || ret, func_def),
             _                     => parse_warn!("block statements", pair.as_rule()),
@@ -196,9 +190,6 @@ pub fn parse_block_statement(
     ret: bool,
     func_def: bool,
 ) {
-    if ret {
-        println!("Parsing block statement with ret: {}", ast_node.as_str());
-    }
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::function_definition => parse_function_definition(pair, file_writer, ret),
