@@ -162,13 +162,10 @@ pub fn parse_block(
     ret: bool,
     func_def: bool
 ) {
-    let mut inner_iter = ast_node.into_inner().peekable();
-
-    while let Some(pair) = inner_iter.next() {
-        let last = inner_iter.peek().is_none();
+    for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::block_statements => {
-                parse_block_statements(pair, file_writer, (last && func_def) || ret);
+                parse_block_statements(pair, file_writer, ret, func_def);
             },
             _ => parse_warn!("block", pair.as_rule()),
         }
@@ -176,28 +173,55 @@ pub fn parse_block(
 }
 
 
-pub fn parse_block_statements(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter, ret: bool) {
-    for pair in ast_node.into_inner() {
+pub fn parse_block_statements(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter, ret: bool, func_def: bool) {
+    let mut inner_iter = ast_node.into_inner().peekable();
+    while let Some(pair) = inner_iter.next() {
+        let last = inner_iter.peek().is_none();
+        if (last && func_def) {
+            println!("BLOCK last & func_def: {}", pair.as_str());
+        } 
+        if ret {
+            println!("BLOCK ret: {}", pair.as_str());
+        }
         match pair.as_rule() {
-            Rule::block_statement => parse_block_statement(pair, file_writer, ret),
+            Rule::block_statement => parse_block_statement(pair, file_writer, (last && func_def) || ret, func_def),
             _                     => parse_warn!("block statements", pair.as_rule()),
         }
     }
 }
 
-pub fn parse_block_statement(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter, ret: bool) {
+pub fn parse_block_statement(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    ret: bool,
+    func_def: bool,
+) {
+    if ret {
+        println!("Parsing block statement with ret: {}", ast_node.as_str());
+    }
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::function_definition => parse_function_definition(pair, file_writer, ret),
             Rule::defmodule           => parse_defmodule(pair, file_writer),
-            Rule::tuple               => parse_tuple(pair, file_writer, ret),
-            Rule::assignment          => parse_assignment(pair, file_writer, ret),
+            Rule::tuple               => parse_tuple(pair, file_writer, ret, func_def),
+            Rule::assignment          => parse_assignment(pair, file_writer, ret, func_def),
             Rule::send                => parse_send(pair, file_writer, ret),
-            Rule::receive             => parse_receive(pair, file_writer, ret),
+            Rule::receive             => parse_receive(pair, file_writer, ret, func_def),
             Rule::io                  => parse_io(pair, file_writer, ret),
+            Rule::spawn_process       => parse_spawn_process(pair, file_writer, ret),
+            Rule::assigned_variable   => parse_assigned_variable(pair, file_writer, ret),
             _                         => parse_warn!("block statement", pair.as_rule()),
         }
     }
+}
+
+fn parse_assigned_variable(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    ret: bool
+) {
+    let variable_name = get_variable_name(ast_node);
+    file_writer.write_assigned_variable(&variable_name, ret);
 }
 
 fn parse_io(
@@ -229,7 +253,8 @@ fn io_to_str(ast_node: Pair<Rule>) -> String {
 fn parse_receive(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
-    ret: bool
+    ret: bool,
+    func_def: bool,
 ) {
     // Find the receive_statement node and panic if does not exist
     let receive_statement = ast_node
@@ -245,7 +270,7 @@ fn parse_receive(
     for pair in receive_statement.into_inner() {
         match pair.as_rule() {
             Rule::receive_statement => {
-                let mtype = parse_receive_statement(pair, file_writer, ret);
+                let mtype = parse_receive_statement(pair, file_writer, ret, func_def);
                 mtypes.push(mtype);
             },
             _ => parse_warn!("receive", pair.as_rule()),
@@ -257,7 +282,8 @@ fn parse_receive(
 fn parse_receive_statement(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
-    ret: bool
+    ret: bool,
+    func_def: bool,
 ) -> String {
 
     // Preserve order and type
@@ -273,8 +299,8 @@ fn parse_receive_statement(
 
     for pair in ast_node.clone().into_inner() {
         match pair.as_rule() {
-            Rule::block_statement => parse_block_statement(pair, file_writer, ret),
-            Rule::block           => parse_block(pair, file_writer, ret, false),
+            Rule::block_statement => parse_block_statement(pair, file_writer, ret, func_def),
+            Rule::block           => parse_block(pair, file_writer, ret, func_def),
             _                     => (),
         };
     };
@@ -483,7 +509,7 @@ fn get_variable_name(ast_node: Pair<Rule>) -> String {
     }
 }
 
-fn parse_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter, ret: bool) {
+fn parse_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter, ret: bool, func_def: bool) {
     let mut assigned_variable = None;
     let mut expression = None;
     for pair in ast_node.into_inner() {
@@ -500,7 +526,7 @@ fn parse_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representat
         panic!("No variable name in assignment expression");
     }
     if let Some(x) = expression {
-        parse_expression_tuple(x, file_writer, ret);
+        parse_expression_tuple(x, file_writer, ret, func_def);
     } else {
         panic!("No expression in assignment expression");
     }
@@ -513,9 +539,11 @@ fn get_function_name(ast_node: Pair<Rule>, str_out: &mut String) {
 }
 
 fn get_primitive_as_str(primitive: Pair<Rule>) -> String {
-    match primitive.as_rule() {
-        Rule::string => format!("\"{}\"", primitive.as_str()),
-        _            => primitive.as_str().to_string(),
+    let rule = primitive.into_inner().next().unwrap();
+    match rule.as_rule() {
+        Rule::string => format!("\"{}\"", rule.as_str()),
+        Rule::self_pid => String::from("__pid"), // TODO this exposes implementation of file_writer
+        _            => rule.as_str().to_string(),
     }
 }
 
@@ -627,7 +655,7 @@ pub fn parse_function_definition(
     // Write the body 
     // Start by setting up the channels
     // Use predefiend code blocks for send and recv
-    parse_do(func_body_node.unwrap(), file_writer, true, true);
+    parse_do(func_body_node.unwrap(), file_writer, false, true);
 
     // Close the function 
     file_writer.commit_function();
@@ -671,8 +699,8 @@ fn parse_do_single(
 ) {
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
-            Rule::tuple           => parse_tuple(pair, file_writer, ret || func_def),
-            Rule::block_statement => parse_block_statement(pair, file_writer, ret),
+            Rule::tuple           => parse_tuple(pair, file_writer, ret || func_def, func_def),
+            Rule::block_statement => parse_block_statement(pair, file_writer, ret || func_def, func_def),
             _                     => parse_warn!("do single", pair.as_rule()), 
            }
     }
@@ -682,17 +710,20 @@ fn parse_tuple(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
     ret: bool,
+    func_def: bool,
 ) {
     // Given a tuple does not begin with an identified keyword i.e.
     // is an "atom", we assume it is a function call
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
-            Rule::expression_tuple    => parse_expression_tuple(pair, file_writer, ret),  
+            Rule::expression_tuple    => parse_expression_tuple(pair, file_writer, ret, func_def),  
             Rule::binary_operation    => parse_binary_operation(pair, file_writer, ret),
-            Rule::r#if                => parse_if(pair, file_writer, ret),
-            Rule::unless              => parse_unless(pair, file_writer, ret),
+            Rule::r#if                => parse_if(pair, file_writer, ret, func_def),
+            Rule::unless              => parse_unless(pair, file_writer, ret, func_def),
             Rule::function_definition => parse_function_definition(pair, file_writer, ret),
             Rule::metadata            => (),
+            Rule::io                  => parse_io(pair, file_writer, ret),
+            Rule::receive             => parse_receive(pair, file_writer, ret, func_def),
             _                         => parse_warn!("tuple", pair.as_rule()),
         }
     }
@@ -748,6 +779,7 @@ fn parse_expression_tuple(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
     ret: bool,    
+    func_def: bool,
 ) {
     let mut io_node: Option<Pair<Rule>> = None;
     let mut atom_node: Option<Pair<Rule>> = None;
@@ -758,6 +790,9 @@ fn parse_expression_tuple(
             Rule::atom                 => atom_node = Some(pair),
             Rule::expression_arguments => arguments_node = Some(pair),
             Rule::spawn_process        => parse_spawn_process(pair, file_writer, ret),
+            Rule::tuple                => {
+                parse_tuple(pair, file_writer, ret, func_def)
+            },
             _                          => parse_warn!("expression tuple", pair.as_rule()),
         }
     }
@@ -811,11 +846,12 @@ fn parse_spawn_process(
 fn parse_unless(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
-    ret: bool
+    ret: bool,
+    func_def: bool,
 ) {
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
-            Rule::conditions => parse_unless_conditions(pair, file_writer, ret),
+            Rule::conditions => parse_unless_conditions(pair, file_writer, ret, func_def),
             _                => parse_warn!("unless", pair.as_rule()),
         }
     }
@@ -824,11 +860,13 @@ fn parse_unless(
 fn parse_if(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
-    ret: bool
+    ret: bool,
+    func_def: bool,
 ) {
+    println!("Parsing if with ret: {}", ret);
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
-            Rule::conditions => parse_conditions(pair, file_writer, ret),
+            Rule::conditions => parse_conditions(pair, file_writer, ret, func_def),
             _                => parse_warn!("if", pair.as_rule()),
         }
     }
@@ -932,6 +970,7 @@ fn parse_conditions(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
     ret: bool,
+    func_def: bool,
 ) {
     // TODO write the translation for conditions
     let mut do_block: Option<Pair<Rule>> = None;
@@ -948,7 +987,6 @@ fn parse_conditions(
 
     // To do, reformat so that parse block returns the
     // list of instructions to write
-
     let condition = condition
         .unwrap_or_else(|| panic!("Unconditional if"));
 
@@ -959,7 +997,7 @@ fn parse_conditions(
 
     // Parse the do block
     if let Some(x) = do_block {
-        parse_do(x, file_writer, ret, false);
+        parse_do(x, file_writer, ret, func_def);
         file_writer.commit_if();
         return;
     }
@@ -971,19 +1009,18 @@ fn parse_conditions(
     let mut do_else_block = do_else_block.into_inner();
     if let Some(pair) = do_else_block.next() {
         match pair.as_rule() {
-            Rule::tuple     => parse_tuple(pair, file_writer, ret),
-            Rule::primitive => parse_primitive(pair, file_writer, ret),
-            Rule::block_statement => parse_block_statement(pair, file_writer, ret),
-            _               => parse_warn!("conditions", pair.as_rule()),
+            Rule::primitive       => parse_primitive(pair, file_writer, ret),
+            Rule::block_statement => parse_block_statement(pair, file_writer, ret, func_def),
+            _                     => parse_warn!("conditions", pair.as_rule()),
         }            
     }
     file_writer.write_else();
     
     if let Some(pair) = do_else_block.next() {
         match pair.as_rule() {
-            Rule::tuple     => parse_tuple(pair, file_writer, ret),
-            Rule::primitive => parse_primitive(pair, file_writer, ret),
-            _               => parse_warn!("conditions", pair.as_rule()),
+            Rule::block_statement => parse_tuple(pair, file_writer, ret, func_def),
+            Rule::primitive       => parse_primitive(pair, file_writer, ret),
+            _                     => parse_warn!("conditions", pair.as_rule()),
         }
     }
     file_writer.commit_if();
@@ -993,6 +1030,7 @@ fn parse_unless_conditions(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
     ret: bool,
+    func_def: bool,
 ) {
     let mut do_block: Option<Pair<Rule>> = None;
     let mut _do_else_block: Option<Pair<Rule>> = None;
@@ -1013,7 +1051,7 @@ fn parse_unless_conditions(
     
     // Parse the do block
     if let Some(x) = do_block {
-        parse_do(x, file_writer, ret, false);
+        parse_do(x, file_writer, ret, func_def);
     }
     
     // Write the unless statement

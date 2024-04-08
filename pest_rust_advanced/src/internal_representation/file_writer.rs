@@ -116,7 +116,7 @@ impl FileWriter {
         self.function_messages = 0;
     }
 
-    pub fn write_function_call(&mut self, func_name: &str, call_arguments: &str, return_variable: &str, _ret: bool /* TODO */) {
+    pub fn write_function_call(&mut self, func_name: &str, call_arguments: &str, return_variable: &str, ret: bool) {
         // Track how many function calls have taken place 
         // Create a channel for each
         // Name the receive variables appropriately
@@ -133,14 +133,22 @@ impl FileWriter {
         }
         self.function_body.push_str(&format!("run {}{}, ret{}, __pid);\n", func_name, call_arguments, self.function_call_count));
         self.function_body.push_str(&format!("int {};\n", return_variable));
-        self.function_body.push_str(&format!("ret{} ? {}\n", self.function_call_count, return_variable)); 
+        self.function_body.push_str(&format!("ret{} ? {};\n", self.function_call_count, return_variable));
+        if ret {
+            self.function_body.push_str(&format!("ret ! {};\n", return_variable));
+        } 
     }
 
     fn condition_to_string(expr: &formatted_condition::FormattedCondition) -> String {
         let mut symbol_map = HashMap::new();
         symbol_map.insert("or", "||");
         symbol_map.insert("and", "&&");   
-        symbol_map.insert(">=", ">="); 
+        symbol_map.insert(">=", ">=");
+        symbol_map.insert("<=", "<=");
+        symbol_map.insert(">", ">");
+        symbol_map.insert("<", "<"); 
+        symbol_map.insert("==", "==");
+        symbol_map.insert("!=", "!=");
         match expr {
             formatted_condition::FormattedCondition::Number(n) => n.to_string(),
             formatted_condition::FormattedCondition::Boolean(b) => {
@@ -204,7 +212,7 @@ impl FileWriter {
 
     pub fn write_primitive(&mut self, primitive: &str, ret: bool) {
         let formatted_string = if ret {
-            format!("ret ! {}\n", primitive)
+            format!("ret ! {};\n", primitive)
         } else {
             format!("{}\n", primitive)
         };
@@ -228,20 +236,18 @@ impl FileWriter {
         // Format args depending on if they are empty
         let formatted_args = format!("{}{}ret{},{}", args, if args.is_empty() {""} else {","}, self.function_call_count, self.function_call_count);
 
+        // TODO verify logic, is a stack appropriate
         let var_name = self.var_stack.pop();
         let i = self.process_count;
         if let Some(x) = var_name {
-            // Create a mailbox for each process
-            self.function_channels.push_str(&format!("chan p{}_mailbox = [10] of {{ mtype, MessageList }};\n", self.process_count));            
-            self.function_metabody.push_str(&format!("mailbox[{}] = p{}_mailbox;\n", i, i));
-            self.function_body.push_str(&format!("run {}({});\n", proctype, formatted_args));
-
             // Add to the lookup tables
             self.process_name.insert(i, x.clone());
             self.mailbox_id.insert(x.clone(), i);
-        } else {
-            panic!("Missing variable name in process stack");
         }
+        // Create a mailbox for each process
+        self.function_channels.push_str(&format!("chan p{}_mailbox = [10] of {{ mtype, MessageList }};\n", self.process_count));            
+        self.function_metabody.push_str(&format!("mailbox[{}] = p{}_mailbox;\n", i, i));
+        self.function_body.push_str(&format!("run {}({});\n", proctype, formatted_args));        
     }
 
     pub fn write_send(&mut self, target: &str, mut args: Vec<String>) {
@@ -314,5 +320,18 @@ impl FileWriter {
         self.function_body.push_str("}\nunless\n{");
         self.function_body.push_str(format!("{}\n", Self::condition_to_string(&condition)).as_str());
         self.function_body.push_str("}\n")
+    }
+
+    pub fn write_assigned_variable(
+        &mut self,
+        var: &str,
+        ret: bool
+    ) {
+        if ret {
+            self.function_body.push_str(&format!("ret ! {}\n", var));
+        } else {
+            println!("Trying to write {} might not make sense", var);
+            self.function_body.push_str(&format!("{}\n", var));
+        }
     }
 }

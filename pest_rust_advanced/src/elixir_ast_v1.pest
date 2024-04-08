@@ -44,7 +44,7 @@ condensed_list = { "'" ~ letters ~ "'" }
 
 bool = { true | false }
 
-primitive = { bool | number | string | atom | variable }
+primitive = { bool | number | string | atom | self_pid | variable }
 
 metadata = { nil | metadata_arguments }
 
@@ -63,7 +63,7 @@ atom = { ":" ~ letters }
 
 annotation = { ":@" ~ letters }
 
-do_else =  { "[do: " ~ (block_statement | primitive) ~ ", " ~ "else: " ~ (tuple | primitive) ~ "]" }
+do_else =  { "[do: " ~ (block_statement | primitive) ~ ", " ~ "else: " ~ (block_statement | primitive) ~ "]" }
 
 do_single = { "[do: " ~ (block_statement | primitive) ~ "]" }
 
@@ -75,7 +75,10 @@ block = { "{:__block__" ~ ", " ~ metadata ~ ", " ~ block_statements ~  "}" }
 
 block_statements = { "[" ~ (block_statement ~ ", ")* ~ block_statement* ~ "]" }
 
+// TODO merge with tuple
 block_statement = { string | assigned_variable | attribute | function_definition | macro | io | directive | assignment | spawn_process | send | receive | defmodule | tuple }
+
+tuple = { function_definition | if | unless | or | and | assigned_variable | binary_operation | expression_tuple }
 
 assignment = { "{:=, " ~ metadata ~ ", [" ~ assigned_variable ~ ", " ~ expression_argument ~ "]}" }
 
@@ -131,12 +134,11 @@ not = { "{:not, " ~ metadata ~ ", " ~ "[" ~ boolean_operand ~ "]}" }
 
 conditions = { "[" ~ boolean_operand ~ ", " ~ (do | do_else) ~ "]"}
 
-tuple = { function_definition | if | unless | or | and | assigned_variable | binary_operation | expression_tuple}
-
 binary_operand   = { number | string | assigned_variable | binary_operation | expression_tuple }
 
 binary_operation = { "{:" ~ binary_operator ~ ", " ~ metadata ~ ", [" ~ binary_operand ~ ", " ~ binary_operand ~ "]}" }
 
+// TODO Seems expression tuple with atom is always function call, can extract this to function call and refactor 
 expression_tuple = { "{" ~ (annotation | atom) ~ ", " ~ metadata ~ ", " ~ expression_arguments ~ "}" } 
 
 expression_arguments = { ("[" ~ (expression_argument ~ ", ")* ~ expression_argument ~ "]") | condensed_list | nil }
@@ -157,6 +159,7 @@ send_tupled_arguments = { "{" ~ ((atom | number | string | self_pid | binary_ope
 
 send_argument = { atom | number | string | self_pid | binary_operation | assigned_variable | expression_tuple }
 
+// TODO, self_pid is just a special case of a function call!
 self_pid = { "{:self, " ~ metadata ~ ", []}" }
 
 receive = { "{:receive, " ~ metadata ~ ", [[do: " ~ (receive_statements) ~ "]]}" }

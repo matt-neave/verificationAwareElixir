@@ -1,4 +1,4 @@
-mtype = {FINISHED,BIND,MESSAGE};
+mtype = {VOTE};
 typedef MessageType {
 byte data1[20];
 int data2;
@@ -11,7 +11,7 @@ MessageType m1;
 MessageType m2;
 MessageType m3;
 };
-chan mailbox[3] = [10] of { mtype, MessageList };
+chan mailbox[4] = [10] of { mtype, MessageList };
 
 init {
 chan p0_mailbox = [10] of { mtype, MessageList };
@@ -20,88 +20,57 @@ chan p1_mailbox = [10] of { mtype, MessageList };
 chan ret2 = [1] of { int };
 chan p2_mailbox = [10] of { mtype, MessageList };
 chan ret3 = [1] of { int };
+chan p3_mailbox = [10] of { mtype, MessageList };
+chan ret4 = [1] of { int };
 mailbox[1] = p1_mailbox;
 mailbox[2] = p2_mailbox;
+mailbox[3] = p3_mailbox;
 mailbox[0] = p0_mailbox;
 int __pid = 0;
-printf("BasicDeadlock running\n");
-int p1;
-p1 = run start_2(ret1,1);
-int p2;
-p2 = run start_2(ret2,2);
-MessageList msg_0;
-msg_0.m1.data2 = p2;
-mailbox[1] ! BIND, msg_0;
-MessageList msg_1;
-msg_1.m1.data2 = p1;
-mailbox[2] ! BIND, msg_1;
-run next_1(0, ret3, __pid);
-int val3;
-ret3 ? val3
+run vote(__pid,ret1,1);
+run vote(__pid,ret2,2);
+run vote(__pid,ret3,3);
+int maj;
+maj = run await_majority(3,0, ret4, __pid);
+int val4;
+ret4 ? val4;
+if
+:: (maj > 1) -> 
+printf("Majority reached\n");
+else ->
+printf("Majority not reached\n");
+fi
 }
 
-proctype next_1 (int ps; chan ret; int __pid) {
+proctype await_majority (int n;int i; chan ret; int __pid) {
 chan ret1 = [1] of { int };
-{
+if
+:: (n == 0) -> 
+ret ! i
+else ->
 do
 :: true ->
 mtype messageType;
 MessageList rec_v_0;
 mailbox[__pid] ? messageType, rec_v_0;
 if
-:: messageType == FINISHED ->
-run next_1(ps + 1, ret1, __pid);
+:: messageType == VOTE ->
+int x;
+x = rec_v_0.m1.data2
+run await_majority(n - 1,i + x, ret1, __pid);
 int val1;
-ret1 ? val1
+ret1 ? val1;
+ret ! val1;
 break;
 :: else -> mailbox[_pid] ! messageType, rec_v_0;
 fi;
 od;
-}
-unless
-{(ps >= 2)
-}
+fi
 }
 
-proctype start_2 (chan ret; int __pid) {
-chan ret1 = [1] of { int };
-printf("Process started\n");
-do
-:: true ->
-mtype messageType;
-MessageList rec_v_1;
-mailbox[__pid] ? messageType, rec_v_1;
-if
-:: messageType == BIND ->
-int pid_other;
-pid_other = rec_v_1.m1.data2
-printf("Bound\n");
-run next_2(pid_other, ret1, __pid);
-int val1;
-ret1 ? val1
-break;
-:: else -> mailbox[_pid] ! messageType, rec_v_1;
-fi;
-od;
-}
-
-proctype next_2 (int pid_other; chan ret; int __pid) {
-chan ret1 = [1] of { int };
-do
-:: true ->
-mtype messageType;
-MessageList rec_v_2;
-mailbox[__pid] ? messageType, rec_v_2;
-if
-:: messageType == MESSAGE ->
+proctype vote (int master; chan ret; int __pid) {
 MessageList msg_0;
-mailbox[pid_other] ! MESSAGE, msg_0;
-break;
-:: else -> mailbox[_pid] ! messageType, rec_v_2;
-fi;
-od;
-run next_2(pid_other, ret1, __pid);
-int val1;
-ret1 ? val1
+msg_0.m1.data2 = 1;
+mailbox[master] ! VOTE, msg_0;
 }
 
