@@ -449,7 +449,6 @@ fn extract_send_arguments<'a>(send_arguments: Option<Pair<'a, Rule>>, send_tuple
             } else if pair.as_rule() == Rule::assigned_variable {
                 send_args.push(get_variable_name(pair));
             } else if pair.as_rule() != Rule::metadata {
-                println!("Send argument type: {:?}", pair.as_rule());
                 send_args.push(pair.as_str().to_string());
             }
         }
@@ -460,7 +459,6 @@ fn extract_send_arguments<'a>(send_arguments: Option<Pair<'a, Rule>>, send_tuple
             } else if pair.as_rule() == Rule::assigned_variable {
                 send_args.push(get_variable_name(pair));
             } else if pair.as_rule() != Rule::metadata {
-                println!("Send argument type: {:?}", pair.as_rule());
                 send_args.push(pair.as_str().to_string());
             }
         }
@@ -709,7 +707,6 @@ fn resolve_tuple_argument(ast_node: Pair<Rule>) -> &str {
 }
 
 fn resolve_negative_number(ast_node: Pair<Rule>) -> &str {
-    println!("{}", ast_node);
     for pair in ast_node.into_inner() {
         if pair.as_rule() == Rule::number {
                 let s = format!("-{}", pair.as_str());
@@ -773,7 +770,6 @@ fn parse_expression_tuple(
         let mut func_name = x.as_str().to_string();
         func_name.remove(0);
         if let Some(arguments) = arguments_node {
-            println!("{}", arguments.as_str());
             let call_args = parse_call_arguments(arguments);
             file_writer.write_function_call(&func_name, &call_args, "" /* TODO, replace with var name if assignment */, ret);
         } else {

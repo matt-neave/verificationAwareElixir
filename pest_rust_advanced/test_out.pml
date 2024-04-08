@@ -1,4 +1,4 @@
-mtype = {FINISHED,MESSAGE,BIND};
+mtype = {FINISHED,BIND,MESSAGE};
 typedef MessageType {
 byte data1[20];
 int data2;
