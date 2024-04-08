@@ -52,13 +52,12 @@ metadata_arguments = { ("[" ~ (metadata_argument ~ ", ")* ~ metadata_argument ~ 
 
 metadata_argument = { line_number | alias_status | context }
 
-alias_name = { "{:__aliases__" ~ ", " ~ metadata ~ ", " ~ (atoms | unknown_alias) ~ "}" }
+alias_name = { "{:__aliases__" ~ ", " ~ metadata ~ ", " ~ atoms ~ "}" }
 
 context = { "context: Elixir" }
 
 // TODO: confirm
 atoms = { "[" ~ (atom ~ ", ")* ~ atom? ~ "]" }
-unknown_alias = { "[...]" }
 
 atom = { ":" ~ letters }
 
@@ -80,7 +79,7 @@ block_statement = { string | assigned_variable | attribute | function_definition
 
 assignment = { "{:=, " ~ metadata ~ ", [" ~ assigned_variable ~ ", " ~ expression_argument ~ "]}" }
 
-assigned_variable = { "{" ~ atom ~ ", " ~ metadata ~ ", nil}"  }
+assigned_variable = { "{" ~ atom ~ ", " ~ metadata ~ ", nil}" }
 
 function_definition = { (vae_init ~ ", ")? ~ (type_spec ~ ", ")? ~ (( "{:defp" | "{:def") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}") }
 

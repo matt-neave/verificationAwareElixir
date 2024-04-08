@@ -1,4 +1,5 @@
 defmodule Student do
+  @vae_init true
   def start do
     c_p = spawn(Calculator, :add, [])
     #tep send?(atom(), integer(), integet(), integer())

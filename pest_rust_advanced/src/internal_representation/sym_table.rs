@@ -7,13 +7,14 @@ pub enum SymbolType {
     Boolean,
 }
 
-pub struct SymbolEntry {
-    name: String,
-    symbol_type: SymbolType,
-}
-
 pub struct SymbolTable {
     pub entries: HashMap<String, SymbolType>,
+}
+
+impl Default for SymbolTable {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SymbolTable {
@@ -31,7 +32,7 @@ impl SymbolTable {
 
     // Unsafe
     pub fn lookup(&self, name: &str) -> &SymbolType {
-        self.entries.get(name).expect(format!("missing symbol: {}", name).as_str())
+        self.entries.get(name).unwrap_or_else(|| panic!("missing symbol: {}", name))
     }
 
     pub fn pretty_print(&self) {

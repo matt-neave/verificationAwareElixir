@@ -1,7 +1,4 @@
-use std::f32::consts::E;
 use std::fs;
-use std::env;
-use std::num;
 use pest::Parser;
 use pest_derive::Parser;
 use pest::iterators::Pair;
@@ -11,9 +8,6 @@ use std::path::Path;
 use std::fs::File;
 
 // Logging
-use log::trace;
-use log::debug;
-use log::info;
 use log::warn;
 use log::error;
 use log::Level;
@@ -38,7 +32,7 @@ fn main() {
     init_logger();
 
     let file_content = fs::read_to_string(path)
-        .expect(format!("Failed to read {}", path).as_str());
+        .unwrap_or_else(|_| panic!("Failed to read {}", path));
 
     let prog_ast = ASTParser::parse(Rule::elixir_program, file_content.as_str())
         .expect("Failed to parse the AST")
@@ -60,7 +54,7 @@ fn extract_elixir_ast(out_file: &str) {
     let ast_extractor_code = &*format!("defmodule AstExtractor do
   def main do
     {{:ok, ast}} = Code.string_to_quoted(File.read!(\"../{}\"))
-    File.write!(\"../{}\", inspect(ast)) # Writing AST to a file
+    File.write!(\"../{}\", inspect(ast, limit: :infinity)) # Writing AST to a file
     ast
   end
 end", dir.to_str().unwrap(), out_file);
@@ -69,18 +63,18 @@ end", dir.to_str().unwrap(), out_file);
     let lib = format!("{}/lib", source);
     let extractor = &*format!("{}/ast_extactor.ex", lib);
     
-    let _ = std::fs::create_dir(lib.clone())
+    std::fs::create_dir(lib.clone())
         .expect("Failed to create lib directory at source");
     
     let ast_extractor = File::create(extractor);
 
-    let _ = ast_extractor
+    ast_extractor
         .expect("Failed to create AST extractor")
         .write_all(ast_extractor_code.as_bytes())
         .expect("Failed to write to AST extractor");
 
     let output = Command::new("mix")
-        .args(&["run", "-e", "AstExtractor.main"])
+        .args(["run", "-e", "AstExtractor.main"])
         .current_dir(source)
         .output()
         .expect("Failed to execute Elixir script");
@@ -297,7 +291,7 @@ fn parse_receive_atom(
     _ret: bool
 ) -> String {
     let mut assignments = Vec::new();
-    let mtype = ast_node.into_inner().next().unwrap().as_str().replace(":", "");
+    let mtype = ast_node.into_inner().next().unwrap().as_str().replace(':', "");
     assignments.push(mtype.clone());
     file_writer.write_receive_assignment(assignments);
     mtype
@@ -311,10 +305,10 @@ fn parse_receive_single(
     // Find the atom node
     if let Some(x) = ast_node.into_inner().find(|y| y.as_rule() == Rule::atom) {
         let mut assignments = Vec::new();
-        let mtype = x.as_str().replace(":", "");
+        let mtype = x.as_str().replace(':', "");
         assignments.push(mtype.clone());
         file_writer.write_receive_assignment(assignments);
-        return mtype;
+        mtype
     } else {
         panic!("No atom in assigned variable");
     }
@@ -323,14 +317,14 @@ fn parse_receive_single(
 fn parse_receive_pair(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
-    ret: bool
+    _ret: bool
 ) -> String {
     // Pair guaranteed of the form alpha_letters followed by atom or assigned_variable
     let mut assignments = Vec::new();
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::alpha_letters => assignments.push(pair.as_str().to_string()),
-            Rule::atom          => assignments.push(pair.as_str().to_string().replace(":", "")),
+            Rule::atom          => assignments.push(pair.as_str().to_string().replace(':', "")),
             Rule::assigned_variable => assignments.push(get_variable_name(pair)),
             _ => parse_warn!("receive pair", pair.as_rule()),
         }
@@ -346,7 +340,7 @@ fn parse_receive_pair(
 fn parse_receive_multi(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
-    ret: bool
+    _ret: bool
 ) -> String {
     // Extract all instances of recv_binding to a vector
     let mut assignments = Vec::new();
@@ -370,7 +364,7 @@ fn parse_receive_multi(
 fn parse_send(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
-    ret: bool
+    _ret: bool
 ) {
     let mut send_target = None;
     let mut send_arguments = None;
@@ -392,7 +386,7 @@ fn parse_send(
     // Write the send to the file
     if let Some(x) = send_target {
         let var = get_variable_name(x);
-        file_writer.write_send(&*var, send_args);
+        file_writer.write_send(&var, send_args);
     } else {
         panic!("No send target in send expression");
     }
@@ -401,7 +395,7 @@ fn parse_send(
 /* Takes an operation and produces a string representation that can be evalutated in the frontend */
 fn operation_as_string(ast_node: Pair<Rule>) -> String {
     let mut repr = String::new();
-    if (ast_node.as_rule() == Rule::binary_operation) {
+    if ast_node.as_rule() == Rule::binary_operation {
         /* Recursive case */
         let mut op = "";
         let mut args = Vec::new(); 
@@ -414,28 +408,28 @@ fn operation_as_string(ast_node: Pair<Rule>) -> String {
         }
         let str1 = operation_as_string(args[0].to_owned());
         let str2 = operation_as_string(args[1].to_owned());
-        repr = String::from(format!("{} {} {}", str1, op, str2));
-    } else if (ast_node.as_rule() == Rule::expression_tuple) {
+        repr = format!("{} {} {}", str1, op, str2);
+    } else if ast_node.as_rule() == Rule::expression_tuple {
         /* Base case */
         for pair in ast_node.into_inner() {
             if pair.as_rule() == Rule::atom {
-                repr = String::from(pair.as_str().replace(":", ""));
+                repr = pair.as_str().replace(':', "");
             }
         }
-    } else if (ast_node.as_rule() == Rule::assigned_variable) {
+    } else if ast_node.as_rule() == Rule::assigned_variable {
         /* Base case */
         repr = get_variable_name(ast_node);
-    } else if (ast_node.as_rule() == Rule::string || ast_node.as_rule() == Rule::number) {
+    } else if ast_node.as_rule() == Rule::string || ast_node.as_rule() == Rule::number {
         repr = ast_node.as_str().to_string();
-    } else if (ast_node.as_rule() == Rule::binary_operand) {
-        for pair in ast_node.into_inner() {
-            match pair.as_rule() {
-                Rule::binary_operation  => return operation_as_string(pair),
-                Rule::expression_tuple  => return operation_as_string(pair),
-                Rule::binary_operand    => return operation_as_string(pair),
-                Rule::assigned_variable => return operation_as_string(pair),
-                Rule::number            => return operation_as_string(pair),
-                Rule::string            => return operation_as_string(pair),
+    } else if ast_node.as_rule() == Rule::binary_operand {
+        if let Some(pair) = ast_node.into_inner().next() {
+            return match pair.as_rule() {
+                Rule::binary_operation  => operation_as_string(pair),
+                Rule::expression_tuple  => operation_as_string(pair),
+                Rule::binary_operand    => operation_as_string(pair),
+                Rule::assigned_variable => operation_as_string(pair),
+                Rule::number            => operation_as_string(pair),
+                Rule::string            => operation_as_string(pair),
                 _                       => panic!("Unexpected type in binary operation string repr"),
             }
         }
@@ -483,7 +477,7 @@ fn get_variable_name(ast_node: Pair<Rule>) -> String {
         panic!("Can't get variable name unless type assigned_variable");
     }
     if let Some(x) = ast_node.clone().into_inner().find(|y| y.as_rule() == Rule::atom) {
-        return x.as_str().replace(":", "");
+        return x.as_str().replace(':', "");
     } else if let Some(x) = ast_node.clone().into_inner().find(|y| y.as_rule() == Rule::assigned_variable) {
         return get_variable_name(x);
     } else {
@@ -503,7 +497,7 @@ fn parse_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representat
     }
     if let Some(x) = assigned_variable {
         let variable_name = get_variable_name(x);
-        file_writer.write_assignment_variable(&*variable_name);
+        file_writer.write_assignment_variable(&variable_name);
     } else {
         panic!("No variable name in assignment expression");
     }
@@ -536,15 +530,15 @@ fn argument_list_as_str(argument_list: Pair<Rule>) -> String {
                     out += get_primitive_as_str(arg_type).as_str();
                 },
                 Rule::assigned_variable => {
-                    let mut x: String = get_variable_name(arg_type);
+                    let x: String = get_variable_name(arg_type);
                     out += x.as_str();
                 },
                 _ => parse_warn!("argument list as str", arg_type.as_rule()),
             }
         }
-        out.push_str(",");
+        out.push(',');
     }
-    if out.len() > 0 {
+    if !out.is_empty() {
         out.pop();
     }
     out
@@ -584,10 +578,8 @@ fn create_function_symbol_table(
     let args_v: Vec<&str> = args.trim_matches(|c| c == '[' || c == ']').split(',').map(|s| s.trim()).collect();
 
     if let Some(x) = argument_types.clone().expect("no argument types").into_inner().find(|y| y.as_rule() == Rule::argument_types) {
-        let mut i = 0;
-        for pair in x.into_inner() {
+        for (i, pair) in x.into_inner().enumerate() {
             sym_table.add_entry(args_v.get(i).expect("arguments and types size misalign").to_string(), get_symbol_type(pair));
-            i += 1;
         }
     } else {
         panic!("no argument types");
@@ -600,7 +592,7 @@ fn create_function_symbol_table(
 pub fn parse_function_definition(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
-    ret: bool,
+    _ret: bool,
 ) {
     // Write a new function name to the output file
     let mut func_name = String::new();
@@ -625,14 +617,14 @@ pub fn parse_function_definition(
     
     get_function_name(func_name_node.unwrap(), &mut func_name);
     let args = &*argument_list_as_str(func_arg_node.expect("no function arguments"));
-    let mut sym_table;
+    let sym_table;
     if let Some(x) = func_type_spec {
         sym_table = create_function_symbol_table(args, x);
     } else {
         sym_table = internal_representation::sym_table::SymbolTable::new();
         error!("Missing type spec for function {}.", func_name);
     }
-    file_writer.new_function(&*func_name, args, sym_table, vae_init);
+    file_writer.new_function(&func_name, args, sym_table, vae_init);
     
     // Write the body 
     // Start by setting up the channels
@@ -714,18 +706,14 @@ fn parse_tuple(
 fn resolve_tuple_argument(ast_node: Pair<Rule>) -> &str {
     println!("{}\n{}", ast_node, ast_node.as_str());
     panic!("TODO implement tuple arguments");
-    ""
 }
 
 fn resolve_negative_number(ast_node: Pair<Rule>) -> &str {
     println!("{}", ast_node);
     for pair in ast_node.into_inner() {
-        match pair.as_rule() {
-            Rule::number => {
+        if pair.as_rule() == Rule::number {
                 let s = format!("-{}", pair.as_str());
                 return Box::leak(s.into_boxed_str());
-            },
-            _ => () 
         }
     }
     ""
@@ -751,11 +739,11 @@ fn parse_call_arguments(ast_node: Pair<Rule>) -> String {
                 _ => panic!("Failed to find argument in argument list")
             };
             out.push_str(&arg_s);
-            out.push_str(",");
+            out.push(',');
         }
     }
     out.pop();
-    out.push_str("]");
+    out.push(']');
     out
 }
 
@@ -787,9 +775,9 @@ fn parse_expression_tuple(
         if let Some(arguments) = arguments_node {
             println!("{}", arguments.as_str());
             let call_args = parse_call_arguments(arguments);
-            file_writer.write_function_call(&*func_name, &call_args, "" /* TODO, replace with var name if assignment */, ret);
+            file_writer.write_function_call(&func_name, &call_args, "" /* TODO, replace with var name if assignment */, ret);
         } else {
-            file_writer.write_function_call(&*func_name, "", "", ret);
+            file_writer.write_function_call(&func_name, "", "", ret);
         }
     }
 
@@ -798,7 +786,7 @@ fn parse_expression_tuple(
 fn parse_spawn_process(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
-    ret: bool
+    _ret: bool
 ) {
     let mut process_type = None;
     let mut process_arguments = None;
@@ -814,7 +802,7 @@ fn parse_spawn_process(
     if let Some(x) = process_type {
         if let Some(y) = process_arguments {
             let args = &*argument_list_as_str(y);
-            file_writer.write_spawn_process(&*x.as_str().replace(":", ""), args);
+            file_writer.write_spawn_process(&x.as_str().replace(':', ""), args);
         } else {
             panic!("No process type provided in spawn");
         }        
@@ -901,7 +889,7 @@ fn create_condition(
                 let r_op = operands.remove(0);
  
                 // Return new FormattedCondition
-                return internal_representation::formatted_condition::FormattedCondition::BinaryOperation(&"and", Box::new(l_op), Box::new(r_op));
+                return internal_representation::formatted_condition::FormattedCondition::BinaryOperation("and", Box::new(l_op), Box::new(r_op));
             },
             Rule::not => {
                 // Recurse into the condition
@@ -1011,13 +999,13 @@ fn parse_unless_conditions(
     ret: bool,
 ) {
     let mut do_block: Option<Pair<Rule>> = None;
-    let mut do_else_block: Option<Pair<Rule>> = None;
+    let mut _do_else_block: Option<Pair<Rule>> = None;
     let mut condition: Option<Pair<Rule>> = None;
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::boolean_operand      => condition = Some(pair), 
             Rule::r#do                 => do_block = Some(pair),
-            Rule::do_else              => do_else_block = Some(pair),
+            Rule::do_else              => _do_else_block = Some(pair),
             _                          => parse_warn!("conditions", pair.as_rule()),
         }
     }
@@ -1042,12 +1030,12 @@ fn parse_primitive(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, ret: bool
 ) {
-    file_writer.write_primitive(&*ast_node.as_str(), ret);
+    file_writer.write_primitive(ast_node.as_str(), ret);
 }
 
 fn name_from_tuple_str(input: &str) -> &str {
     // Check if the input string starts with "{:" and ends with "}"
-    if input.starts_with("{:") && input.ends_with("}") {
+    if input.starts_with("{:") && input.ends_with('}') {
         // Remove leading "{:" and trailing "}"
         let content = &input[2..(input.len() - 1)];
 
@@ -1057,7 +1045,7 @@ fn name_from_tuple_str(input: &str) -> &str {
         // Check if there are at least two parts (name and other content)
         if parts.len() >= 2 {
             // Extract and return the name (the first part)
-            return &parts[0];
+            return parts[0];
         }
     }
 
