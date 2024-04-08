@@ -82,9 +82,11 @@ assignment = { "{:=, " ~ metadata ~ ", [" ~ assigned_variable ~ ", " ~ expressio
 
 assigned_variable = { "{" ~ atom ~ ", " ~ metadata ~ ", nil}"  }
 
-function_definition = { (type_spec ~ ", ")? ~ (( "{:defp" | "{:def") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}") }
+function_definition = { (vae_init ~ ", ")? ~ (type_spec ~ ", ")? ~ (( "{:defp" | "{:def") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}") }
 
 type_spec = { "{:@, " ~ metadata ~ ", [{:spec, " ~ metadata ~ ", [{:\"::\", " ~ metadata ~ ", [" ~ function_arguments_type ~ ", " ~ argument_type ~"]}]}]}" } 
+
+vae_init = { "{:@, " ~ metadata ~ ", [{:vae_init, " ~ metadata ~ ", [true]}]}" }
 
 function_arguments_type = { "{" ~ atom ~ ", " ~ metadata ~ ", " ~ argument_types ~ "}" }
 

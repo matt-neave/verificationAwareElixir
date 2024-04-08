@@ -91,22 +91,17 @@ impl FileWriter {
 }
 
 
-    pub fn new_function(&mut self, func_name: &str, arguments: &str, sym_table: sym_table::SymbolTable) {
-        // TODO: look into using annotation instead of matching on start
-        match &*func_name {
-            "start" => {
-                self.content.push_str(&*format!("init {{\n"));
-                self.function_channels.push_str("chan p0_mailbox = [10] of { mtype, MessageList };\n");
-                self.function_body.push_str("mailbox[0] = p0_mailbox;\n");
-                self.function_body.push_str("int __pid = 0;\n");
-            },
-            _       => 
-                if arguments.is_empty() {
-                    self.content.push_str(&*format!("proctype {} (chan ret; int __pid) {{\n", &*func_name));
-                } else {
-                    let formatted_args = Self::format_arguments(arguments, sym_table);
-                    self.content.push_str(&*format!("proctype {} ({}; chan ret; int __pid) {{\n", &*func_name, &*formatted_args));
-                },
+    pub fn new_function(&mut self, func_name: &str, arguments: &str, sym_table: sym_table::SymbolTable, init: bool) {
+        if init {
+            self.content.push_str(&*format!("init {{\n"));
+            self.function_channels.push_str("chan p0_mailbox = [10] of { mtype, MessageList };\n");
+            self.function_body.push_str("mailbox[0] = p0_mailbox;\n");
+            self.function_body.push_str("int __pid = 0;\n");
+        } else if arguments.is_empty() {
+            self.content.push_str(&*format!("proctype {} (chan ret; int __pid) {{\n", &*func_name));
+        } else {
+            let formatted_args = Self::format_arguments(arguments, sym_table);
+            self.content.push_str(&*format!("proctype {} ({}; chan ret; int __pid) {{\n", &*func_name, &*formatted_args));
         }
     }
 

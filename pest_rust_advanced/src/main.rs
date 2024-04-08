@@ -609,6 +609,7 @@ pub fn parse_function_definition(
     let mut func_body_node: Option<Pair<Rule>> = None;
     let mut func_arg_node: Option<Pair<Rule>> = None;
     let mut func_type_spec: Option<Pair<Rule>> = None;
+    let mut vae_init = false;
     let mut _func_metadata_node: Option<Pair<Rule>> = None;
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
@@ -617,6 +618,7 @@ pub fn parse_function_definition(
             Rule::r#do               => func_body_node = Some(pair),
             Rule::metadata           => _func_metadata_node = Some(pair),
             Rule::type_spec          => func_type_spec = Some(pair),
+            Rule::vae_init           => vae_init = true,
             _                        => parse_warn!("function definition", pair.as_rule()),
         }
     }
@@ -630,7 +632,7 @@ pub fn parse_function_definition(
         sym_table = internal_representation::sym_table::SymbolTable::new();
         error!("Missing type spec for function {}.", func_name);
     }
-    file_writer.new_function(&*func_name, args, sym_table);
+    file_writer.new_function(&*func_name, args, sym_table, vae_init);
     
     // Write the body 
     // Start by setting up the channels
