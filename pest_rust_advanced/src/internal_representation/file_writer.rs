@@ -98,14 +98,14 @@ impl FileWriter {
                 self.content.push_str(&*format!("init {{\n"));
                 self.function_channels.push_str("chan p0_mailbox = [10] of { mtype, MessageList };\n");
                 self.function_body.push_str("mailbox[0] = p0_mailbox;\n");
-
+                self.function_body.push_str("int __pid = 0;\n");
             },
             _       => 
                 if arguments.is_empty() {
-                    self.content.push_str(&*format!("proctype {} (chan ret) {{\n", &*func_name));
+                    self.content.push_str(&*format!("proctype {} (chan ret; int __pid) {{\n", &*func_name));
                 } else {
                     let formatted_args = Self::format_arguments(arguments, sym_table);
-                    self.content.push_str(&*format!("proctype {} ({}; chan ret) {{\n", &*func_name, &*formatted_args));
+                    self.content.push_str(&*format!("proctype {} ({}; chan ret; int __pid) {{\n", &*func_name, &*formatted_args));
                 },
         }
     }
@@ -137,7 +137,7 @@ impl FileWriter {
         if return_variable.is_empty() {
            return_variable = format!("val{}", self.function_call_count); 
         }
-        self.function_body.push_str(&*format!("run {}{}, ret{});\n", func_name, call_arguments, self.function_call_count));
+        self.function_body.push_str(&*format!("run {}{}, ret{}, __pid);\n", func_name, call_arguments, self.function_call_count));
         self.function_body.push_str(&*format!("int {};\n", return_variable));
         self.function_body.push_str(&*format!("ret{} ? {}\n", self.function_call_count, return_variable)); 
     }
@@ -230,20 +230,17 @@ impl FileWriter {
         self.process_count += 1;
         self.function_call_count += 1;
         self.function_channels.push_str(&format!("chan ret{} = [1] of {{ int }};\n", self.function_call_count));
-        // add the channel as an argument (consider if args is empty or not)
 
-        let formatted_args = format!("ret{}{}{}", self.function_call_count, if args.is_empty() {""} else {","} ,args);
-        
+        // Format args depending on if they are empty
+        let formatted_args = format!("{}{}ret{},{}", args, if args.is_empty() {""} else {","}, self.function_call_count, self.function_call_count);
+
         let var_name = self.var_stack.pop();
         let i = self.process_count;
         if let Some(x) = var_name {
             // Create a mailbox for each process
-            self.function_channels.push_str(&*format!("chan p{}_mailbox = [10] of {{ mtype, MessageList }};\n", self.process_count));
-            
-            // TODO: does function_body instead of function_metabody preserve semantics
-            self.function_metabody.push_str(&*format!("mailbox[{}] = p{}_mailbox;\n", i, i));
-            
-            self.function_body.push_str(&*format!("run {}({});\n", proctype, formatted_args));
+            self.function_channels.push_str(&format!("chan p{}_mailbox = [10] of {{ mtype, MessageList }};\n", self.process_count));            
+            self.function_metabody.push_str(&format!("mailbox[{}] = p{}_mailbox;\n", i, i));
+            self.function_body.push_str(&format!("run {}({});\n", proctype, formatted_args));
 
             // Add to the lookup tables
             self.process_name.insert(i, x.clone());
@@ -264,7 +261,7 @@ impl FileWriter {
         for mut arg in args {
             // TODO: replace third argument with type
             if arg.starts_with("{:self,") {
-                arg = String::from("_pid");
+                arg = String::from("__pid");
             }
 
             self.function_body.push_str(&*format!("msg_{}.m{}.data{} = {};\n", self.function_messages, i, 2, arg));
@@ -282,7 +279,7 @@ impl FileWriter {
         self.function_body.push_str("do\n:: true ->\n");
         self.function_body.push_str("mtype messageType;\n");
         self.function_body.push_str(&*format!("MessageList rec_v_{};\n", self.receive_count));
-        self.function_body.push_str(&*format!("mailbox[_pid] ? messageType, rec_v_{};\nif\n", self.receive_count));
+        self.function_body.push_str(&*format!("mailbox[__pid] ? messageType, rec_v_{};\nif\n", self.receive_count));
         self.receive_count += 1;
     }
 

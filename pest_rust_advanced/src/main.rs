@@ -520,19 +520,33 @@ fn get_function_name(ast_node: Pair<Rule>, str_out: &mut String) {
     str_out.remove(0);
 }
 
+fn get_primitive_as_str(primitive: Pair<Rule>) -> String {
+    match primitive.as_rule() {
+        Rule::string => format!("\"{}\"", primitive.as_str()),
+        _            => primitive.as_str().to_string(),
+    }
+}
+
 fn argument_list_as_str(argument_list: Pair<Rule>) -> String {
     let mut out = String::from("");
     for argument in argument_list.into_inner() {
-        for pair in argument.into_inner() {
-            if pair.as_rule() == Rule::atom {
-                let mut x: String = String::from(pair.as_str());
-                x = x[1..].to_string();
-                out += x.as_str();
-                out += ",";
+        for arg_type in argument.into_inner() {
+            match arg_type.as_rule() {
+                Rule::primitive => {
+                    out += get_primitive_as_str(arg_type).as_str();
+                },
+                Rule::assigned_variable => {
+                    let mut x: String = get_variable_name(arg_type);
+                    out += x.as_str();
+                },
+                _ => parse_warn!("argument list as str", arg_type.as_rule()),
             }
         }
+        out.push_str(",");
     }
-    out.pop();
+    if out.len() > 0 {
+        out.pop();
+    }
     out
 }
 

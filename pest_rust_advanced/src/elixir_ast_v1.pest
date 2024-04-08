@@ -52,12 +52,13 @@ metadata_arguments = { ("[" ~ (metadata_argument ~ ", ")* ~ metadata_argument ~ 
 
 metadata_argument = { line_number | alias_status | context }
 
-alias_name = { "{:__aliases__" ~ ", " ~ metadata ~ ", " ~ atoms ~ "}" }
+alias_name = { "{:__aliases__" ~ ", " ~ metadata ~ ", " ~ (atoms | unknown_alias) ~ "}" }
 
 context = { "context: Elixir" }
 
 // TODO: confirm
-atoms = { "[" ~ (atom)* ~ "]" }
+atoms = { "[" ~ (atom ~ ", ")* ~ atom? ~ "]" }
+unknown_alias = { "[...]" }
 
 atom = { ":" ~ letters }
 
@@ -97,7 +98,7 @@ argument_type = { ("{" ~ type ~ ", " ~ metadata ~ ", []}") | atom }
 
 function_arguments = { nil | "[]" | ("[" ~ (function_argument ~ ", ")* ~ function_argument ~ "]") }
 
-function_argument = { "{" ~ atom ~ ", " ~ metadata ~ ", " ~ nil ~ "}" }
+function_argument = { assigned_variable | primitive }
 
 function_name = { atom }
 
