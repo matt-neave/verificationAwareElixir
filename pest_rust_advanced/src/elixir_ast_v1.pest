@@ -94,7 +94,7 @@ ltl_spec = { "{:@, " ~ metadata ~ ", [{:ltl, " ~ metadata ~ ", [\"" ~ ltl ~ "\"]
 
 function_arguments_type = { "{" ~ atom ~ ", " ~ metadata ~ ", " ~ argument_types ~ "}" }
 
-argument_types = { "[" ~ (argument_type ~ ", ")* ~ argument_type ~ "]" }
+argument_types = { ("[" ~ (argument_type ~ ", ")* ~ argument_type ~ "]") | "[]" }
 
 integer_type = { ":integer" }
 
