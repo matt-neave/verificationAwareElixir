@@ -1,1 +1,0 @@
-{:send, [line: 15], [{:pid, [line: 15], nil}, {:res, {:+, [line: 15], [{:x, [line: 15], nil}, {:y, [line: 15], nil}]}}]}

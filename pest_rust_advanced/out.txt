@@ -1,7 +1,0 @@
-if_condition(53, 57, [primitive(53, 57, [bool(53, 57)])])
-
-true
-
-if_condition(497, 608, [or(497, 608, [metadata(503, 513, [metadata_arguments(503, 513, [metadata_argument(504, 512, [line_number(504, 512, [number(510, 512, [int(510, 512)])])])])]), if_condition(516, 560, [boolean_expression(516, 560, [operation(516, 560, [metadata(521, 531, [metadata_arguments(521, 531, [metadata_argument(522, 530, [line_number(522, 530, [number(528, 530, [int(528, 530)])])])])]), variable_argument(534, 555, [tuple(534, 555, [expression_tuple(534, 555, [atom(535, 537, [letters(536, 537)]), metadata(539, 549, [metadata_arguments(539, 549, [metadata_argument(540, 548, [line_number(540, 548, [number(546, 548, [int(546, 548)])])])])]), expression_arguments(551, 554, [nil(551, 554)])])])]), primitive(557, 558, [int(557, 558)])])])]), if_condition(562, 606, [boolean_expression(562, 606, [operation(562, 606, [metadata(567, 577, [metadata_arguments(567, 577, [metadata_argument(568, 576, [line_number(568, 576, [number(574, 576, [int(574, 576)])])])])]), variable_argument(580, 601, [tuple(580, 601, [expression_tuple(580, 601, [atom(581, 583, [letters(582, 583)]), metadata(585, 595, [metadata_arguments(585, 595, [metadata_argument(586, 594, [line_number(586, 594, [number(592, 594, [int(592, 594)])])])])]), expression_arguments(597, 600, [nil(597, 600)])])])]), primitive(603, 604, [int(603, 604)])])])])])])
-
-{:or, [line: 14], [{:<, [line: 14], [{:x, [line: 14], nil}, 0]}, {:<, [line: 14], [{:y, [line: 14], nil}, 0]}]}

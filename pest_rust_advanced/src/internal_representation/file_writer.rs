@@ -60,9 +60,9 @@ impl FileWriter {
 
     pub fn write_operation(&mut self, operand: &str, left_e: &str, right_e: &str, ret: bool) {
         let formatted_string = if ret {
-            format!("ret ! {} {} {}\n", left_e, operand, right_e)
+            format!("ret ! {} {} {};\n", left_e, operand, right_e)
         } else {
-            format!("{} {} {}\n", left_e, operand, right_e)
+            format!("{} {} {};\n", left_e, operand, right_e)
         };
         self.function_body.push_str(formatted_string.as_str());
     }
@@ -116,7 +116,7 @@ impl FileWriter {
         self.function_messages = 0;
     }
 
-    pub fn write_function_call(&mut self, func_name: &str, call_arguments: &str, return_variable: &str, ret: bool) {
+    pub fn write_function_call(&mut self, func_name: &str, call_arguments: &str, ret: bool) {
         // Track how many function calls have taken place 
         // Create a channel for each
         // Name the receive variables appropriately
@@ -127,12 +127,14 @@ impl FileWriter {
         // TODO make a mapping of variable name
         let call_arguments = call_arguments.replace('[', "(");
         let call_arguments = call_arguments.replace(']', "");
-        let mut return_variable = return_variable.to_owned();
-        if return_variable.is_empty() {
+        let return_variable;
+        if self.var_stack.is_empty() {
            return_variable = format!("val{}", self.function_call_count); 
+           self.function_body.push_str(&format!("int {};\n", return_variable));
+        } else {
+           return_variable = self.var_stack.pop().unwrap(); 
         }
         self.function_body.push_str(&format!("run {}{}, ret{}, __pid);\n", func_name, call_arguments, self.function_call_count));
-        self.function_body.push_str(&format!("int {};\n", return_variable));
         self.function_body.push_str(&format!("ret{} ? {};\n", self.function_call_count, return_variable));
         if ret {
             self.function_body.push_str(&format!("ret ! {};\n", return_variable));
@@ -184,7 +186,7 @@ impl FileWriter {
     }
 
     pub fn commit_if(&mut self) {
-        self.function_body.push_str("fi\n");
+        self.function_body.push_str("fi;\n");
     }
 
     // Method to commit the content to the file and reset the string
@@ -284,7 +286,7 @@ impl FileWriter {
     }
 
     pub fn commit_receive(&mut self) {
-        self.function_body.push_str(&format!(":: else -> mailbox[_pid] ! messageType, rec_v_{};\n", self.receive_count - 1));
+        self.function_body.push_str(&format!(":: else -> mailbox[__pid] ! messageType, rec_v_{};\n", self.receive_count - 1));
         self.function_body.push_str("fi;\nod;\n");
     }
 
@@ -296,7 +298,7 @@ impl FileWriter {
                 self.function_body.push_str(&format!(":: messageType == {} ->\n", assignment.to_uppercase()));
             } else {
                 self.function_body.push_str(&format!("int {};\n", assignment));
-                self.function_body.push_str(&format!("{} = rec_v_{}.m{}.{}\n", assignment, self.receive_count - 1, i, "data2"));
+                self.function_body.push_str(&format!("{} = rec_v_{}.m{}.{};\n", assignment, self.receive_count - 1, i, "data2"));
             }
         }
     }
@@ -328,7 +330,7 @@ impl FileWriter {
         ret: bool
     ) {
         if ret {
-            self.function_body.push_str(&format!("ret ! {}\n", var));
+            self.function_body.push_str(&format!("ret ! {};\n", var));
         } else {
             println!("Trying to write {} might not make sense", var);
             self.function_body.push_str(&format!("{}\n", var));

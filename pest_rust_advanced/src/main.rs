@@ -646,7 +646,7 @@ pub fn parse_function_definition(
     // Write the body 
     // Start by setting up the channels
     // Use predefiend code blocks for send and recv
-    parse_do(func_body_node.unwrap(), file_writer, false, true);
+    parse_do(func_body_node.unwrap(), file_writer, false, !vae_init);
 
     // Close the function 
     file_writer.commit_function();
@@ -797,9 +797,9 @@ fn parse_expression_tuple(
         func_name.remove(0);
         if let Some(arguments) = arguments_node {
             let call_args = parse_call_arguments(arguments);
-            file_writer.write_function_call(&func_name, &call_args, "" /* TODO, replace with var name if assignment */, ret);
+            file_writer.write_function_call(&func_name, &call_args, ret);
         } else {
-            file_writer.write_function_call(&func_name, "", "", ret);
+            file_writer.write_function_call(&func_name, "", ret);
         }
     }
 
@@ -854,7 +854,6 @@ fn parse_if(
     ret: bool,
     func_def: bool,
 ) {
-    println!("Parsing if with ret: {}", ret);
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::conditions => parse_conditions(pair, file_writer, ret, func_def),

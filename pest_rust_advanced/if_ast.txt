@@ -1,1 +1,0 @@
-{:def, [], [{:my_function, [], nil}, [do: {:if, [], [true, [do: {{:., [], [{:__aliases__, [alias: false], [:IO]}, :puts]}, [], ["Hello"]}]]}]]}
