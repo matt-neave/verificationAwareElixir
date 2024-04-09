@@ -84,11 +84,13 @@ assignment = { "{:=, " ~ metadata ~ ", [" ~ assigned_variable ~ ", " ~ expressio
 
 assigned_variable = { "{" ~ atom ~ ", " ~ metadata ~ ", nil}" }
 
-function_definition = { (vae_init ~ ", ")? ~ (type_spec ~ ", ")? ~ (( "{:defp" | "{:def") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}") }
+function_definition = { (ltl_spec ~ ", ")? ~ (vae_init ~ ", ")? ~ (type_spec ~ ", ")? ~ (( "{:defp" | "{:def") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}") }
 
 type_spec = { "{:@, " ~ metadata ~ ", [{:spec, " ~ metadata ~ ", [{:\"::\", " ~ metadata ~ ", [" ~ function_arguments_type ~ ", " ~ argument_type ~"]}]}]}" } 
 
 vae_init = { "{:@, " ~ metadata ~ ", [{:vae_init, " ~ metadata ~ ", [true]}]}" }
+
+ltl_spec = { "{:@, " ~ metadata ~ ", [{:ltl, " ~ metadata ~ ", [\"" ~ ltl ~ "\"]}]}" }
 
 function_arguments_type = { "{" ~ atom ~ ", " ~ metadata ~ ", " ~ argument_types ~ "}" }
 
@@ -204,5 +206,78 @@ macro = { "defmacro" }
 
 //TODO complete
 directive = { "import" | "alias" | "require" }
+
+ltl = { ltl_term ~ (ltl_binop ~ ltl_term)* }
+
+ltl_term = {
+    ltl_opd |
+    ("(" ~ ltl ~ ")") |
+    ltl_unary_term
+}
+
+ltl_unary_term = {
+    ltl_unop ~ ltl_term
+}
+
+ltl_opd = {
+    ltl_primitive ~ (ltl_embed_binop ~ ltl_opd)*
+}
+
+ltl_primitive = {
+    number | alpha_letters
+}
+
+ltl_embed_binop = {
+    "<" | ">" | "+" | "-" | "<=" | ">="
+}
+
+ltl_unop = {
+    always | eventually | ltl_negation
+}
+
+always = {
+    "always" | "[]"
+}
+
+eventually = {
+    "eventually" | "<>"
+}
+
+ltl_negation = {
+    "!"
+}
+
+ltl_binop = {
+    until | weak_until | dual | ltl_and | ltl_or | implication | equivalence
+}
+
+until = {
+    "until" | "U"
+}
+
+weak_until = {
+    "W"
+}
+
+dual = {
+    "V"
+}
+
+ltl_and = {
+    "&&" | "/\\"
+}
+
+ltl_or = {
+    "||" | "\\/"
+}
+
+implication = {
+    "implies" | "->"
+}
+
+equivalence = {
+    "equivalent" | "<->"
+}
+
 
 //TODO case, match, send, receive, guards, ranges, for comprehensions, maps...
