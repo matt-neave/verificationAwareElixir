@@ -1,5 +1,6 @@
 defmodule MajorityVote do
 
+  @ltl "<>(maj>1)"
   @vae_init true
   def start do
     spawn(Voter, :vote, [self()])

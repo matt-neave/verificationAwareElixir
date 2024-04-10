@@ -13,6 +13,9 @@ pub struct FileWriter {
     function_body: String,
     function_channels: String,
     function_metabody: String,
+    ltl_specs: String,
+    ltl_header: String,
+    ltl_func: bool,
     function_call_count: u32,
     process_count: i32,
     mailbox_id: HashMap<String, i32>,
@@ -22,7 +25,9 @@ pub struct FileWriter {
     _maximum_message_size: u32,
     function_messages: u32,
     receive_count: u32,
+    ltl_count: u32,
     file: File,
+    module: String,
 }
 
 impl FileWriter {
@@ -35,6 +40,9 @@ impl FileWriter {
             function_body: String::new(),
             function_channels: String::new(),
             function_metabody: String::new(),
+            ltl_specs: String::new(),
+            ltl_header: String::new(),
+            ltl_func: false,
             function_call_count: 0,
             process_count: 0,
             mailbox_id: HashMap::new(),
@@ -44,7 +52,9 @@ impl FileWriter {
             _maximum_message_size: 1,
             function_messages: 0,
             receive_count: 0,
+            ltl_count: 0,
             file,
+            module: String::new()
         })
     }
 
@@ -114,6 +124,7 @@ impl FileWriter {
         self.function_body = String::new();
         self.function_call_count = 0;
         self.function_messages = 0;
+        self.ltl_func = false;
     }
 
     pub fn write_function_call(&mut self, func_name: &str, call_arguments: &str, ret: bool) {
@@ -191,7 +202,7 @@ impl FileWriter {
 
     // Method to commit the content to the file and reset the string
     pub fn commit(&mut self) -> io::Result<()> {
-
+        self.content.push_str(&format!("\n{}", self.ltl_specs));
         // Write header meta information
         // TODO: paramatise mailbox length and byte array lengths
         // TODO: use maximum_message_size to determine number of messages in list
@@ -201,11 +212,11 @@ impl FileWriter {
             var_name = String::from(&format!("mtype = {{{}}};\n", unique_mtypes.join(",")));
         }
         var_name.push_str(&format!("typedef MessageType {{\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n}};\ntypedef\nMessageList {{\nMessageType m1;\nMessageType m2;\nMessageType m3;\n}};\nchan mailbox[{}] = [10] of {{ mtype, MessageList }};\n\n", self.process_count + 1));
+        var_name.push_str(&format!("{}\n", self.ltl_header));
         let header_buf = var_name
             .as_bytes();
 
         let _ = self.file.write_all(header_buf);
-
         // Write parsed content
         self.file.write_all(self.content.as_bytes())?;
         self.content.clear(); // Reset the string
@@ -223,7 +234,12 @@ impl FileWriter {
     }
 
     pub fn write_assignment_variable(&mut self, var: &str) {
-        self.function_body.push_str(&format!("int {};\n", var));
+        let formatted_var = &format!("int {};\n", var);
+        if self.ltl_func {
+            self.ltl_header.push_str(formatted_var)
+        } else {
+            self.function_body.push_str(formatted_var);
+        }
         self.function_body.push_str(&format!("{} = ", var));
 
         // Push the variable name to the stack to be applied by spawn
@@ -335,5 +351,20 @@ impl FileWriter {
             println!("Trying to write {} might not make sense", var);
             self.function_body.push_str(&format!("{}\n", var));
         }
+    }
+
+    pub fn write_ltl(
+        &mut self,
+        spec: &str
+    ) {
+        self.ltl_func = true;
+        self.ltl_specs.push_str(&format!("ltl ltl_{} {{ {} }};", self.ltl_count, spec));
+    }
+
+    pub fn write_defmodule(
+        &mut self,
+        module: &str
+    ) {
+        self.module = module.to_string();
     }
 }

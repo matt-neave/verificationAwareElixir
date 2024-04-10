@@ -619,6 +619,7 @@ pub fn parse_function_definition(
     let mut func_arg_node: Option<Pair<Rule>> = None;
     let mut func_type_spec: Option<Pair<Rule>> = None;
     let mut vae_init = false;
+    let mut ltl_spec: Option<Pair<Rule>> = None;
     let mut _func_metadata_node: Option<Pair<Rule>> = None;
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
@@ -628,6 +629,7 @@ pub fn parse_function_definition(
             Rule::metadata           => _func_metadata_node = Some(pair),
             Rule::type_spec          => func_type_spec = Some(pair),
             Rule::vae_init           => vae_init = true,
+            Rule::ltl_spec           => ltl_spec = Some(pair),
             _                        => parse_warn!("function definition", pair.as_rule()),
         }
     }
@@ -635,6 +637,12 @@ pub fn parse_function_definition(
     get_function_name(func_name_node.unwrap(), &mut func_name);
     let args = &*argument_list_as_str(func_arg_node.expect("no function arguments"));
     let sym_table;
+    if let Some(x) = ltl_spec {
+        // ltl spec will be last element
+        let ltl = x.into_inner().next_back().unwrap();
+        file_writer.write_ltl(ltl.as_str());
+    }
+
     if let Some(x) = func_type_spec {
         sym_table = create_function_symbol_table(args, x);
     } else {
