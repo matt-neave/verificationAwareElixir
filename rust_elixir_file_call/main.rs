@@ -11,7 +11,7 @@ fn main() {
     let ast_extractor_code = &*format!("defmodule AstExtractor do
   def main do
     {{:ok, ast}} = Code.string_to_quoted(File.read!(\"{}\"))
-    File.write!(\"ast_output.txt\", inspect(ast)) # Writing AST to a file
+    File.write!(\"ast_output.txt\", inspect(ast, limit: :infinity)) # Writing AST to a file
     ast
   end
 end", dir.to_str().unwrap());

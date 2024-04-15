@@ -16,7 +16,7 @@ use log::LevelFilter;
 use env_logger::fmt::Color;
 
 mod internal_representation;
-use internal_representation::formatted_condition;
+use internal_representation::{formatted_condition, sym_table};
 
 #[path = "macros/parse_macros.rs"]
 #[macro_use]
@@ -41,6 +41,7 @@ fn main() {
     
     let mut writer = internal_representation::file_writer::FileWriter::new("test_out.pml").unwrap();
 
+    println!("{}", prog_ast);
     parse_program(prog_ast, &mut writer);
 
     writer.commit().expect("Failed to commit to file");
@@ -192,16 +193,18 @@ pub fn parse_block_statement(
 ) {
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
-            Rule::function_definition => parse_function_definition(pair, file_writer, ret),
-            Rule::defmodule           => parse_defmodule(pair, file_writer),
-            Rule::tuple               => parse_tuple(pair, file_writer, ret, func_def),
-            Rule::assignment          => parse_assignment(pair, file_writer, ret, func_def),
-            Rule::send                => parse_send(pair, file_writer, ret),
-            Rule::receive             => parse_receive(pair, file_writer, ret, func_def),
-            Rule::io                  => parse_io(pair, file_writer, ret),
-            Rule::spawn_process       => parse_spawn_process(pair, file_writer, ret),
-            Rule::assigned_variable   => parse_assigned_variable(pair, file_writer, ret),
-            _                         => parse_warn!("block statement", pair.as_rule()),
+            Rule::function_definition  => parse_function_definition(pair, file_writer, ret),
+            Rule::defmodule            => parse_defmodule(pair, file_writer),
+            Rule::tuple                => parse_tuple(pair, file_writer, ret, func_def),
+            Rule::assignment           => parse_assignment(pair, file_writer, ret, func_def),
+            Rule::array_assignment     => parse_array_assignment(pair, file_writer, ret, func_def),
+            Rule::array_read           => parse_array_read(pair, file_writer, ret, func_def),
+            Rule::send                 => parse_send(pair, file_writer, ret),
+            Rule::receive              => parse_receive(pair, file_writer, ret, func_def),
+            Rule::io                   => parse_io(pair, file_writer, ret),
+            Rule::spawn_process        => parse_spawn_process(pair, file_writer, ret),
+            Rule::assigned_variable    => parse_assigned_variable(pair, file_writer, ret),
+            _                          => parse_warn!("block statement", pair.as_rule()),
         }
     }
 }
@@ -496,7 +499,7 @@ fn get_variable_name(ast_node: Pair<Rule>) -> String {
     } else if let Some(x) = ast_node.clone().into_inner().find(|y| y.as_rule() == Rule::assigned_variable) {
         return get_variable_name(x);
     } else {
-        panic!("No atom in assigned variable");
+        panic!("Unexpected type in assigned variable");
     }
 }
 
@@ -510,9 +513,15 @@ fn parse_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representat
             _                         => (),
         }
     }
+    let typ;
+    if let Some(x) = expression.clone() {
+        typ = get_exp_type(x);
+    } else {
+        panic!("No expression in assignment expression");
+    }
     if let Some(x) = assigned_variable {
         let variable_name = get_variable_name(x);
-        file_writer.write_assignment_variable(&variable_name);
+        file_writer.write_assignment_variable(&variable_name, typ);
     } else {
         panic!("No variable name in assignment expression");
     }
@@ -521,6 +530,128 @@ fn parse_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representat
     } else {
         panic!("No expression in assignment expression");
     }
+}
+
+fn parse_array_assignment(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    _ret: bool,
+    _func_def: bool,
+) {
+    let mut assigned_variable = None;
+    let mut array = None;
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::assigned_variable => assigned_variable = Some(pair),
+            Rule::array             => array = Some(pair),
+            _                       => (),
+        }
+    }
+    // Get the array type
+    let typ;
+    if let Some(x) = array.clone() {
+        typ = get_array_type(x);
+    } else {
+        panic!("No array in array assignment expression");
+    }
+    if let Some(x) = assigned_variable {
+        let variable_name = get_variable_name(x);
+        // TODO type the array
+        file_writer.write_array_assignment(&variable_name, typ);
+    } else {
+        panic!("No variable name in array assignment expression");
+    }
+    if let Some(x) = array {
+        parse_array(x, file_writer, false);
+    }
+}
+
+fn parse_array_read(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    _ret: bool,
+    _func_def: bool,
+) {
+    let mut array_assigned_variable = None;
+    let mut expression_argument = None;
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::array_assigned_variable => array_assigned_variable = Some(pair),
+            Rule::expression_argument     => expression_argument = Some(pair),
+            _                             => (),
+        }
+    };
+    let mut vars = Vec::new();
+    if let Some(x) = array_assigned_variable {
+        for var in x.into_inner() {
+            let var_name = get_variable_name(var);
+            if var_name.as_str() != "_" {
+                vars.push(var_name);
+            }
+        }
+    } else {
+        panic!("No variable name in array read expression");
+    };
+    if let Some(x) = expression_argument {
+        let arg = x.into_inner().next().unwrap();
+        let mut assignment = String::new();
+        match arg.as_rule() {
+            Rule::assigned_variable => assignment = get_variable_name(arg),
+            Rule::array => todo!(),
+            _           => error!("Unexpected type in array read expression"),
+        }
+        file_writer.write_array_read(vars, assignment);
+    } else {
+        panic!("No array in array read expression");
+    };
+}
+
+// Gets the type of an expression
+fn get_exp_type(var: Pair<Rule>) -> sym_table::SymbolType {
+    let exp = var.into_inner().next().unwrap();
+    match exp.as_rule() {
+        Rule::number => sym_table::SymbolType::Integer,
+        Rule::negative_number => sym_table::SymbolType::Integer,
+        Rule::bool   => sym_table::SymbolType::Boolean,
+        Rule::self_pid => sym_table::SymbolType::Integer,
+        Rule::string => sym_table::SymbolType::String,
+        Rule::spawn_process => sym_table::SymbolType::Integer,
+        Rule::array => get_array_type(exp),
+        Rule::assigned_variable => sym_table::SymbolType::Unknown,
+        Rule::binary_operation => sym_table::SymbolType::Integer,
+        _            => {
+            parse_warn!("get exp type", exp.as_rule());
+            sym_table::SymbolType::Unknown
+        },
+    }
+}
+
+fn get_array_type(array: Pair<Rule>) -> sym_table::SymbolType {
+    let mut typ = sym_table::SymbolType::Array(Box::new(sym_table::SymbolType::Unknown), 0);
+    for pair in array.into_inner() {
+        match pair.as_rule() {
+            Rule::primitive_array => {
+                let arg = pair.into_inner().next().unwrap();
+                match arg.as_rule() {
+                    Rule::assigned_variable => typ = sym_table::SymbolType::Array(Box::new(sym_table::SymbolType::Unknown), 0),
+                    Rule::primitive => {
+                        let primitive = arg.into_inner().next().unwrap();
+                        match primitive.as_rule() {
+                            Rule::number => typ = sym_table::SymbolType::Array(Box::new(sym_table::SymbolType::Integer), 0),
+                            Rule::string => typ = sym_table::SymbolType::Array(Box::new(sym_table::SymbolType::String), 0),
+                            Rule::bool   => typ = sym_table::SymbolType::Array(Box::new(sym_table::SymbolType::Boolean), 0),
+                            _            => parse_warn!("get array type", primitive.as_rule()),
+                        
+                        };
+                    },
+                    _ => (),
+                }
+            },
+            Rule::metadata => (),
+            _ => parse_warn!("get array type", pair.as_rule()),
+        }
+    }
+    typ
 }
 
 fn get_function_name(ast_node: Pair<Rule>, str_out: &mut String) {
@@ -792,6 +923,7 @@ fn parse_expression_tuple(
             Rule::tuple                => {
                 parse_tuple(pair, file_writer, ret, func_def)
             },
+            Rule::array                => parse_array(pair, file_writer, ret),
             _                          => parse_warn!("expression tuple", pair.as_rule()),
         }
     }
@@ -804,6 +936,7 @@ fn parse_expression_tuple(
         let mut func_name = x.as_str().to_string();
         func_name.remove(0);
         if let Some(arguments) = arguments_node {
+            println!("{}: {}", func_name, arguments.as_str());
             let call_args = parse_call_arguments(arguments);
             file_writer.write_function_call(&func_name, &call_args, ret);
         } else {
@@ -839,7 +972,32 @@ fn parse_spawn_process(
     } else {
         panic!("No process type provided in spawn");
     }
+}
 
+fn parse_array(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    _ret: bool
+) {
+    // Array is either primitive_array or cons
+    let mut elements = Vec::new(); 
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::primitive_array => {
+                pair.into_inner().for_each(|x| elements.push(x.as_str().to_string()));
+            },
+            Rule::function_argument => {
+                let arg = pair.into_inner().next().unwrap();
+                match arg.as_rule() {
+                    Rule::assigned_variable => elements.push(get_variable_name(arg)),
+                    Rule::primitive         => elements.push(get_primitive_as_str(arg)),
+                    _                       => error!("Unexpected function argument in non-primitive array"),
+                }
+            }
+            _                     => parse_warn!("array", pair.as_rule()),
+        }
+    }
+    file_writer.write_array(elements);
 }
 
 fn parse_unless(

@@ -13,24 +13,28 @@ alias_status = { "alias: " ~ bool }
 
 number = { int | float }
 
+// TODO check function_argument is strictly appropriate
+primitive_array = { 
+    "[" ~ (function_argument ~ ", ")* ~ function_argument ~ "]"
+}
+
+array = { 
+    primitive_array | 
+    ("[{:|, " ~ metadata ~ ", [" ~ (function_argument ~ ", ")* ~ function_argument ~ "]}]" ) 
+} 
+
 int = { ASCII_DIGIT+ }
 
 float = { ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ }
 
-unary_op = { "@" | "." | "+" | "-" | "!" | "^" | "not" | "~~~" }
-
-left_op = { "*" | "/" | "+" | "-" }
-
-right_op = { "++" | "--" | "+++" | "---" | ".." | "<>" | "in" | "not in" | "|>" | "<<<" | ">>>" | "<<~" | "~>>" | "<~" | "~>" | "<~>" | "<|>" | "<" | ">" | "<=" | ">=" | "==" | "!=" | "=~" | "===" | "!==" | "&&" | "&&&" | "and" | "||" | "|||" | "or" | "=" | "|" | "::" | "when" | "<-" | "\\" }
-
-binary_operator = { "+" | "-" | "/" | "*" }
+binary_operator = { "++" | "+" | "-" | "/" | "*" }
 
 // TODO: non-exhaustive
 boolean_operator = { "==" | "<=" | ">=" | "<" | ">" }
 
 map_op = { "=>" }
 
-operator = { unary_op | left_op | right_op | map_op }
+operator = { map_op }
 
 unused_characters = { "{" | "}" | "_" | "\\" }
 
@@ -44,7 +48,7 @@ condensed_list = { "'" ~ letters ~ "'" }
 
 bool = { true | false }
 
-primitive = { bool | number | string | atom | self_pid | variable }
+primitive = { bool | number | string | atom | primitive_array | self_pid | variable }
 
 metadata = { nil | metadata_arguments }
 
@@ -76,13 +80,19 @@ block = { "{:__block__" ~ ", " ~ metadata ~ ", " ~ block_statements ~  "}" }
 block_statements = { "[" ~ (block_statement ~ ", ")* ~ block_statement* ~ "]" }
 
 // TODO merge with tuple
-block_statement = { string | assigned_variable | attribute | function_definition | macro | io | directive | assignment | spawn_process | send | receive | defmodule | tuple }
+block_statement = { string | assigned_variable | attribute | function_definition | macro | io | directive | array_read | array_assignment | assignment | spawn_process | send | receive | defmodule | tuple }
 
 tuple = { function_definition | if | unless | or | and | assigned_variable | binary_operation | expression_tuple }
 
 assignment = { "{:=, " ~ metadata ~ ", [" ~ assigned_variable ~ ", " ~ expression_argument ~ "]}" }
+array_assignment = { "{:=, " ~ metadata ~ ", [" ~ assigned_variable ~ ", " ~ array ~ "]}" }
+array_read = { "{:=, " ~ metadata ~ ", [" ~ array_assigned_variable ~ ", " ~ expression_argument ~ "]}" }
 
-assigned_variable = { "{" ~ atom ~ ", " ~ metadata ~ ", nil}" }
+assigned_variable = { 
+    ("{" ~ atom ~ ", " ~ metadata ~ ", nil}")  
+}
+
+array_assigned_variable = { "[" ~ (assigned_variable ~ ", ")* ~ assigned_variable ~ "]" }
 
 function_definition = { (ltl_spec ~ ", ")? ~ (vae_init ~ ", ")? ~ (type_spec ~ ", ")? ~ (( "{:defp" | "{:def") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}") }
 
@@ -136,7 +146,7 @@ not = { "{:not, " ~ metadata ~ ", " ~ "[" ~ boolean_operand ~ "]}" }
 
 conditions = { "[" ~ boolean_operand ~ ", " ~ (do | do_else) ~ "]"}
 
-binary_operand   = { number | string | assigned_variable | binary_operation | expression_tuple }
+binary_operand  = { number | string | assigned_variable | binary_operation | primitive_array | expression_tuple }
 
 binary_operation = { "{:" ~ binary_operator ~ ", " ~ metadata ~ ", [" ~ binary_operand ~ ", " ~ binary_operand ~ "]}" }
 
@@ -191,7 +201,7 @@ spawn_process = { "{:spawn, " ~ metadata ~ ", [" ~ process_name ~ ", " ~ atom ~ 
 // {:__aliases__, [line: 3], [:Calculator]}
 process_name = { "{:__aliases__, " ~ metadata ~ ", [" ~ atom ~ "]}" }
 
-expression_argument = { number | negative_number | string | spawn_process | assigned_variable | binary_operation | tuple | do }
+expression_argument = { number | negative_number | bool | self_pid | string | spawn_process | array | assigned_variable | binary_operation | tuple | do }
 
 attribute = { ":@" ~ ", " ~ metadata ~ ", " ~ attributes }
 

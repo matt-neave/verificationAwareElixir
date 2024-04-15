@@ -13,9 +13,11 @@ pub struct FileWriter {
     function_body: String,
     function_channels: String,
     function_metabody: String,
+    function_sym_table: sym_table::SymbolTable,
     ltl_specs: String,
     ltl_header: String,
     ltl_func: bool,
+    c_state: String,
     function_call_count: u32,
     process_count: i32,
     mailbox_id: HashMap<String, i32>,
@@ -28,6 +30,8 @@ pub struct FileWriter {
     ltl_count: u32,
     file: File,
     module: String,
+    array_capacity: u32,
+    array_var_stack: Vec<String>,
 }
 
 impl FileWriter {
@@ -40,9 +44,11 @@ impl FileWriter {
             function_body: String::new(),
             function_channels: String::new(),
             function_metabody: String::new(),
+            function_sym_table: sym_table::SymbolTable::new(),
             ltl_specs: String::new(),
             ltl_header: String::new(),
             ltl_func: false,
+            c_state: String::new(),
             function_call_count: 0,
             process_count: 0,
             mailbox_id: HashMap::new(),
@@ -54,7 +60,9 @@ impl FileWriter {
             receive_count: 0,
             ltl_count: 0,
             file,
-            module: String::new()
+            module: String::new(),
+            array_capacity: 100,
+            array_var_stack: Vec::new(),
         })
     }
 
@@ -81,7 +89,9 @@ impl FileWriter {
         match t {
             sym_table::SymbolType::Integer => String::from("int"),
             sym_table::SymbolType::String => String::from("byte"),
-            sym_table::SymbolType::Boolean => String::from("int")
+            sym_table::SymbolType::Boolean => String::from("int"),
+            sym_table::SymbolType::Array(x, _) => format!("{}[]", Self::type_to_str(x)),
+            sym_table::SymbolType::Unknown => String::from("int"),
         }
     }
 
@@ -112,6 +122,7 @@ impl FileWriter {
             let formatted_args = Self::format_arguments(arguments, sym_table);
             self.content.push_str(&format!("proctype {} ({}; chan ret; int __pid) {{\n", func_name, &*formatted_args));
         }
+        self.function_sym_table = sym_table::SymbolTable::new();
     }
 
     pub fn commit_function(&mut self) {
@@ -211,7 +222,12 @@ impl FileWriter {
         if !unique_mtypes.is_empty() {
             var_name = String::from(&format!("mtype = {{{}}};\n", unique_mtypes.join(",")));
         }
+        // Messages
         var_name.push_str(&format!("typedef MessageType {{\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n}};\ntypedef\nMessageList {{\nMessageType m1;\nMessageType m2;\nMessageType m3;\n}};\nchan mailbox[{}] = [10] of {{ mtype, MessageList }};\n\n", self.process_count + 1));
+        // Elixir list c_decl
+        let typ = "int";
+        var_name.push_str(&format!("c_decl {{\ntypedef struct LinkedList {{\n{} val;\nstruct LinkedList *next;\n}} LinkedList;\n\nLinkedList* newLinkedList({} val) {{\nLinkedList *newNode = (LinkedList *)malloc(sizeof(LinkedList));\nnewNode->val = val;\nnewNode->next = NULL;\nreturn newNode;\n}};\n\nLinkedList* prepend(LinkedList *head, {} val) {{\nLinkedList *newNode = (LinkedList *)malloc(sizeof(LinkedList));\nnewNode->val = val;\nnewNode->next = head;\nreturn newNode;\n}};\n\nLinkedList* append(LinkedList *head, {} vals[], size_t size) {{\nLinkedList *newNode = head;\nfor ({} i = 0; i < size; i++) {{\nnewNode->next = newLinkedList(vals[i]);\nnewNode = newNode->next;\n}};\nreturn head;\n}};\n}}\n\n", typ, typ, typ, typ, typ));
+        // ltl specs
         var_name.push_str(&format!("{}\n", self.ltl_header));
         let header_buf = var_name
             .as_bytes();
@@ -233,7 +249,7 @@ impl FileWriter {
         
     }
 
-    pub fn write_assignment_variable(&mut self, var: &str) {
+    pub fn write_assignment_variable(&mut self, var: &str, typ: sym_table::SymbolType) {
         let formatted_var = &format!("int {};\n", var);
         if self.ltl_func {
             self.ltl_header.push_str(formatted_var)
@@ -244,6 +260,7 @@ impl FileWriter {
 
         // Push the variable name to the stack to be applied by spawn
         self.var_stack.push(String::from(var));
+        self.function_sym_table.add_entry(String::from(var), typ);
     }
 
     pub fn write_spawn_process(&mut self, proctype: &str, args: &str) {
@@ -366,5 +383,50 @@ impl FileWriter {
         module: &str
     ) {
         self.module = module.to_string();
+    }
+
+    pub fn write_array_assignment(
+        &mut self,
+        var: &str,
+        typ: sym_table::SymbolType,
+    ) {
+        self.function_body.push_str(&format!("int {}[{}];\n", var, self.array_capacity));
+        self.array_var_stack.push(var.to_string());
+        self.function_sym_table.add_entry(var.to_string(), typ);
+    }
+
+    pub fn write_array(
+        &mut self,
+        elements: Vec<String>,
+    ) {
+        // For an assignment, we can take the var off the stack
+        if let Some(var) = self.array_var_stack.pop() {
+            let mut i = 0;
+            for element in elements {
+                // Check if the element type is an array
+                if let Some(sym_table::SymbolType::Array(_, size)) = self.function_sym_table.safe_lookup(&element) {
+                    for j in 0..*size {
+                        self.function_body.push_str(&format!("{}[{}] = {}[{}];\n", var, i, element, j));
+                        i += 1;
+                    }
+                } else {
+                    self.function_body.push_str(&format!("{}[{}] = {};\n", var, i, element));
+                }
+                i += 1;
+            };
+            // Replace the existing symbol table entry with the size and same type as var
+            self.function_sym_table.update_array_size(&var, i);
+        } 
+    }
+
+    pub fn write_array_read(
+        &mut self,
+        assignees: Vec<String>,
+        assignment: String,
+    ) {
+        for (i, assignee) in assignees.iter().enumerate() {
+            self.function_body.push_str(&format!("int {};\n", assignee));
+            self.function_body.push_str(&format!("{} = {}[{}];\n", assignee, assignment, i));
+        }
     }
 }
