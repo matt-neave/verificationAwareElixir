@@ -43,7 +43,10 @@ return head;
 }
 
 
-init{ 
+init {
+chan p0_mailbox = [10] of { mtype, MessageList };
+mailbox[0] = p0_mailbox;
+int __pid = 0;
 int x[100];
 x[0] = 1;
 x[1] = 2;
@@ -51,8 +54,13 @@ int y[100];
 y[0] = 1;
 y[1] = x[0];
 y[2] = x[1];
+int z[100];
+z[0] = y[0];
+z[1] = y[1];
+z[2] = y[2];
+z[3] = 2;
 int head;
-head = y[0];
+head = z[0];
 printf("head\n");
 }
 

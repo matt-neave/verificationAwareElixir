@@ -993,11 +993,42 @@ fn parse_array(
                     Rule::primitive         => elements.push(get_primitive_as_str(arg)),
                     _                       => error!("Unexpected function argument in non-primitive array"),
                 }
-            }
+            },
+            Rule::binary_operand => {
+                let arg = pair.into_inner().next().unwrap();
+                match arg.as_rule() {
+                    Rule::binary_operation  => elements.push(operation_as_string(arg)),
+                    Rule::assigned_variable => elements.push(get_variable_name(arg)),
+                    Rule::number         => elements.push(arg.as_str().to_string()),
+                    Rule::string         => elements.push(arg.as_str().to_string()),
+                    Rule::primitive_array => {
+                        let arr_elements = get_elements_from_primitive_array(arg);
+                        for element in arr_elements {
+                            elements.push(element);
+                        }
+                    },
+                    _                       => error!("Unexpected binary operand in non-primitive array"),
+                }
+            },
             _                     => parse_warn!("array", pair.as_rule()),
         }
     }
     file_writer.write_array(elements);
+}
+
+fn get_elements_from_primitive_array(
+    ast_node: Pair<Rule>
+) -> Vec<String> {
+    let mut elements = Vec::new();
+    for pair in ast_node.into_inner() {
+        let arg = pair.clone().into_inner().next().unwrap();
+        match arg.as_rule() {
+            Rule::primitive => elements.push(get_primitive_as_str(pair)),
+            Rule::assigned_variable => elements.push(get_variable_name(pair)),
+            _               => parse_warn!("get elements from primitive array", pair.as_rule()),
+        }
+    }
+    elements
 }
 
 fn parse_unless(

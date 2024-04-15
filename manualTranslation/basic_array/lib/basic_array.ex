@@ -1,4 +1,5 @@
 defmodule BasicArray do
+  @vae_init true
   def main do
     x = [1, 2]
     y = [1 | x]

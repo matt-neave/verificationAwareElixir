@@ -20,14 +20,15 @@ primitive_array = {
 
 array = { 
     primitive_array | 
-    ("[{:|, " ~ metadata ~ ", [" ~ (function_argument ~ ", ")* ~ function_argument ~ "]}]" ) 
+    ("[{:|, " ~ metadata ~ ", [" ~ (function_argument ~ ", ")* ~ function_argument ~ "]}]" ) | 
+    ("{:++, " ~ metadata ~  ", [" ~ binary_operand ~ ", " ~ binary_operand ~ "]}" )
 } 
 
 int = { ASCII_DIGIT+ }
 
 float = { ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ }
 
-binary_operator = { "++" | "+" | "-" | "/" | "*" }
+binary_operator = { "+" | "-" | "/" | "*" }
 
 // TODO: non-exhaustive
 boolean_operator = { "==" | "<=" | ">=" | "<" | ">" }

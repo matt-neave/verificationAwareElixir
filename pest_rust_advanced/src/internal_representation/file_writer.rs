@@ -411,8 +411,8 @@ impl FileWriter {
                     }
                 } else {
                     self.function_body.push_str(&format!("{}[{}] = {};\n", var, i, element));
+                    i += 1;
                 }
-                i += 1;
             };
             // Replace the existing symbol table entry with the size and same type as var
             self.function_sym_table.update_array_size(&var, i);
