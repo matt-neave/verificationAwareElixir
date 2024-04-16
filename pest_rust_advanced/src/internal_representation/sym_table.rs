@@ -88,3 +88,10 @@ pub fn get_array_inner_type(symbol_type: &SymbolType) -> &SymbolType {
         _ => panic!("Tried to get inner type of non-array type"),
     }
 }
+
+pub fn get_array_size(symbol_type: &SymbolType) -> i32 {
+    match symbol_type {
+        SymbolType::Array(_, size) => *size,
+        _ => panic!("Tried to get size of non-array type"),
+    }
+}

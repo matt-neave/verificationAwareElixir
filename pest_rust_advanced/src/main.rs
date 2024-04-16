@@ -204,6 +204,7 @@ pub fn parse_block_statement(
             Rule::io                   => parse_io(pair, file_writer, ret),
             Rule::spawn_process        => parse_spawn_process(pair, file_writer, ret),
             Rule::assigned_variable    => parse_assigned_variable(pair, file_writer, ret),
+            Rule::r#for                => parse_for(pair, file_writer, ret, func_def),
             _                          => parse_warn!("block statement", pair.as_rule()),
         }
     }
@@ -1297,4 +1298,49 @@ fn parse_binary_operation(
         let operand_right = name_from_tuple_str(operands[1].as_str());
         file_writer.write_operation(x.as_str(), operand_left, operand_right, ret);
     }
+}
+
+fn parse_for(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    _ret: bool,
+    _func_def: bool,
+) {
+    let mut iterator = None;
+    let mut do_block = None;
+    let mut iterable = None;
+    let mut iterable_as_array = None;
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::assigned_variable => {
+                if iterator == None {
+                    iterator = Some(pair);
+                } else {
+                    iterable = Some(pair);
+                }
+            },
+            Rule::r#do   => do_block = Some(pair),
+            Rule::array  => iterable_as_array = Some(pair),
+            _            => parse_warn!("for", pair.as_rule()),
+        }
+    }
+
+    if let Some(x) = iterator {
+        if let Some(y) = iterable {
+            let iterator_name = get_variable_name(x);
+            let iterable_name = get_variable_name(y);
+            file_writer.write_basic_for_loop(&iterator_name, &iterable_name);
+            if let Some(z) = do_block {
+                parse_do(z, file_writer, false, false);
+            }
+            file_writer.commit_for_loop();
+        } else if let Some(y) = iterable_as_array {
+            todo!()
+        } else {
+            panic!("No iterable in for loop");
+        }
+    } else {
+        panic!("No iterator in for loop");
+    }
+    
 }

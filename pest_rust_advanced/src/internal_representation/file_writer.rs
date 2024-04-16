@@ -224,9 +224,9 @@ impl FileWriter {
         }
         // Messages
         var_name.push_str(&format!("typedef MessageType {{\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n}};\ntypedef\nMessageList {{\nMessageType m1;\nMessageType m2;\nMessageType m3;\n}};\nchan mailbox[{}] = [10] of {{ mtype, MessageList }};\n\n", self.process_count + 1));
-        // Elixir list c_decl
-        let typ = "int";
-        var_name.push_str(&format!("c_decl {{\ntypedef struct LinkedList {{\n{} val;\nstruct LinkedList *next;\n}} LinkedList;\n\nLinkedList* newLinkedList({} val) {{\nLinkedList *newNode = (LinkedList *)malloc(sizeof(LinkedList));\nnewNode->val = val;\nnewNode->next = NULL;\nreturn newNode;\n}};\n\nLinkedList* prepend(LinkedList *head, {} val) {{\nLinkedList *newNode = (LinkedList *)malloc(sizeof(LinkedList));\nnewNode->val = val;\nnewNode->next = head;\nreturn newNode;\n}};\n\nLinkedList* append(LinkedList *head, {} vals[], size_t size) {{\nLinkedList *newNode = head;\nfor ({} i = 0; i < size; i++) {{\nnewNode->next = newLinkedList(vals[i]);\nnewNode = newNode->next;\n}};\nreturn head;\n}};\n}}\n\n", typ, typ, typ, typ, typ));
+        // TODO remove or refactor Elixir list c_decl
+        // let typ = "int";
+        // var_name.push_str(&format!("c_decl {{\ntypedef struct LinkedList {{\n{} val;\nstruct LinkedList *next;\n}} LinkedList;\n\nLinkedList* newLinkedList({} val) {{\nLinkedList *newNode = (LinkedList *)malloc(sizeof(LinkedList));\nnewNode->val = val;\nnewNode->next = NULL;\nreturn newNode;\n}};\n\nLinkedList* prepend(LinkedList *head, {} val) {{\nLinkedList *newNode = (LinkedList *)malloc(sizeof(LinkedList));\nnewNode->val = val;\nnewNode->next = head;\nreturn newNode;\n}};\n\nLinkedList* append(LinkedList *head, {} vals[], size_t size) {{\nLinkedList *newNode = head;\nfor ({} i = 0; i < size; i++) {{\nnewNode->next = newLinkedList(vals[i]);\nnewNode = newNode->next;\n}};\nreturn head;\n}};\n}}\n\n", typ, typ, typ, typ, typ));
         // ltl specs
         var_name.push_str(&format!("{}\n", self.ltl_header));
         let header_buf = var_name
@@ -428,5 +428,30 @@ impl FileWriter {
             self.function_body.push_str(&format!("int {};\n", assignee));
             self.function_body.push_str(&format!("{} = {}[{}];\n", assignee, assignment, i));
         }
+    }
+
+    pub fn write_basic_for_loop(
+        &mut self,
+        iterator: &str,
+        iterable: &str,
+    ) {
+        // Look up the inner type of iterable 
+        let arr_type = self.function_sym_table.lookup(iterable);
+        let typ = Self::type_to_str(sym_table::get_array_inner_type(arr_type));
+        let arr_size = sym_table::get_array_size(arr_type);
+        
+        // Copies the array to be iterated through into a temporary array of the correct size
+        self.function_body.push_str(&format!("{} __temp_iterable[{}];\n{} __temp_iterator;\n", typ, arr_size, typ));
+        self.function_body.push_str(&format!("for (__temp_iterator : 0..{}) {{\n__temp_iterable[__temp_iterator] = {}[__temp_iterator];\n}}\n", arr_size - 1, iterable));
+        
+        // Loop through the temporary array
+        self.function_body.push_str(&format!("{} {};\n", typ, iterator));
+        self.function_body.push_str(&format!("for ({} in __temp_iterable) {{\n", iterator));
+    }
+
+    pub fn commit_for_loop(
+        &mut self,
+    ) {
+        self.function_body.push_str("}\n");
     }
 }
