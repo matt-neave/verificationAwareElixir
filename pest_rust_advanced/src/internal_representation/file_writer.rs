@@ -3,6 +3,8 @@ use std::collections::HashMap;
 
 use std::io::{self, Write};
 
+use log::warn;
+
 use crate::formatted_condition;
 use crate::internal_representation::sym_table;
 
@@ -450,6 +452,48 @@ impl FileWriter {
     }
 
     pub fn commit_for_loop(
+        &mut self,
+    ) {
+        self.function_body.push_str("}\n");
+    }
+
+    pub fn write_enum_random(
+        &mut self,
+        args: Vec<String>,
+    ) {
+        warn!("Random number generation is not supported in Promela");
+    }
+
+    pub fn write_enum_at(
+        &mut self,
+        args: Vec<String>,
+    ) {
+        let list = &args[0];
+        let index = &args[1];
+        self.function_body.push_str(&format!("{}[{}];\n", list, index));
+    }
+    
+    pub fn write_enum_map(
+        &mut self,
+        iterable: String,
+        fn_args: Vec<String>,
+        assignee: String,
+    ) {
+        let size = sym_table::get_array_size(self.function_sym_table.lookup(&iterable));
+        let typ = Self::type_to_str(sym_table::get_array_inner_type(self.function_sym_table.lookup(&iterable)));
+        self.function_sym_table.update_array_size(&assignee, size);
+        self.function_body.push_str(&format!("int __iterator;\nfor (__iterator : 0..{}) {{\n", size - 1));
+        
+        // TODO only supports single argument functions for now
+        if fn_args.len() != 1 {
+            panic!("Enum map only supports single argument functions");
+        }
+        let arg = &fn_args[0];
+        self.function_body.push_str(&format!("{} {};\n{} = {}[__iterator];\n", typ, arg, arg, iterable));
+        self.function_body.push_str(&format!("{}[__iterator] = ", assignee));
+    }
+
+    pub fn commit_enum_map(
         &mut self,
     ) {
         self.function_body.push_str("}\n");

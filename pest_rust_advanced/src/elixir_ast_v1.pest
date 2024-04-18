@@ -21,7 +21,8 @@ primitive_array = {
 array = { 
     primitive_array | 
     ("[{:|, " ~ metadata ~ ", [" ~ (function_argument ~ ", ")* ~ function_argument ~ "]}]" ) | 
-    ("{:++, " ~ metadata ~  ", [" ~ binary_operand ~ ", " ~ binary_operand ~ "]}" )
+    ("{:++, " ~ metadata ~  ", [" ~ binary_operand ~ ", " ~ binary_operand ~ "]}" ) | 
+    enum_map_call
 } 
 
 int = { ASCII_DIGIT+ }
@@ -81,7 +82,7 @@ block = { "{:__block__" ~ ", " ~ metadata ~ ", " ~ block_statements ~  "}" }
 block_statements = { "[" ~ (block_statement ~ ", ")* ~ block_statement* ~ "]" }
 
 // TODO merge with tuple
-block_statement = { string | assigned_variable | attribute | function_definition | macro | io | for | directive | array_read | array_assignment | assignment | spawn_process | send | receive | defmodule | tuple }
+block_statement = { string | assigned_variable | attribute | function_definition | macro | enum_call | io | for | directive | array_read | array_assignment | assignment | spawn_process | send | receive | defmodule | tuple }
 
 tuple = { function_definition | if | unless | or | and | assigned_variable | binary_operation | expression_tuple }
 
@@ -204,7 +205,7 @@ spawn_process = { "{:spawn, " ~ metadata ~ ", [" ~ process_name ~ ", " ~ atom ~ 
 // {:__aliases__, [line: 3], [:Calculator]}
 process_name = { "{:__aliases__, " ~ metadata ~ ", [" ~ atom ~ "]}" }
 
-expression_argument = { number | negative_number | bool | self_pid | string | spawn_process | array | assigned_variable | binary_operation | tuple | do }
+expression_argument = { number | negative_number | bool | self_pid | string | spawn_process | enum_call | array | assigned_variable | binary_operation | anonymous_function | tuple | do }
 
 attribute = { ":@" ~ ", " ~ metadata ~ ", " ~ attributes }
 
@@ -216,6 +217,21 @@ doc_attribute = { "{:doc" ~ ", " ~ metadata ~ ", " ~ "[" ~ string ~ "]}" }
 
 //TODO complete
 macro = { "defmacro" }
+
+// TODO only supports single statements 
+anonymous_function = { "{:fn, " ~ metadata ~ ", [{:->, " ~ metadata ~ ", [[" ~ (assigned_variable ~ ", ")* ~ assigned_variable ~ "], " ~ block_statement ~ "]}]}" }
+
+/* Enum Lib */
+enum_call = { "{{:., " ~ metadata ~ ", [{:__aliases__, " ~ metadata ~ ", [:Enum]}, " ~ enum_func ~ "]}, " ~ metadata ~ ", [" ~ (expression_argument ~ ", ")* ~ expression_argument* ~ "]}" }
+enum_map_call = { "{{:., " ~ metadata ~ ", [{:__aliases__, " ~ metadata ~ ", [:Enum]}, " ~ enum_map ~ "]}, " ~ metadata ~ ", [" ~ (expression_argument ~ ", ")* ~ expression_argument* ~ "]}" }
+
+enum_func = { enum_random | enum_at }
+
+enum_random = { ":random" }
+
+enum_at = { ":at" }
+
+enum_map = { ":map" }
 
 //TODO complete
 directive = { "import" | "alias" | "require" }

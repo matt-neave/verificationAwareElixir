@@ -1,3 +1,4 @@
+use core::panic;
 use std::fs;
 use pest::Parser;
 use pest_derive::Parser;
@@ -555,15 +556,21 @@ fn parse_array_assignment(
     } else {
         panic!("No array in array assignment expression");
     }
+    let mut variable_name = String::new();
     if let Some(x) = assigned_variable {
-        let variable_name = get_variable_name(x);
+        variable_name = get_variable_name(x);
         // TODO type the array
         file_writer.write_array_assignment(&variable_name, typ);
     } else {
         panic!("No variable name in array assignment expression");
     }
     if let Some(x) = array {
-        parse_array(x, file_writer, false);
+        let arr_type = x.clone().into_inner().next().unwrap();
+        if arr_type.clone().as_rule() == Rule::enum_map_call {
+            parse_enum_map(arr_type, file_writer, variable_name);
+        } else {
+            parse_array(x.clone(), file_writer, false);
+        }
     }
 }
 
@@ -925,6 +932,7 @@ fn parse_expression_tuple(
                 parse_tuple(pair, file_writer, ret, func_def)
             },
             Rule::array                => parse_array(pair, file_writer, ret),
+            Rule::enum_call            => parse_enum_call(pair, file_writer, ret),
             _                          => parse_warn!("expression tuple", pair.as_rule()),
         }
     }
@@ -945,6 +953,113 @@ fn parse_expression_tuple(
         }
     }
 
+}
+
+fn parse_enum_call(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    _ret: bool
+) {
+    let mut func = None;
+    let mut args = Vec::new();
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::enum_func           => func = Some(pair),
+            Rule::expression_argument => args.push(pair),
+            _                         => parse_warn!("enum call", pair.as_rule()),
+        }
+    }
+    if let Some(x) = func {
+        let func_type = x.into_inner().next().unwrap();
+        match func_type.as_rule() {
+            Rule::enum_random => {
+                // single arg, of type assigned variable
+                let mut string_args = Vec::new();
+                for arg in args {
+                    let arg_type = arg.into_inner().next().unwrap();
+                    match arg_type.as_rule() {
+                        Rule::assigned_variable => string_args.push(get_variable_name(arg_type)),
+                        _                       => error!("Enum random calls only support usage on variables"),
+                    }
+                }
+                if string_args.len() != 1 {
+                    error!("Enum random calls only support one argument (variable)");
+                }
+                file_writer.write_enum_random(string_args);
+            },
+            Rule::enum_at => {
+                // two args, an assigned variable and a number
+                let mut string_args = Vec::new();
+                for arg in args {
+                    let arg_type = arg.into_inner().next().unwrap();
+                    match arg_type.as_rule() {
+                        Rule::assigned_variable => string_args.push(get_variable_name(arg_type)),
+                        Rule::number            => string_args.push(arg_type.as_str().to_string()),
+                        _                       => error!("Enum at calls only support usage on variables and numbers"),
+                    }
+                }
+                if string_args.len() != 2 {
+                    error!("Enum at calls only support two arguments (variable, number)");
+                }
+                file_writer.write_enum_at(string_args);
+            },
+            _ => warn!("Tried writing unsupported enum function"),
+        }
+    } else {
+        panic!("No function name in enum call");
+    }
+}
+
+fn parse_enum_map(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    assignee: String,
+) {
+    let mut args = Vec::new();
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::expression_argument => args.push(pair),
+            _                         => parse_warn!("enum call", pair.as_rule()),
+        }
+    }
+    // two args, an assigned variable and an anonymous function
+    let mut iterable = None;
+    let mut func = None;
+    for arg in args {
+        if arg.as_rule() == Rule::expression_argument {
+            let arg_type = arg.into_inner().next().unwrap();
+            match arg_type.as_rule() {
+                Rule::assigned_variable  => iterable = Some(get_variable_name(arg_type)),
+                Rule::anonymous_function => func = Some(arg_type),
+                _                        => error!("Enum map call only supports variables and anonymous functions"),
+            }
+        }
+    }
+    if let Some(x) = iterable {
+        if let Some(y) = func {
+            let mut fn_args = Vec::new();
+            let mut fn_body = None;
+            for pair in y.into_inner() {
+                match pair.as_rule() {
+                    Rule::assigned_variable => fn_args.push(get_variable_name(pair)),
+                    Rule::block_statement   => fn_body = Some(pair),
+                    _                       => (),
+                }
+            }
+
+            file_writer.write_enum_map(x, fn_args, assignee);
+            if let Some(z) = fn_body {
+                parse_block_statement(z, file_writer, false, false);
+            } else {
+                panic!("No function body in enum map call");
+            }
+            file_writer.commit_enum_map();
+        } else {
+            error!("Enum map call missing function argument");
+        }
+    } else {
+        error!("Enum map call missing variable argument");
+    }
 }
 
 fn parse_spawn_process(
@@ -1334,7 +1449,7 @@ fn parse_for(
                 parse_do(z, file_writer, false, false);
             }
             file_writer.commit_for_loop();
-        } else if let Some(y) = iterable_as_array {
+        } else if let Some(_y) = iterable_as_array {
             todo!()
         } else {
             panic!("No iterable in for loop");
