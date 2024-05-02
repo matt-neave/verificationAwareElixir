@@ -13,6 +13,6 @@ defmodule EnumLib do
 
   def map do
     ls = [1,2,3]
-    squares = Enum.map(ls, fn x -> x + x end)
+    squares = Enum.map(ls, fn x -> receive do {:VOTE, vote} -> vote end end)
   end
 end

@@ -12,7 +12,7 @@ use crate::internal_representation::sym_table;
 pub struct FileWriter {
     _header: String,
     content: String,
-    function_body: String,
+    function_body: Vec<String>,
     function_channels: String,
     function_metabody: String,
     function_sym_table: sym_table::SymbolTable,
@@ -43,7 +43,7 @@ impl FileWriter {
         Ok(Self {
             _header: String::new(),
             content: String::new(),
-            function_body: String::new(),
+            function_body: Vec::new(),
             function_channels: String::new(),
             function_metabody: String::new(),
             function_sym_table: sym_table::SymbolTable::new(),
@@ -75,7 +75,7 @@ impl FileWriter {
 
     // Method to append text to the string with new line
     pub fn writeln(&mut self, text: &str) {
-        self.function_body.push_str(format!("{}\n", text).as_str());
+        self.function_body.last_mut().unwrap().push_str(format!("{}\n", text).as_str());
     }
 
     pub fn write_operation(&mut self, operand: &str, left_e: &str, right_e: &str, ret: bool) {
@@ -84,7 +84,7 @@ impl FileWriter {
         } else {
             format!("{} {} {};\n", left_e, operand, right_e)
         };
-        self.function_body.push_str(formatted_string.as_str());
+        self.function_body.last_mut().unwrap().push_str(formatted_string.as_str());
     }
     
     fn type_to_str(t: &sym_table::SymbolType) -> String {
@@ -113,31 +113,39 @@ impl FileWriter {
 
 
     pub fn new_function(&mut self, func_name: &str, arguments: &str, sym_table: sym_table::SymbolTable, init: bool) {
+        self.function_body.push(String::new());
         if init {
             self.content.push_str("init {\n");
             self.function_channels.push_str("chan p0_mailbox = [10] of { mtype, MessageList };\n");
-            self.function_body.push_str("mailbox[0] = p0_mailbox;\n");
-            self.function_body.push_str("int __pid = 0;\n");
+            self.function_body.last_mut().unwrap().push_str("mailbox[0] = p0_mailbox;\n");
+            self.function_body.last_mut().unwrap().push_str("int __pid = 0;\n");
         } else if arguments.is_empty() {
             self.content.push_str(&format!("proctype {} (chan ret; int __pid) {{\n", func_name));
         } else {
             let formatted_args = Self::format_arguments(arguments, sym_table);
             self.content.push_str(&format!("proctype {} ({}; chan ret; int __pid) {{\n", func_name, &*formatted_args));
         }
-        self.function_sym_table = sym_table::SymbolTable::new();
+
+        // Only create a new symbol table if the function is not an anonymous function
+        if self.function_body.len() == 1 {
+            self.function_sym_table = sym_table::SymbolTable::new();
+        }
     }
 
     pub fn commit_function(&mut self) {
         // Commits the current function to the file
         self.content.push_str(&self.function_channels);
         self.content.push_str(&self.function_metabody);
-        self.content.push_str(&format!("{}}}\n\n", &*self.function_body));
-        self.function_channels = String::new();
-        self.function_metabody = String::new();
-        self.function_body = String::new();
-        self.function_call_count = 0;
-        self.function_messages = 0;
-        self.ltl_func = false;
+        self.content.push_str(&format!("{}}}\n\n", &*self.function_body.pop().unwrap()));
+
+        // Only reset if the function is not an anonymous function
+        if self.function_body.is_empty() {
+            self.function_channels = String::new();
+            self.function_metabody = String::new();
+            self.function_call_count = 0;
+            self.function_messages = 0;
+            self.ltl_func = false;
+        }
     }
 
     pub fn write_function_call(&mut self, func_name: &str, call_arguments: &str, ret: bool) {
@@ -154,14 +162,14 @@ impl FileWriter {
         let return_variable;
         if self.var_stack.is_empty() {
            return_variable = format!("val{}", self.function_call_count); 
-           self.function_body.push_str(&format!("int {};\n", return_variable));
+           self.function_body.last_mut().unwrap().push_str(&format!("int {};\n", return_variable));
         } else {
            return_variable = self.var_stack.pop().unwrap(); 
         }
-        self.function_body.push_str(&format!("run {}{}, ret{}, __pid);\n", func_name, call_arguments, self.function_call_count));
-        self.function_body.push_str(&format!("ret{} ? {};\n", self.function_call_count, return_variable));
+        self.function_body.last_mut().unwrap().push_str(&format!("run {}{}, ret{}, __pid);\n", func_name, call_arguments, self.function_call_count));
+        self.function_body.last_mut().unwrap().push_str(&format!("ret{} ? {};\n", self.function_call_count, return_variable));
         if ret {
-            self.function_body.push_str(&format!("ret ! {};\n", return_variable));
+            self.function_body.last_mut().unwrap().push_str(&format!("ret ! {};\n", return_variable));
         } 
     }
 
@@ -201,16 +209,16 @@ impl FileWriter {
         &mut self,
         condition: formatted_condition::FormattedCondition
     ) {
-        self.function_body.push_str("if\n");
-        self.function_body.push_str(format!(":: {} -> \n", Self::condition_to_string(&condition)).as_str());
+        self.function_body.last_mut().unwrap().push_str("if\n");
+        self.function_body.last_mut().unwrap().push_str(format!(":: {} -> \n", Self::condition_to_string(&condition)).as_str());
     }
 
     pub fn write_else(&mut self) {
-        self.function_body.push_str(":: else ->\n");
+        self.function_body.last_mut().unwrap().push_str(":: else ->\n");
     }
 
     pub fn commit_if(&mut self) {
-        self.function_body.push_str("fi;\n");
+        self.function_body.last_mut().unwrap().push_str("fi;\n");
     }
 
     // Method to commit the content to the file and reset the string
@@ -247,7 +255,7 @@ impl FileWriter {
         } else {
             format!("{}\n", primitive)
         };
-        self.function_body.push_str(&formatted_string);
+        self.function_body.last_mut().unwrap().push_str(&formatted_string);
         
     }
 
@@ -256,9 +264,9 @@ impl FileWriter {
         if self.ltl_func {
             self.ltl_header.push_str(formatted_var)
         } else {
-            self.function_body.push_str(formatted_var);
+            self.function_body.last_mut().unwrap().push_str(formatted_var);
         }
-        self.function_body.push_str(&format!("{} = ", var));
+        self.function_body.last_mut().unwrap().push_str(&format!("{} = ", var));
 
         // Push the variable name to the stack to be applied by spawn
         self.var_stack.push(String::from(var));
@@ -284,7 +292,7 @@ impl FileWriter {
         // Create a mailbox for each process
         self.function_channels.push_str(&format!("chan p{}_mailbox = [10] of {{ mtype, MessageList }};\n", self.process_count));            
         self.function_metabody.push_str(&format!("mailbox[{}] = p{}_mailbox;\n", i, i));
-        self.function_body.push_str(&format!("run {}({});\n", proctype, formatted_args));        
+        self.function_body.last_mut().unwrap().push_str(&format!("run {}({});\n", proctype, formatted_args));        
     }
 
     pub fn write_send(&mut self, target: &str, mut args: Vec<String>) {
@@ -294,35 +302,35 @@ impl FileWriter {
 
         // Create the message component
         let mut i = 1;
-        self.function_body.push_str(&format!("MessageList msg_{};\n", self.function_messages));
+        self.function_body.last_mut().unwrap().push_str(&format!("MessageList msg_{};\n", self.function_messages));
         for mut arg in args {
             // TODO: replace third argument with type
             if arg.starts_with("{:self,") {
                 arg = String::from("__pid");
             }
 
-            self.function_body.push_str(&format!("msg_{}.m{}.data{} = {};\n", self.function_messages, i, 2, arg));
+            self.function_body.last_mut().unwrap().push_str(&format!("msg_{}.m{}.data{} = {};\n", self.function_messages, i, 2, arg));
             i += 1;
         }
         if mailbox == -1 {
-            self.function_body.push_str(&format!("mailbox[{}] ! {}, msg_{};\n", target, mtype, self.function_messages));
+            self.function_body.last_mut().unwrap().push_str(&format!("mailbox[{}] ! {}, msg_{};\n", target, mtype, self.function_messages));
         } else {
-            self.function_body.push_str(&format!("mailbox[{}] ! {}, msg_{};\n", mailbox, mtype, self.function_messages));
+            self.function_body.last_mut().unwrap().push_str(&format!("mailbox[{}] ! {}, msg_{};\n", mailbox, mtype, self.function_messages));
         }
         self.function_messages += 1;
     }
 
     pub fn write_receive(&mut self) {
-        self.function_body.push_str("do\n:: true ->\n");
-        self.function_body.push_str("mtype messageType;\n");
-        self.function_body.push_str(&format!("MessageList rec_v_{};\n", self.receive_count));
-        self.function_body.push_str(&format!("mailbox[__pid] ? messageType, rec_v_{};\nif\n", self.receive_count));
+        self.function_body.last_mut().unwrap().push_str("do\n:: true ->\n");
+        self.function_body.last_mut().unwrap().push_str("mtype messageType;\n");
+        self.function_body.last_mut().unwrap().push_str(&format!("MessageList rec_v_{};\n", self.receive_count));
+        self.function_body.last_mut().unwrap().push_str(&format!("mailbox[__pid] ? messageType, rec_v_{};\nif\n", self.receive_count));
         self.receive_count += 1;
     }
 
     pub fn commit_receive(&mut self) {
-        self.function_body.push_str(&format!(":: else -> mailbox[__pid] ! messageType, rec_v_{};\n", self.receive_count - 1));
-        self.function_body.push_str("fi;\nod;\n");
+        self.function_body.last_mut().unwrap().push_str(&format!(":: else -> mailbox[__pid] ! messageType, rec_v_{};\n", self.receive_count - 1));
+        self.function_body.last_mut().unwrap().push_str("fi;\nod;\n");
     }
 
     pub fn write_receive_assignment(&mut self, assignments: Vec<String>) {
@@ -330,33 +338,33 @@ impl FileWriter {
         for (i, assignment) in assignments.iter().enumerate() {
             if i == 0 {
                 self.mtype.push(assignment.to_uppercase());
-                self.function_body.push_str(&format!(":: messageType == {} ->\n", assignment.to_uppercase()));
+                self.function_body.last_mut().unwrap().push_str(&format!(":: messageType == {} ->\n", assignment.to_uppercase()));
             } else {
-                self.function_body.push_str(&format!("int {};\n", assignment));
-                self.function_body.push_str(&format!("{} = rec_v_{}.m{}.{};\n", assignment, self.receive_count - 1, i, "data2"));
+                self.function_body.last_mut().unwrap().push_str(&format!("int {};\n", assignment));
+                self.function_body.last_mut().unwrap().push_str(&format!("{} = rec_v_{}.m{}.{};\n", assignment, self.receive_count - 1, i, "data2"));
             }
         }
     }
     
     pub fn write_end_receive_statement(&mut self) {
-        self.function_body.push_str("break;\n");
+        self.function_body.last_mut().unwrap().push_str("break;\n");
     }
 
     pub fn write_io(&mut self, io_put: &str) {
-        self.function_body.push_str(&format!("printf(\"{}\\n\");\n", io_put));
+        self.function_body.last_mut().unwrap().push_str(&format!("printf(\"{}\\n\");\n", io_put));
     }
 
     pub fn start_unless(&mut self) {
-        self.function_body.push_str("{\n")
+        self.function_body.last_mut().unwrap().push_str("{\n")
     }
 
     pub fn write_unless_condition(
         &mut self,
         condition: formatted_condition::FormattedCondition
     ) {
-        self.function_body.push_str("}\nunless\n{");
-        self.function_body.push_str(format!("{}\n", Self::condition_to_string(&condition)).as_str());
-        self.function_body.push_str("}\n")
+        self.function_body.last_mut().unwrap().push_str("}\nunless\n{");
+        self.function_body.last_mut().unwrap().push_str(format!("{}\n", Self::condition_to_string(&condition)).as_str());
+        self.function_body.last_mut().unwrap().push_str("}\n")
     }
 
     pub fn write_assigned_variable(
@@ -365,10 +373,10 @@ impl FileWriter {
         ret: bool
     ) {
         if ret {
-            self.function_body.push_str(&format!("ret ! {};\n", var));
+            self.function_body.last_mut().unwrap().push_str(&format!("ret ! {};\n", var));
         } else {
             println!("Trying to write {} might not make sense", var);
-            self.function_body.push_str(&format!("{}\n", var));
+            self.function_body.last_mut().unwrap().push_str(&format!("{}\n", var));
         }
     }
 
@@ -392,7 +400,7 @@ impl FileWriter {
         var: &str,
         typ: sym_table::SymbolType,
     ) {
-        self.function_body.push_str(&format!("int {}[{}];\n", var, self.array_capacity));
+        self.function_body.last_mut().unwrap().push_str(&format!("int {}[{}];\n", var, self.array_capacity));
         self.array_var_stack.push(var.to_string());
         self.function_sym_table.add_entry(var.to_string(), typ);
     }
@@ -408,11 +416,11 @@ impl FileWriter {
                 // Check if the element type is an array
                 if let Some(sym_table::SymbolType::Array(_, size)) = self.function_sym_table.safe_lookup(&element) {
                     for j in 0..*size {
-                        self.function_body.push_str(&format!("{}[{}] = {}[{}];\n", var, i, element, j));
+                        self.function_body.last_mut().unwrap().push_str(&format!("{}[{}] = {}[{}];\n", var, i, element, j));
                         i += 1;
                     }
                 } else {
-                    self.function_body.push_str(&format!("{}[{}] = {};\n", var, i, element));
+                    self.function_body.last_mut().unwrap().push_str(&format!("{}[{}] = {};\n", var, i, element));
                     i += 1;
                 }
             };
@@ -427,8 +435,8 @@ impl FileWriter {
         assignment: String,
     ) {
         for (i, assignee) in assignees.iter().enumerate() {
-            self.function_body.push_str(&format!("int {};\n", assignee));
-            self.function_body.push_str(&format!("{} = {}[{}];\n", assignee, assignment, i));
+            self.function_body.last_mut().unwrap().push_str(&format!("int {};\n", assignee));
+            self.function_body.last_mut().unwrap().push_str(&format!("{} = {}[{}];\n", assignee, assignment, i));
         }
     }
 
@@ -443,18 +451,18 @@ impl FileWriter {
         let arr_size = sym_table::get_array_size(arr_type);
         
         // Copies the array to be iterated through into a temporary array of the correct size
-        self.function_body.push_str(&format!("{} __temp_iterable[{}];\n{} __temp_iterator;\n", typ, arr_size, typ));
-        self.function_body.push_str(&format!("for (__temp_iterator : 0..{}) {{\n__temp_iterable[__temp_iterator] = {}[__temp_iterator];\n}}\n", arr_size - 1, iterable));
+        self.function_body.last_mut().unwrap().push_str(&format!("{} __temp_iterable[{}];\n{} __temp_iterator;\n", typ, arr_size, typ));
+        self.function_body.last_mut().unwrap().push_str(&format!("for (__temp_iterator : 0..{}) {{\n__temp_iterable[__temp_iterator] = {}[__temp_iterator];\n}}\n", arr_size - 1, iterable));
         
         // Loop through the temporary array
-        self.function_body.push_str(&format!("{} {};\n", typ, iterator));
-        self.function_body.push_str(&format!("for ({} in __temp_iterable) {{\n", iterator));
+        self.function_body.last_mut().unwrap().push_str(&format!("{} {};\n", typ, iterator));
+        self.function_body.last_mut().unwrap().push_str(&format!("for ({} in __temp_iterable) {{\n", iterator));
     }
 
     pub fn commit_for_loop(
         &mut self,
     ) {
-        self.function_body.push_str("}\n");
+        self.function_body.last_mut().unwrap().push_str("}\n");
     }
 
     pub fn write_enum_random(
@@ -470,7 +478,7 @@ impl FileWriter {
     ) {
         let list = &args[0];
         let index = &args[1];
-        self.function_body.push_str(&format!("{}[{}];\n", list, index));
+        self.function_body.last_mut().unwrap().push_str(&format!("{}[{}];\n", list, index));
     }
     
     pub fn write_enum_map(
@@ -482,20 +490,20 @@ impl FileWriter {
         let size = sym_table::get_array_size(self.function_sym_table.lookup(&iterable));
         let typ = Self::type_to_str(sym_table::get_array_inner_type(self.function_sym_table.lookup(&iterable)));
         self.function_sym_table.update_array_size(&assignee, size);
-        self.function_body.push_str(&format!("int __iterator;\nfor (__iterator : 0..{}) {{\n", size - 1));
+        self.function_body.last_mut().unwrap().push_str(&format!("int __iterator;\nfor (__iterator : 0..{}) {{\n", size - 1));
         
         // TODO only supports single argument functions for now
         if fn_args.len() != 1 {
             panic!("Enum map only supports single argument functions");
         }
         let arg = &fn_args[0];
-        self.function_body.push_str(&format!("{} {};\n{} = {}[__iterator];\n", typ, arg, arg, iterable));
-        self.function_body.push_str(&format!("{}[__iterator] = ", assignee));
+        self.function_body.last_mut().unwrap().push_str(&format!("{} {};\n{} = {}[__iterator];\n", typ, arg, arg, iterable));
+        self.function_body.last_mut().unwrap().push_str(&format!("{}[__iterator] = ", assignee));
     }
 
     pub fn commit_enum_map(
         &mut self,
     ) {
-        self.function_body.push_str("}\n");
+        self.function_body.last_mut().unwrap().push_str("}\n");
     }
 }
