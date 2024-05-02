@@ -1049,7 +1049,8 @@ fn parse_enum_map(
 
             file_writer.write_enum_map(x, fn_args, assignee);
             if let Some(z) = fn_body {
-                parse_block_statement(z, file_writer, false, false);
+                // Return is true as writing anonymous function
+                parse_block_statement(z, file_writer, true, false);
             } else {
                 panic!("No function body in enum map call");
             }

@@ -1,20 +1,21 @@
 use std::fs::File;
 use std::collections::HashMap;
+use rand::Rng;
 
 use std::io::{self, Write};
 
 use log::warn;
 
 use crate::formatted_condition;
-use crate::internal_representation::sym_table;
+use crate::internal_representation::sym_table::{self, get_array_size};
 
 // Todo: bodies should be stack based to handle nesting
 pub struct FileWriter {
     _header: String,
     content: String,
     function_body: Vec<String>,
-    function_channels: String,
-    function_metabody: String,
+    function_channels: Vec<String>,
+    function_metabody: Vec<String>,
     function_sym_table: sym_table::SymbolTable,
     ltl_specs: String,
     ltl_header: String,
@@ -34,6 +35,7 @@ pub struct FileWriter {
     module: String,
     array_capacity: u32,
     array_var_stack: Vec<String>,
+    anonymous_function_count: u32,
 }
 
 impl FileWriter {
@@ -44,8 +46,8 @@ impl FileWriter {
             _header: String::new(),
             content: String::new(),
             function_body: Vec::new(),
-            function_channels: String::new(),
-            function_metabody: String::new(),
+            function_channels: Vec::new(),
+            function_metabody: Vec::new(),
             function_sym_table: sym_table::SymbolTable::new(),
             ltl_specs: String::new(),
             ltl_header: String::new(),
@@ -65,6 +67,7 @@ impl FileWriter {
             module: String::new(),
             array_capacity: 100,
             array_var_stack: Vec::new(),
+            anonymous_function_count: 0,
         })
     }
 
@@ -114,16 +117,19 @@ impl FileWriter {
 
     pub fn new_function(&mut self, func_name: &str, arguments: &str, sym_table: sym_table::SymbolTable, init: bool) {
         self.function_body.push(String::new());
+        self.function_metabody.push(String::new());
+        self.function_channels.push(String::new());
         if init {
-            self.content.push_str("init {\n");
-            self.function_channels.push_str("chan p0_mailbox = [10] of { mtype, MessageList };\n");
+            // TODO: for now, function name is pushed to the channels as this is the first commit to the file
+            self.function_channels.last_mut().unwrap().push_str("init {\n");
+            self.function_channels.last_mut().unwrap().push_str("chan p0_mailbox = [10] of { mtype, MessageList };\n");
             self.function_body.last_mut().unwrap().push_str("mailbox[0] = p0_mailbox;\n");
             self.function_body.last_mut().unwrap().push_str("int __pid = 0;\n");
         } else if arguments.is_empty() {
-            self.content.push_str(&format!("proctype {} (chan ret; int __pid) {{\n", func_name));
+            self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} (chan ret; int __pid) {{\n", func_name));
         } else {
             let formatted_args = Self::format_arguments(arguments, sym_table);
-            self.content.push_str(&format!("proctype {} ({}; chan ret; int __pid) {{\n", func_name, &*formatted_args));
+            self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} ({}; chan ret; int __pid) {{\n", func_name, &*formatted_args));
         }
 
         // Only create a new symbol table if the function is not an anonymous function
@@ -134,14 +140,12 @@ impl FileWriter {
 
     pub fn commit_function(&mut self) {
         // Commits the current function to the file
-        self.content.push_str(&self.function_channels);
-        self.content.push_str(&self.function_metabody);
+        self.content.push_str(&self.function_channels.pop().unwrap());
+        self.content.push_str(&self.function_metabody.pop().unwrap());
         self.content.push_str(&format!("{}}}\n\n", &*self.function_body.pop().unwrap()));
 
         // Only reset if the function is not an anonymous function
         if self.function_body.is_empty() {
-            self.function_channels = String::new();
-            self.function_metabody = String::new();
             self.function_call_count = 0;
             self.function_messages = 0;
             self.ltl_func = false;
@@ -154,7 +158,7 @@ impl FileWriter {
         // Name the receive variables appropriately
         // TODO determine return type    
         self.function_call_count += 1;
-        self.function_channels.push_str(&format!("chan ret{} = [1] of {{ int }};\n", self.function_call_count));
+        self.function_channels.last_mut().unwrap().push_str(&format!("chan ret{} = [1] of {{ int }};\n", self.function_call_count));
         
         // TODO make a mapping of variable name
         let call_arguments = call_arguments.replace('[', "(");
@@ -276,7 +280,7 @@ impl FileWriter {
     pub fn write_spawn_process(&mut self, proctype: &str, args: &str) {
         self.process_count += 1;
         self.function_call_count += 1;
-        self.function_channels.push_str(&format!("chan ret{} = [1] of {{ int }};\n", self.function_call_count));
+        self.function_channels.last_mut().unwrap().push_str(&format!("chan ret{} = [1] of {{ int }};\n", self.function_call_count));
 
         // Format args depending on if they are empty
         let formatted_args = format!("{}{}ret{},{}", args, if args.is_empty() {""} else {","}, self.function_call_count, self.function_call_count);
@@ -290,8 +294,8 @@ impl FileWriter {
             self.mailbox_id.insert(x.clone(), i);
         }
         // Create a mailbox for each process
-        self.function_channels.push_str(&format!("chan p{}_mailbox = [10] of {{ mtype, MessageList }};\n", self.process_count));            
-        self.function_metabody.push_str(&format!("mailbox[{}] = p{}_mailbox;\n", i, i));
+        self.function_channels.last_mut().unwrap().push_str(&format!("chan p{}_mailbox = [10] of {{ mtype, MessageList }};\n", self.process_count));            
+        self.function_metabody.last_mut().unwrap().push_str(&format!("mailbox[{}] = p{}_mailbox;\n", i, i));
         self.function_body.last_mut().unwrap().push_str(&format!("run {}({});\n", proctype, formatted_args));        
     }
 
@@ -469,6 +473,11 @@ impl FileWriter {
         &mut self,
         args: Vec<String>,
     ) {
+        // TODO only pseudorandom as Promela does not support randomness
+        let array = &args[0];
+        let size = get_array_size(self.function_sym_table.lookup(array));
+        let random_index = rand::thread_rng().gen_range(0..size);
+        self.function_body.last_mut().unwrap().push_str(&format!("{}[{}];\n", array, random_index));
         warn!("Random number generation is not supported in Promela");
     }
 
@@ -498,12 +507,17 @@ impl FileWriter {
         }
         let arg = &fn_args[0];
         self.function_body.last_mut().unwrap().push_str(&format!("{} {};\n{} = {}[__iterator];\n", typ, arg, arg, iterable));
-        self.function_body.last_mut().unwrap().push_str(&format!("{}[__iterator] = ", assignee));
+        self.function_channels.last_mut().unwrap().push_str(&format!("chan __anonymous_ret_{} = [1] of {{ int }};\n", self.anonymous_function_count));
+        self.function_body.last_mut().unwrap().push_str(&format!("run __anonymous_{}(__anonymous_ret_{},__pid);\n", self.anonymous_function_count, self.anonymous_function_count)); 
+        self.function_body.last_mut().unwrap().push_str(&format!("__anonymous_ret_{} ? {}[__iterator];\n", self.anonymous_function_count, assignee));
+        self.new_function(&format!("__anonymous_{}", self.anonymous_function_count), "", sym_table::SymbolTable::new(), false);
+        self.anonymous_function_count += 1;
     }
 
     pub fn commit_enum_map(
         &mut self,
     ) {
+        self.commit_function();
         self.function_body.last_mut().unwrap().push_str("}\n");
     }
 }
