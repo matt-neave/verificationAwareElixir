@@ -1,12 +1,15 @@
 use core::panic;
+use regex::Regex;
 use std::fs;
-use pest::Parser;
-use pest_derive::Parser;
-use pest::iterators::Pair;
 use std::process::Command;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::fs::File;
+
+// Pest
+use pest::Parser;
+use pest_derive::Parser;
+use pest::iterators::Pair;
 
 // Logging
 use log::warn;
@@ -17,7 +20,7 @@ use log::LevelFilter;
 use env_logger::fmt::Color;
 
 mod internal_representation;
-use internal_representation::{formatted_condition, sym_table};
+use internal_representation::{formatted_condition, sym_table, model_runner};
 
 #[path = "macros/parse_macros.rs"]
 #[macro_use]
@@ -29,6 +32,9 @@ pub struct ASTParser;
 
 fn main() {
     let path = "./ast_output.txt";
+    let model_path = "test_out.pml";
+    let model_check_flag = std::env::args().nth(1);
+
     extract_elixir_ast(path);
     init_logger();
 
@@ -40,17 +46,23 @@ fn main() {
         .next()
         .unwrap();
     
-    let mut writer = internal_representation::file_writer::FileWriter::new("test_out.pml").unwrap();
+    let mut writer = internal_representation::file_writer::FileWriter::new(&model_path).unwrap();
 
-    println!("{}", prog_ast);
+    //println!("{}", prog_ast);
     parse_program(prog_ast, &mut writer);
 
     writer.commit().expect("Failed to commit to file");
+
+    if let Some(flag) = model_check_flag {
+        if flag == "--verify" || flag == "-v" {
+            model_runner::run_model(&model_path);
+        }
+    }
 }
 
 fn extract_elixir_ast(out_file: &str) {
     let arg_error = "Incorrect usage: cargo run -- \"target_file\"";
-    let arg_binding = std::env::args().nth(1).expect(arg_error);
+    let arg_binding = std::env::args().last().expect(arg_error);
     let dir = Path::new(&arg_binding);
     // TODO this could be a file now... can parse the target file as arg to mix
     let ast_extractor_code = &*format!("defmodule AstExtractor do
@@ -85,7 +97,7 @@ end", dir.to_str().unwrap(), out_file);
         let mut file = File::open(out_file).expect("Failed to open output file");
         let mut contents = String::new();
         file.read_to_string(&mut contents).expect("Failed to read output file");
-        println!("{}", contents);
+        //println!("{}", contents);
     } else {
         println!("Error: {:?}", output.stderr);
     }
@@ -116,7 +128,7 @@ fn init_logger() {
                 record.args()
             )
         })
-        .filter_level(LevelFilter::Trace)
+        .filter_level(LevelFilter::Off)
         .init();
 
 }
@@ -259,7 +271,8 @@ fn parse_receive(
         .find(|x| x.as_rule() == Rule::receive_statements)
         .expect("No receive_statements in receive expression");
 
-    file_writer.write_receive();
+    let line_number = get_line_number(ast_node.clone());
+    file_writer.write_receive(line_number);
 
     // Parse receive statements
     let mut mtypes = Vec::new();
@@ -312,10 +325,11 @@ fn parse_receive_atom(
     file_writer: &mut internal_representation::file_writer::FileWriter, 
     _ret: bool
 ) -> String {
+    let line_number = get_line_number(ast_node.clone());
     let mut assignments = Vec::new();
     let mtype = ast_node.into_inner().next().unwrap().as_str().replace(':', "");
     assignments.push(mtype.clone());
-    file_writer.write_receive_assignment(assignments);
+    file_writer.write_receive_assignment(assignments, line_number);
     mtype
 }
 
@@ -324,12 +338,13 @@ fn parse_receive_single(
     file_writer: &mut internal_representation::file_writer::FileWriter, 
     _ret: bool
 ) -> String {
+    let line_number = get_line_number(ast_node.clone());
     // Find the atom node
     if let Some(x) = ast_node.into_inner().find(|y| y.as_rule() == Rule::atom) {
         let mut assignments = Vec::new();
         let mtype = x.as_str().replace(':', "");
         assignments.push(mtype.clone());
-        file_writer.write_receive_assignment(assignments);
+        file_writer.write_receive_assignment(assignments, line_number);
         mtype
     } else {
         panic!("No atom in assigned variable");
@@ -343,18 +358,21 @@ fn parse_receive_pair(
 ) -> String {
     // Pair guaranteed of the form alpha_letters followed by atom or assigned_variable
     let mut assignments = Vec::new();
+    let mut metadata = None;
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::alpha_letters => assignments.push(pair.as_str().to_string()),
             Rule::atom          => assignments.push(pair.as_str().to_string().replace(':', "")),
             Rule::assigned_variable => assignments.push(get_variable_name(pair)),
+            Rule::metadata => metadata = Some(pair),
             _ => parse_warn!("receive pair", pair.as_rule()),
         }
     }
+    let line_number = get_line_number_from_metadata(metadata);
     if assignments.is_empty() {
         panic!("No assignments in receive pair");
     } else {
-        file_writer.write_receive_assignment(assignments.clone());
+        file_writer.write_receive_assignment(assignments.clone(), line_number);
         assignments[0].as_str().to_string() 
     }
 }
@@ -366,16 +384,20 @@ fn parse_receive_multi(
 ) -> String {
     // Extract all instances of recv_binding to a vector
     let mut assignments = Vec::new();
+    let mut metadata = None;
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::recv_binding => {
                 assignments.push(get_variable_name(pair));
             },
+            Rule::metadata => metadata = Some(pair),
             _ => parse_warn!("receive multi", pair.as_rule()),
         }
     }
+    let line_number = get_line_number_from_metadata(metadata);
+
     // File writing for receive multi
-    file_writer.write_receive_assignment(assignments.clone());
+    file_writer.write_receive_assignment(assignments.clone(), line_number);
     if assignments.is_empty() {
         panic!("No assignments in receive multi");
     } else {
@@ -456,7 +478,6 @@ fn operation_as_string(ast_node: Pair<Rule>) -> String {
             }
         }
     } else {
-        println!("Error on:\n{}", ast_node);
         panic!("Unhandled string representation of expression type");
     }
     repr
@@ -556,7 +577,7 @@ fn parse_array_assignment(
     } else {
         panic!("No array in array assignment expression");
     }
-    let mut variable_name = String::new();
+    let variable_name;
     if let Some(x) = assigned_variable {
         variable_name = get_variable_name(x);
         // TODO type the array
@@ -741,7 +762,6 @@ fn create_function_symbol_table(
         panic!("no argument types");
     }
 
-    sym_table.pretty_print();
     sym_table
 }
 
@@ -919,12 +939,12 @@ fn parse_expression_tuple(
     ret: bool,    
     func_def: bool,
 ) {
-    let mut io_node: Option<Pair<Rule>> = None;
+    let mut _io_node: Option<Pair<Rule>> = None;
     let mut atom_node: Option<Pair<Rule>> = None;
     let mut arguments_node: Option<Pair<Rule>> = None;
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
-            Rule::io                   => io_node = Some(pair), 
+            Rule::io                   => _io_node = Some(pair), 
             Rule::atom                 => atom_node = Some(pair),
             Rule::expression_arguments => arguments_node = Some(pair),
             Rule::spawn_process        => parse_spawn_process(pair, file_writer, ret),
@@ -937,15 +957,10 @@ fn parse_expression_tuple(
         }
     }
 
-    if let Some(x) = io_node {
-        println!("io match: {}\n", x.as_str());
-    }
-
     if let Some(x) = atom_node {
         let mut func_name = x.as_str().to_string();
         func_name.remove(0);
         if let Some(arguments) = arguments_node {
-            println!("{}: {}", func_name, arguments.as_str());
             let call_args = parse_call_arguments(arguments);
             file_writer.write_function_call(&func_name, &call_args, ret);
         } else {
@@ -1429,7 +1444,7 @@ fn parse_for(
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::assigned_variable => {
-                if iterator == None {
+                if iterator.is_none() {
                     iterator = Some(pair);
                 } else {
                     iterable = Some(pair);
@@ -1459,4 +1474,26 @@ fn parse_for(
         panic!("No iterator in for loop");
     }
     
+}
+
+fn get_line_number_from_metadata(metadata: Option<Pair<Rule>>) -> u32 {
+    if let Some(x) = metadata {
+        let re = Regex::new(r"line: (\d+)").expect("Failed to compile regex");
+    
+        if let Some(captures) = re.captures(x.as_str()) {
+            let line_number = captures[1].parse();
+            if let Ok(y) = line_number {
+                return y;
+            }
+        }
+    }
+    0
+}
+
+fn get_line_number(ast_node: Pair<Rule>) -> u32 {
+    let mut metadata = None;
+    for pair in ast_node.into_inner() {
+        if pair.as_rule() == Rule::metadata { metadata = Some(pair) }
+    }
+    get_line_number_from_metadata(metadata)
 }

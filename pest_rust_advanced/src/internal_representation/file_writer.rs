@@ -20,7 +20,6 @@ pub struct FileWriter {
     ltl_specs: String,
     ltl_header: String,
     ltl_func: bool,
-    c_state: String,
     function_call_count: u32,
     process_count: i32,
     mailbox_id: HashMap<String, i32>,
@@ -52,7 +51,6 @@ impl FileWriter {
             ltl_specs: String::new(),
             ltl_header: String::new(),
             ltl_func: false,
-            c_state: String::new(),
             function_call_count: 0,
             process_count: 0,
             mailbox_id: HashMap::new(),
@@ -324,11 +322,11 @@ impl FileWriter {
         self.function_messages += 1;
     }
 
-    pub fn write_receive(&mut self) {
-        self.function_body.last_mut().unwrap().push_str("do\n:: true ->\n");
-        self.function_body.last_mut().unwrap().push_str("mtype messageType;\n");
-        self.function_body.last_mut().unwrap().push_str(&format!("MessageList rec_v_{};\n", self.receive_count));
-        self.function_body.last_mut().unwrap().push_str(&format!("mailbox[__pid] ? messageType, rec_v_{};\nif\n", self.receive_count));
+    pub fn write_receive(&mut self, line_number: u32) {
+        self.function_body.last_mut().unwrap().push_str(&format!("do /*{}*/\n:: true -> /*{}*/\n", line_number, line_number));
+        self.function_body.last_mut().unwrap().push_str(&format!("mtype messageType; /*{}*/\n", line_number));
+        self.function_body.last_mut().unwrap().push_str(&format!("MessageList rec_v_{}; /*{}*/\n", self.receive_count, line_number));
+        self.function_body.last_mut().unwrap().push_str(&format!("mailbox[__pid] ? messageType, rec_v_{}; /*{}*/\nif /*{}*/\n", self.receive_count, line_number, line_number));
         self.receive_count += 1;
     }
 
@@ -337,15 +335,15 @@ impl FileWriter {
         self.function_body.last_mut().unwrap().push_str("fi;\nod;\n");
     }
 
-    pub fn write_receive_assignment(&mut self, assignments: Vec<String>) {
+    pub fn write_receive_assignment(&mut self, assignments: Vec<String>, line_number: u32) {
         // First element is the message type
         for (i, assignment) in assignments.iter().enumerate() {
             if i == 0 {
                 self.mtype.push(assignment.to_uppercase());
-                self.function_body.last_mut().unwrap().push_str(&format!(":: messageType == {} ->\n", assignment.to_uppercase()));
+                self.function_body.last_mut().unwrap().push_str(&format!(":: messageType == {} -> /*{}*/\n", assignment.to_uppercase(), line_number));
             } else {
-                self.function_body.last_mut().unwrap().push_str(&format!("int {};\n", assignment));
-                self.function_body.last_mut().unwrap().push_str(&format!("{} = rec_v_{}.m{}.{};\n", assignment, self.receive_count - 1, i, "data2"));
+                self.function_body.last_mut().unwrap().push_str(&format!("int {}; /*{}*/\n", assignment, line_number));
+                self.function_body.last_mut().unwrap().push_str(&format!("{} = rec_v_{}.m{}.{}; /*{}*/\n", assignment, self.receive_count - 1, i, "data2", line_number));
             }
         }
     }
