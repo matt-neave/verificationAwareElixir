@@ -15,7 +15,7 @@ echo "Running the examples..."
 
 ### Example 1 ###
 echo "Example 1..."
-./target/release/pest_rust_example ../manualTranslation/majority_vote/lib/majority_vote.ex
+./target/release/vae ../manualTranslation/majority_vote/lib/majority_vote.ex
 
 output=$(spin -search -DVECTORSZ=40960 test_out.pml 2>&1)
 
@@ -29,7 +29,7 @@ fi
 
 ### Example 2 ###
 echo "Example 2..."
-./target/release/pest_rust_example ../manualTranslation/distributed_calculator/calc.ex
+./target/release/vae ../manualTranslation/distributed_calculator/calc.ex
 
 output=$(spin test_out.pml 2>&1)
 
@@ -43,7 +43,7 @@ fi
 
 ### Example 3 ###
 echo "Example 3..."
-./target/release/pest_rust_example ../manualTranslation/basicDeadlock/basic_deadlock/lib/basic_deadlock.ex
+./target/release/vae ../manualTranslation/basicDeadlock/basic_deadlock/lib/basic_deadlock.ex
 
 output=$(spin -search -DVECTORSZ=40960 test_out.pml 2>&1)
 
@@ -57,7 +57,7 @@ fi
 
 ### Example 4 ###
 echo "Example 4..."
-./target/release/pest_rust_example ../manualTranslation/basic_sequential/lib/basic_sequential.ex
+./target/release/vae ../manualTranslation/basic_sequential/lib/basic_sequential.ex
 
 output=$(spin test_out.pml 2>&1)
 

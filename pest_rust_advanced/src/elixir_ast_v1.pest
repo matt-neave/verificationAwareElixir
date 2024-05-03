@@ -96,7 +96,7 @@ assigned_variable = {
 
 array_assigned_variable = { "[" ~ (assigned_variable ~ ", ")* ~ assigned_variable ~ "]" }
 
-function_definition = { (ltl_spec ~ ", ")? ~ (vae_init ~ ", ")? ~ (type_spec ~ ", ")? ~ (( "{:defp" | "{:def") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}") }
+function_definition = { (ltl_spec ~ ", ")? ~ (vae_init ~ ", ")? ~ (type_spec ~ ", ")? ~ (ltl_spec ~ ", ")? ~ (vae_init ~ ", ")? ~ (( "{:defp" | "{:def") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}") }
 
 type_spec = { "{:@, " ~ metadata ~ ", [{:spec, " ~ metadata ~ ", [{:\"::\", " ~ metadata ~ ", [" ~ function_arguments_type ~ ", " ~ argument_type ~"]}]}]}" } 
 
