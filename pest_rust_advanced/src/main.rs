@@ -36,8 +36,9 @@ fn main() {
 
     let args = std::env::args().collect::<Vec<String>>();
     let model_check_flag = args.contains(&"--verify".to_string()) || args.contains(&"-v".to_string());
-    let silent_flag = args.contains(&"--silent".to_string()) || args.contains(&"-s".to_string());
-
+    let silent_flag = args.contains(&"--quiet".to_string()) || args.contains(&"-q".to_string());
+    let simulate_flag = args.contains(&"--sim".to_string()) || args.contains(&"-s".to_string());
+    
     extract_elixir_ast(path, silent_flag);
     init_logger(silent_flag);
 
@@ -59,6 +60,9 @@ fn main() {
 
     writer.commit().expect("Failed to commit to file");
 
+    if simulate_flag {
+        model_runner::simulate_model(model_path);
+    }
     if model_check_flag {
         model_runner::run_model(model_path);
     }

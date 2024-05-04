@@ -11,7 +11,7 @@ defmodule Clock do
   @spec clock(integer()) :: integer()
   def clock(n) do
     if n == 12 do
-      IO.puts "Termination"
+      IO.puts "Finished"
       n
     else
       clock(n + 1)

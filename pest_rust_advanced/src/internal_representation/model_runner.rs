@@ -5,12 +5,13 @@ use std::str::FromStr;
 use std::collections::HashMap;
 use regex::Regex;
 
+const SPIN_CMD: &str = "spin";
+const MEM_LIMIT: &str = "40960";
+
 pub fn run_model(model_path: &str) {
-    let spin_cmd = "spin";
-    let mem_limit = "40960";
-    let output = Command::new(spin_cmd)
+    let output = Command::new(SPIN_CMD)
         .arg("-search")
-        .arg(&format!("-DVECTORSZ={}", mem_limit))
+        .arg(&format!("-DVECTORSZ={}", MEM_LIMIT))
         .arg(model_path)
         .stdout(Stdio::piped())
         .output()
@@ -27,6 +28,14 @@ pub fn run_model(model_path: &str) {
             panic!("Error: {}", e);
         }
     }
+}
+
+pub fn simulate_model(model_path: &str) {
+    let _ = Command::new(SPIN_CMD)
+        .arg(model_path)
+        .stdout(Stdio::inherit())
+        .output()
+        .expect("Failed to run simulation");
 }
 
 fn profile_errors(model_path: &str, model_output: &str) {
