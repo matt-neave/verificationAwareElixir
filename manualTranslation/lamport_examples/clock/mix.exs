@@ -1,9 +1,9 @@
-defmodule LamportExamples.MixProject do
+defmodule Clock.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :lamport_examples,
+      app: :clock,
       version: "0.1.0",
       elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,

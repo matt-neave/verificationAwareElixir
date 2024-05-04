@@ -1,4 +1,6 @@
-defmodule LamportExamples do
+# 12 hour clock by Lamport, with termination
+
+defmodule Clock do
 
   @vae_init true
   def start do
@@ -6,10 +8,10 @@ defmodule LamportExamples do
   end
 
   @ltl "[]((n>=1)&&(n<=12))"
-  @spec clock(integer()) :: :ok
+  @spec clock(integer()) :: integer()
   def clock(n) do
     if n == 12 do
-      IO.puts "Done"
+      IO.puts "Termination"
     else
       clock(n + 1)
     end

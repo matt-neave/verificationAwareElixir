@@ -33,10 +33,13 @@ pub struct ASTParser;
 fn main() {
     let path = "./ast_output.txt";
     let model_path = "test_out.pml";
-    let model_check_flag = std::env::args().nth(1);
 
-    extract_elixir_ast(path);
-    init_logger();
+    let args = std::env::args().collect::<Vec<String>>();
+    let model_check_flag = args.contains(&"--verify".to_string()) || args.contains(&"-v".to_string());
+    let silent_flag = args.contains(&"--silent".to_string()) || args.contains(&"-s".to_string());
+
+    extract_elixir_ast(path, silent_flag);
+    init_logger(silent_flag);
 
     let file_content = fs::read_to_string(path)
         .unwrap_or_else(|_| panic!("Failed to read {}", path));
@@ -48,19 +51,20 @@ fn main() {
     
     let mut writer = internal_representation::file_writer::FileWriter::new(&model_path).unwrap();
 
-    //println!("{}", prog_ast);
+    if !silent_flag {
+        println!("{}", prog_ast);
+    }
+
     parse_program(prog_ast, &mut writer);
 
     writer.commit().expect("Failed to commit to file");
 
-    if let Some(flag) = model_check_flag {
-        if flag == "--verify" || flag == "-v" {
-            model_runner::run_model(&model_path);
-        }
+    if model_check_flag {
+        model_runner::run_model(model_path);
     }
 }
 
-fn extract_elixir_ast(out_file: &str) {
+fn extract_elixir_ast(out_file: &str, silent: bool) {
     let arg_error = "Incorrect usage: cargo run -- \"target_file\"";
     let arg_binding = std::env::args().last().expect(arg_error);
     let dir = Path::new(&arg_binding);
@@ -97,7 +101,9 @@ end", dir.to_str().unwrap(), out_file);
         let mut file = File::open(out_file).expect("Failed to open output file");
         let mut contents = String::new();
         file.read_to_string(&mut contents).expect("Failed to read output file");
-        //println!("{}", contents);
+        if !silent {
+            println!("{}", contents);
+        }
     } else {
         println!("Error: {:?}", output.stderr);
     }
@@ -105,7 +111,12 @@ end", dir.to_str().unwrap(), out_file);
     let _ = std::fs::remove_dir(lib);
 }
 
-fn init_logger() {
+fn init_logger(silent: bool) {
+    let level = if silent {
+        LevelFilter::Off
+    } else {
+        LevelFilter::Debug
+    };
     // Initialise logger
     env_logger::builder()
         .format(|buf, record| {
@@ -128,7 +139,7 @@ fn init_logger() {
                 record.args()
             )
         })
-        .filter_level(LevelFilter::Off)
+        .filter_level(level)
         .init();
 
 }
@@ -796,9 +807,14 @@ pub fn parse_function_definition(
     get_function_name(func_name_node.unwrap(), &mut func_name);
     let args = &*argument_list_as_str(func_arg_node.expect("no function arguments"));
     let sym_table;
+    let mut arg_var_intersect = Vec::new();
     if let Some(x) = ltl_spec {
         // ltl spec will be last element
         let ltl = x.into_inner().next_back().unwrap();
+        let ltl_vars = get_vars_from_ltl(ltl.clone());
+        // The intersection between the ltl vars and the args will be instrumented
+        arg_var_intersect = collect_common_elements(args, ltl_vars);
+        println!("Intersect: {:?}", arg_var_intersect);
         file_writer.write_ltl(ltl.as_str());
     }
 
@@ -808,7 +824,7 @@ pub fn parse_function_definition(
         sym_table = internal_representation::sym_table::SymbolTable::new();
         error!("Missing type spec for function {}.", func_name);
     }
-    file_writer.new_function(&func_name, args, sym_table, vae_init);
+    file_writer.new_function(&func_name, args, sym_table, vae_init, arg_var_intersect);
     
     // Write the body 
     // Start by setting up the channels
@@ -818,6 +834,50 @@ pub fn parse_function_definition(
     // Close the function 
     file_writer.commit_function();
     // file_writer.commit().expect("Failed to commit to file");
+}
+
+fn collect_common_elements<'a>(args: &'a str, ltl_vars: Vec<String>) -> Vec<String> {
+    // Helper function for collecting intersection of args and ltl vars
+    let mut common = Vec::new();
+    let args_v: Vec<&str> = args.split(',').map(|s| s.trim()).collect();
+    for arg in args_v {
+        let arg_s = arg.to_string();
+        if ltl_vars.contains(&arg_s) {
+            common.push(arg_s);
+        }
+    }
+    common
+}
+
+fn get_vars_from_ltl(ltl: Pair<Rule>) -> Vec<String> {
+    // Recursively descend the ltl tree and extract all variables
+    let mut vars = Vec::new();
+    for pair in ltl.into_inner() {
+        match pair.as_rule() {
+            Rule::alpha_letters => { // Base case
+                vars.push(pair.as_str().to_string());
+            },
+            Rule::ltl_primitive => { // Recursive cases
+                vars.append(&mut get_vars_from_ltl(pair));
+            },
+            Rule::ltl_term => {
+                vars.append(&mut get_vars_from_ltl(pair));
+            },
+            Rule::ltl_opd => {
+                vars.append(&mut get_vars_from_ltl(pair));
+            },
+            Rule::ltl_unary_term => {
+                vars.append(&mut get_vars_from_ltl(pair));
+            },
+            Rule::ltl => {
+                vars.append(&mut get_vars_from_ltl(pair));
+            }
+            _ => (),
+        }
+    }
+    vars.sort();
+    vars.dedup();
+    vars
 }
 
 // fn parse_function_body(
@@ -882,6 +942,8 @@ fn parse_tuple(
             Rule::metadata            => (),
             Rule::io                  => parse_io(pair, file_writer, ret),
             Rule::receive             => parse_receive(pair, file_writer, ret, func_def),
+            // TODO this case doesn't make sense, error in parsing somewhere
+            Rule::tuple               => parse_tuple(pair, file_writer, ret, func_def),
             _                         => parse_warn!("tuple", pair.as_rule()),
         }
     }

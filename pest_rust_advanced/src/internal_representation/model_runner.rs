@@ -67,6 +67,7 @@ fn check_invalid_end_state(model_path: &str, model_output: &str) -> HashMap<u32,
     let mut process_to_line_map: HashMap<u32, u32> = HashMap::new();
 
     if model_output.contains(match_str) {
+        println!("The program likely reached a deadlock. Generating trace.");
         // Run the trace
         let trace_output = Command::new("spin")
             .arg("-t")

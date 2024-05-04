@@ -113,20 +113,31 @@ impl FileWriter {
 }
 
 
-    pub fn new_function(&mut self, func_name: &str, arguments: &str, sym_table: sym_table::SymbolTable, init: bool) {
+    pub fn new_function(&mut self, func_name: &str, arguments: &str, mut sym_table: sym_table::SymbolTable, init: bool, ltl_vars: Vec<String>) {
         self.function_body.push(String::new());
         self.function_metabody.push(String::new());
         self.function_channels.push(String::new());
+        let mut string_args = arguments.to_string();
+        // Rename each arg in the ltl_vars with a unique name
+        for (i, var) in ltl_vars.iter().enumerate() {
+            // TODO for now, all ltl vars are INTEGERS
+            let ltl_arg = format!("__ltl_{}", i);
+            string_args  = string_args.replace(var, &ltl_arg);
+            self.ltl_header.push_str(&format!("int {};\n", var));
+            sym_table.add_entry(ltl_arg, sym_table::SymbolType::Integer);
+            self.function_body.last_mut().unwrap().push_str(&format!("{} = __ltl_{};\n", var, i));
+        }
+
         if init {
             // TODO: for now, function name is pushed to the channels as this is the first commit to the file
             self.function_channels.last_mut().unwrap().push_str("init {\n");
             self.function_channels.last_mut().unwrap().push_str("chan p0_mailbox = [10] of { mtype, MessageList };\n");
             self.function_body.last_mut().unwrap().push_str("mailbox[0] = p0_mailbox;\n");
             self.function_body.last_mut().unwrap().push_str("int __pid = 0;\n");
-        } else if arguments.is_empty() {
+        } else if string_args .is_empty() {
             self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} (chan ret; int __pid) {{\n", func_name));
         } else {
-            let formatted_args = Self::format_arguments(arguments, sym_table);
+            let formatted_args = Self::format_arguments(&string_args , sym_table);
             self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} ({}; chan ret; int __pid) {{\n", func_name, &*formatted_args));
         }
 
@@ -508,7 +519,7 @@ impl FileWriter {
         self.function_channels.last_mut().unwrap().push_str(&format!("chan __anonymous_ret_{} = [1] of {{ int }};\n", self.anonymous_function_count));
         self.function_body.last_mut().unwrap().push_str(&format!("run __anonymous_{}(__anonymous_ret_{},__pid);\n", self.anonymous_function_count, self.anonymous_function_count)); 
         self.function_body.last_mut().unwrap().push_str(&format!("__anonymous_ret_{} ? {}[__iterator];\n", self.anonymous_function_count, assignee));
-        self.new_function(&format!("__anonymous_{}", self.anonymous_function_count), "", sym_table::SymbolTable::new(), false);
+        self.new_function(&format!("__anonymous_{}", self.anonymous_function_count), "", sym_table::SymbolTable::new(), false, Vec::new());
         self.anonymous_function_count += 1;
     }
 
