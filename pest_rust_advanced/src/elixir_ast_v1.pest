@@ -69,7 +69,7 @@ atom = { ":" ~ letters }
 
 annotation = { ":@" ~ letters }
 
-do_else =  { "[do: " ~ (block_statement | primitive) ~ ", " ~ "else: " ~ (block_statement | primitive) ~ "]" }
+do_else =  { "[do: " ~ (block | block_statement | primitive) ~ ", " ~ "else: " ~ (block | block_statement | primitive) ~ "]" }
 
 do_single = { "[do: " ~ (block_statement | primitive) ~ "]" }
 

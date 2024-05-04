@@ -7,11 +7,12 @@ defmodule Clock do
     clock 0
   end
 
-  @ltl "[]((n>=1)&&(n<=12))"
+  @ltl "[]((n>=0)&&(n<=12))"
   @spec clock(integer()) :: integer()
   def clock(n) do
     if n == 12 do
       IO.puts "Termination"
+      n
     else
       clock(n + 1)
     end

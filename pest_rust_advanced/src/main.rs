@@ -814,7 +814,6 @@ pub fn parse_function_definition(
         let ltl_vars = get_vars_from_ltl(ltl.clone());
         // The intersection between the ltl vars and the args will be instrumented
         arg_var_intersect = collect_common_elements(args, ltl_vars);
-        println!("Intersect: {:?}", arg_var_intersect);
         file_writer.write_ltl(ltl.as_str());
     }
 
@@ -1392,6 +1391,7 @@ fn parse_conditions(
         match pair.as_rule() {
             Rule::primitive       => parse_primitive(pair, file_writer, ret),
             Rule::block_statement => parse_block_statement(pair, file_writer, ret, func_def),
+            Rule::block           => parse_block(pair, file_writer, ret, func_def),
             _                     => parse_warn!("conditions", pair.as_rule()),
         }            
     }
