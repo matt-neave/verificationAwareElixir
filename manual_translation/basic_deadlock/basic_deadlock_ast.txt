@@ -1,0 +1,128 @@
+{:ok,
+ {:__block__, [],
+  [
+    {:defmodule, [line: 1],
+     [
+       {:__aliases__, [line: 1], [:BasicDeadlock]},
+       [
+         do: {:__block__, [],
+          [
+            {:def, [line: 2],
+             [
+               {:start, [line: 2], [:run]},
+               [
+                 do: {:__block__, [],
+                  [
+                    {{:., [line: 3], [{:__aliases__, [line: 3], [:IO]}, :puts]},
+                     [line: 3], ["BasicDeadlock running"]},
+                    {:=, [line: 4],
+                     [
+                       {:p1, [line: 4], nil},
+                       {:spawn, [line: 4],
+                        [{:__aliases__, [line: 4], [:BasicProcess]}, :start, []]}
+                     ]},
+                    {:=, [line: 5],
+                     [
+                       {:p2, [line: 5], nil},
+                       {:spawn, [line: 5],
+                        [{:__aliases__, [line: 5], [:BasicProcess]}, :start, []]}
+                     ]},
+                    {:send, [line: 6],
+                     [{:p1, [line: 6], nil}, {:bind, {:p2, [line: 6], nil}}]},
+                    {:send, [line: 7],
+                     [{:p2, [line: 7], nil}, {:bind, {:p1, [line: 7], nil}}]},
+                    {:next, [line: 8], [0]}
+                  ]}
+               ]
+             ]},
+            {:defp, [line: 11],
+             [
+               {:next, [line: 11], [{:ps, [line: 11], nil}]},
+               [
+                 do: {:unless, [line: 12],
+                  [
+                    {:>=, [line: 12], [{:ps, [line: 12], nil}, 2]},
+                    [
+                      do: {:receive, [line: 13],
+                       [
+                         [
+                           do: [
+                             {:->, [line: 14],
+                              [
+                                [:finished],
+                                {:next, [line: 14],
+                                 [{:+, [line: 14], [{:ps, [...], ...}, 1]}]}
+                              ]}
+                           ]
+                         ]
+                       ]}
+                    ]
+                  ]}
+               ]
+             ]}
+          ]}
+       ]
+     ]},
+    {:defmodule, [line: 20],
+     [
+       {:__aliases__, [line: 20], [:BasicProcess]},
+       [
+         do: {:__block__, [],
+          [
+            {:def, [line: 21],
+             [
+               {:start, [line: 21], nil},
+               [
+                 do: {:__block__, [],
+                  [
+                    {{:., [line: 22],
+                      [{:__aliases__, [line: 22], [:IO]}, :puts]}, [line: 22],
+                     ["Process started"]},
+                    {:receive, [line: 23],
+                     [
+                       [
+                         do: [
+                           {:->, [line: 24],
+                            [
+                              [bind: {:pid_other, [line: 24], nil}],
+                              {:__block__, [],
+                               [
+                                 {{:., [line: 25],
+                                   [{:__aliases__, [...], ...}, :puts]},
+                                  [line: 25], ["Bound"]},
+                                 {:next, [line: 26], [{:pid_other, [...], ...}]}
+                               ]}
+                            ]}
+                         ]
+                       ]
+                     ]}
+                  ]}
+               ]
+             ]},
+            {:defp, [line: 30],
+             [
+               {:next, [line: 30], [{:pid_other, [line: 30], nil}]},
+               [
+                 do: {:__block__, [],
+                  [
+                    {:receive, [line: 31],
+                     [
+                       [
+                         do: [
+                           {:->, [line: 32],
+                            [
+                              [{:{}, [line: 32], [:message]}],
+                              {:send, [line: 32],
+                               [{:pid_other, [line: 32], nil}, :message]}
+                            ]}
+                         ]
+                       ]
+                     ]},
+                    {:next, [line: 34], [{:pid_other, [line: 34], nil}]}
+                  ]}
+               ]
+             ]}
+          ]}
+       ]
+     ]}
+  ]}}

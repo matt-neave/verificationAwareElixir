@@ -1,5 +1,4 @@
 defmodule Precondition do
-
   defp do_generate_preconditions(_name, args) do
     quote do
       Enum.map(unquote(args), &generate_precondition(&1))
@@ -16,15 +15,5 @@ defmodule Precondition do
 
   defmacro pre(condition) do
     generate_precondition(__CALLER__.module, {condition})
-  end
-end
-
-defmodule Maths do
-  import Precondition
-
-  def add(x, y) do
-    pre x + y >= 0
-    pre y >= 0
-    x + y
   end
 end
