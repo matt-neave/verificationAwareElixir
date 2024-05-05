@@ -35,6 +35,7 @@ pub struct FileWriter {
     array_capacity: u32,
     array_var_stack: Vec<String>,
     anonymous_function_count: u32,
+    returning_function: bool,
 }
 
 impl FileWriter {
@@ -66,6 +67,7 @@ impl FileWriter {
             array_capacity: 100,
             array_var_stack: Vec::new(),
             anonymous_function_count: 0,
+            returning_function: true,
         })
     }
 
@@ -80,7 +82,7 @@ impl FileWriter {
     }
 
     pub fn write_operation(&mut self, operand: &str, left_e: &str, right_e: &str, ret: bool) {
-        let formatted_string = if ret {
+        let formatted_string = if ret && self.returning_function {
             format!("ret ! {} {} {};\n", left_e, operand, right_e)
         } else {
             format!("{} {} {};\n", left_e, operand, right_e)
@@ -93,6 +95,7 @@ impl FileWriter {
             sym_table::SymbolType::Integer => String::from("int"),
             sym_table::SymbolType::String => String::from("byte"),
             sym_table::SymbolType::Boolean => String::from("int"),
+            sym_table::SymbolType::NoRet   => String::from("unparsable type"),
             sym_table::SymbolType::Array(x, _) => format!("{}[]", Self::type_to_str(x)),
             sym_table::SymbolType::Unknown => String::from("int"),
         }
@@ -127,6 +130,8 @@ impl FileWriter {
             sym_table.add_entry(ltl_arg, sym_table::SymbolType::Integer);
             self.function_body.last_mut().unwrap().push_str(&format!("{} = __ltl_{};\n", var, i));
         }
+
+        self.returning_function = sym_table.get_return_type() != &sym_table::SymbolType::NoRet;
 
         if init {
             // TODO: for now, function name is pushed to the channels as this is the first commit to the file
@@ -181,7 +186,7 @@ impl FileWriter {
         }
         self.function_body.last_mut().unwrap().push_str(&format!("run {}{}, ret{}, __pid);\n", func_name, call_arguments, self.function_call_count));
         self.function_body.last_mut().unwrap().push_str(&format!("ret{} ? {};\n", self.function_call_count, return_variable));
-        if ret {
+        if ret && self.returning_function {
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! {};\n", return_variable));
         } 
     }
@@ -277,7 +282,7 @@ impl FileWriter {
     }
 
     pub fn write_primitive(&mut self, primitive: &str, ret: bool) {
-        let formatted_string = if ret {
+        let formatted_string = if ret && self.returning_function {
             format!("ret ! {};\n", primitive)
         } else {
             format!("{}\n", primitive)
@@ -322,10 +327,13 @@ impl FileWriter {
         self.function_body.last_mut().unwrap().push_str(&format!("run {}({});\n", proctype, formatted_args));        
     }
 
-    pub fn write_send(&mut self, target: &str, mut args: Vec<String>) {
+    pub fn write_send(&mut self, mut target: &str, mut args: Vec<String>) {
         let mailbox: i32 = *self.mailbox_id.get(target).unwrap_or(&-1);
         let mtype = args.remove(0).replace(':', "").to_uppercase();
         self.mtype.push(mtype.clone());
+        
+        // Edge case, sending to self
+        target = if target == "self" { "__pid" } else { target };
 
         // Create the message component
         let mut i = 1;
@@ -399,7 +407,7 @@ impl FileWriter {
         var: &str,
         ret: bool
     ) {
-        if ret {
+        if ret && self.returning_function {
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! {};\n", var));
         } else {
             println!("Trying to write {} might not make sense", var);

@@ -442,7 +442,6 @@ fn parse_send(
 
     // Create a vector of tuples of argument types and identifiers
     let send_args = extract_send_arguments(send_arguments, send_tupled_arguments, send_atom);
-
     // Write the send to the file
     if let Some(x) = send_target {
         let var = get_variable_name(x);
@@ -503,12 +502,15 @@ fn extract_send_arguments<'a>(send_arguments: Option<Pair<'a, Rule>>, send_tuple
     let mut send_args = Vec::new();
     if let Some(x) = send_arguments {
         for pair in x.into_inner() {
-            if pair.as_rule() == Rule::binary_operation {
-                send_args.push(operation_as_string(pair));
-            } else if pair.as_rule() == Rule::assigned_variable {
-                send_args.push(get_variable_name(pair));
-            } else if pair.as_rule() != Rule::metadata {
-                send_args.push(pair.as_str().to_string());
+            if pair.as_rule() == Rule::send_argument {
+                let arg = pair.into_inner().next().unwrap();
+                if arg.as_rule() == Rule::binary_operation {
+                    send_args.push(operation_as_string(arg));
+                } else if arg.as_rule() == Rule::assigned_variable {
+                    send_args.push(get_variable_name(arg));
+                } else if arg.as_rule() != Rule::metadata {
+                    send_args.push(arg.as_str().to_string());
+                }
             }
         }
     } else if let Some(x) = send_tupled_arguments {
@@ -744,6 +746,7 @@ fn get_symbol_type(
         ":integer" => internal_representation::sym_table::SymbolType::Integer,
         ":string"  => internal_representation::sym_table::SymbolType::String,
         ":bool"    => internal_representation::sym_table::SymbolType::Boolean,
+        ":ok"      => internal_representation::sym_table::SymbolType::NoRet,
         _          => internal_representation::sym_table::SymbolType::Integer,
     }
 }
@@ -1412,7 +1415,7 @@ fn create_condition(
             Rule::number => {
                 return internal_representation::formatted_condition::FormattedCondition::Number(pair.as_str().parse().unwrap());
             },
-            _ => panic!("Failed to create condition from node for {:?}", pair.as_rule()),
+            _ => panic!("Failed to create condition from node for {:?}.\n{}", pair.as_rule(), pair.as_str()),
         }
     }
     
@@ -1474,6 +1477,7 @@ fn parse_conditions(
         match pair.as_rule() {
             Rule::block_statement => parse_tuple(pair, file_writer, ret, func_def),
             Rule::primitive       => parse_primitive(pair, file_writer, ret),
+            Rule::block           => parse_block(pair, file_writer, ret, func_def),
             _                     => parse_warn!("conditions", pair.as_rule()),
         }
     }

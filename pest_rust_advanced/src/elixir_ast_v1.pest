@@ -140,7 +140,7 @@ and = { "{:and" ~ ", " ~ metadata ~ ", " ~ "[" ~ boolean_operand ~ ", " ~ boolea
 variable_argument = { tuple }
 
 // TODO need variable_argument
-boolean_operand = { boolean_operation | binary_operand | not | or | and | assigned_variable | primitive }
+boolean_operand = { boolean_operation | not | or | and | assigned_variable | binary_operand | primitive }
 
 boolean_operation = { "{:" ~ boolean_operator ~ ", " ~ metadata ~ ", " ~ "[" ~ boolean_operand ~ ", " ~ boolean_operand ~ "]" ~ "}" }
 
@@ -171,7 +171,7 @@ send = { "{:send, " ~ metadata ~ ", [" ~ send_target ~ ", " ~ (send_atom | send_
 
 send_atom = { atom }
 
-send_target = { "{" ~ atom ~ ", " ~ metadata ~ ", nil}" }
+send_target = { "{" ~ atom ~ ", " ~ metadata ~ (", nil}" | ", []}") }
 
 send_arguments = { "{:{}, " ~ metadata ~ ", " ~ ( "[]" | "[" ~ (send_argument ~ ", ")* ~ send_argument ~ "]" ) ~ "}" }
 

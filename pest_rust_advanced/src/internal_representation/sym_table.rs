@@ -5,6 +5,7 @@ pub enum SymbolType {
     Integer,
     String,
     Boolean,
+    NoRet,  // Special type for non returning function
     Array(Box<SymbolType>, i32),
     Unknown,
 }
@@ -78,6 +79,16 @@ impl SymbolTable {
         println!("Symbol Table:");
         for (name, symbol_type) in &self.entries {
             println!("{}: {:?}", name, symbol_type);
+        }
+    }
+
+    pub fn get_return_type(&mut self) -> &SymbolType {
+        // Edge case to get return type
+        let ret_v = "RET_V";
+        if self.entries.contains_key(ret_v) {
+            self.lookup(ret_v)
+        } else {
+            &SymbolType::Unknown
         }
     }
 }
