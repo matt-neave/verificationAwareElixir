@@ -50,7 +50,7 @@ fn main() {
         .next()
         .unwrap();
     
-    let mut writer = internal_representation::file_writer::FileWriter::new(&model_path).unwrap();
+    let mut writer = internal_representation::file_writer::FileWriter::new(model_path).unwrap();
 
     if !silent_flag {
         println!("{}", prog_ast);
@@ -76,7 +76,7 @@ fn extract_elixir_ast(out_file: &str, silent: bool) {
     let ast_extractor_code = &*format!("defmodule AstExtractor do
   def main do
     {{:ok, ast}} = Code.string_to_quoted(File.read!(\"../{}\"))
-    File.write!(\"../{}\", inspect(ast, limit: :infinity)) # Writing AST to a file
+    File.write!(\"../{}\", inspect(ast, limit: :infinity, charlists: :as_lists)) # Writing AST to a file
     ast
   end
 end", dir.to_str().unwrap(), out_file);
@@ -233,6 +233,7 @@ pub fn parse_block_statement(
             Rule::spawn_process        => parse_spawn_process(pair, file_writer, ret),
             Rule::assigned_variable    => parse_assigned_variable(pair, file_writer, ret),
             Rule::r#for                => parse_for(pair, file_writer, ret, func_def),
+            Rule::pre                  => parse_pre(pair, file_writer, ret, func_def),
             _                          => parse_warn!("block statement", pair.as_rule()),
         }
     }
@@ -975,7 +976,7 @@ fn resolve_negative_number(ast_node: Pair<Rule>) -> &str {
 /// returns a string representation of a list of arguments
 fn parse_call_arguments(ast_node: Pair<Rule>) -> String {
     let mut out = String::from("[");
-    for pair in ast_node.into_inner() {
+    for pair in ast_node.clone().into_inner() {
         for arg in pair.into_inner() {
             let arg_s: String = match arg.as_rule() {
                 Rule::r#number => arg.as_str().to_string(),
@@ -987,7 +988,7 @@ fn parse_call_arguments(ast_node: Pair<Rule>) -> String {
                     variable_name.to_string()
                 },
                 Rule::binary_operation => operation_as_string(arg),
-                _ => panic!("Failed to find argument in argument list")
+                _ => panic!("Failed to find argument in argument list: {}", ast_node.as_str()),
             };
             out.push_str(&arg_s);
             out.push(',');
@@ -1018,6 +1019,7 @@ fn parse_expression_tuple(
             },
             Rule::array                => parse_array(pair, file_writer, ret),
             Rule::enum_call            => parse_enum_call(pair, file_writer, ret),
+            Rule::binary_operation     => parse_binary_operation(pair, file_writer, ret),
             _                          => parse_warn!("expression tuple", pair.as_rule()),
         }
     }
@@ -1256,6 +1258,44 @@ fn parse_if(
     }
 }
 
+fn parse_pre(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    ret: bool,
+    func_def: bool,
+) {
+    let line_number = get_line_number(ast_node.clone());
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::pre_conditions => parse_pre_conditions(pair, file_writer, ret, func_def, line_number),
+            _                    => parse_warn!("pre", pair.as_rule()),
+        }
+    }
+}
+
+fn parse_pre_conditions(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    _ret: bool,
+    _func_def: bool,
+    line_number: u32,
+) {
+    let mut condition: Option<Pair<Rule>> = None;
+    for pair in ast_node.clone().into_inner() {
+        match pair.as_rule() {
+            Rule::boolean_operand      => condition = Some(pair), 
+            _                          => parse_warn!("conditions", pair.as_rule()),
+        }
+    };
+    // To do, reformat so that parse block returns the
+    // list of instructions to write
+    let condition = condition
+        .unwrap_or_else(|| panic!("Unconditional pre condition"));
+
+    let formatted_condition = create_condition(condition);
+    file_writer.write_pre_condition(formatted_condition, line_number);
+}
+
 fn create_condition(
     ast_node: Pair<Rule>
 ) -> internal_representation::formatted_condition::FormattedCondition {
@@ -1340,10 +1380,39 @@ fn create_condition(
                 // Return new FormattedCondition
                 return internal_representation::formatted_condition::FormattedCondition::BinaryOperation(operator.as_str(), Box::new(l_op), Box::new(r_op));
             },
+            Rule::binary_operand => {
+                return create_condition(pair);
+            },
+            Rule::binary_operation => {
+                // Operation
+                let Some(operator) = pair.clone().into_inner().find(|a: &Pair<Rule>| a.as_rule() == Rule::binary_operator) else { todo!() };
+                
+                // Recursve into operands
+                let mut operands = Vec::new(); 
+                for cond in pair.into_inner() {
+                    if let Rule::binary_operand = cond.as_rule() {
+                        operands.push(create_condition(cond))
+                    }
+                }
+
+                if operands.len() < 2 {
+                    panic!("Not enough operands for 'or' operation");
+                }
+            
+                // Take ownership of the operands
+                let l_op = operands.remove(0);
+                let r_op = operands.remove(0);
+ 
+                // Return new FormattedCondition
+                return internal_representation::formatted_condition::FormattedCondition::BinaryOperation(operator.as_str(), Box::new(l_op), Box::new(r_op));
+            },
             Rule::boolean_operand => {
                 return create_condition(pair);
             },
-            _ => panic!("Failed to create condition from node")
+            Rule::number => {
+                return internal_representation::formatted_condition::FormattedCondition::Number(pair.as_str().parse().unwrap());
+            },
+            _ => panic!("Failed to create condition from node for {:?}", pair.as_rule()),
         }
     }
     

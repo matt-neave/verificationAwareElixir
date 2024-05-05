@@ -82,7 +82,7 @@ block = { "{:__block__" ~ ", " ~ metadata ~ ", " ~ block_statements ~  "}" }
 block_statements = { "[" ~ (block_statement ~ ", ")* ~ block_statement* ~ "]" }
 
 // TODO merge with tuple
-block_statement = { string | assigned_variable | attribute | function_definition | macro | enum_call | io | for | directive | array_read | array_assignment | assignment | spawn_process | send | receive | defmodule | tuple }
+block_statement = { string | assigned_variable | attribute | function_definition | macro | enum_call | io | for | pre | directive | array_read | array_assignment | assignment | spawn_process | send | receive | defmodule | tuple }
 
 tuple = { function_definition | if | unless | or | and | assigned_variable | binary_operation | expression_tuple }
 
@@ -124,7 +124,9 @@ io = { "{{:., " ~ metadata ~ ", " ~ "[" ~ alias_name ~ ", " ~ ":puts" ~ "]}, " ~
 
 for = { "{:for, " ~ metadata ~ ", [{:<-, " ~ metadata ~ ", [" ~ assigned_variable ~ ", " ~ (array | assigned_variable) ~ "]}, " ~ do ~ "]}" }
 
-if = { "{:if" ~ ", " ~ metadata ~ ", " ~ conditions ~ "}" }
+if = { "{:if, " ~ metadata ~ ", " ~ conditions ~ "}" }
+
+pre = { "{:pre, " ~ metadata ~ ", " ~ pre_conditions ~ "}" }
 
 unless = { "{:unless" ~ ", " ~ metadata ~ ", " ~ conditions ~ "}" }
 
@@ -138,7 +140,7 @@ and = { "{:and" ~ ", " ~ metadata ~ ", " ~ "[" ~ boolean_operand ~ ", " ~ boolea
 variable_argument = { tuple }
 
 // TODO need variable_argument
-boolean_operand = { boolean_operation | not | or | and | assigned_variable | primitive }
+boolean_operand = { boolean_operation | binary_operand | not | or | and | assigned_variable | primitive }
 
 boolean_operation = { "{:" ~ boolean_operator ~ ", " ~ metadata ~ ", " ~ "[" ~ boolean_operand ~ ", " ~ boolean_operand ~ "]" ~ "}" }
 
@@ -149,6 +151,8 @@ false = { "false" }
 not = { "{:not, " ~ metadata ~ ", " ~ "[" ~ boolean_operand ~ "]}" }
 
 conditions = { "[" ~ boolean_operand ~ ", " ~ (do | do_else) ~ "]"}
+
+pre_conditions = { "[" ~ boolean_operand ~ "]"}
 
 binary_operand  = { number | string | assigned_variable | binary_operation | primitive_array | expression_tuple }
 
@@ -234,7 +238,16 @@ enum_at = { ":at" }
 enum_map = { ":map" }
 
 //TODO complete
-directive = { "import" | "alias" | "require" }
+directive_type = { "import" | "alias" | "require" }
+
+directive_arguments = { "[" ~ (directive_argument ~ ", ")* ~ directive_argument ~ "]" }
+
+directive_argument = {
+    "{:__aliases__, " ~ metadata ~ ", [" ~ atom ~ "]}"
+}
+
+// {:import, [line: 1], [{:__aliases__, [line: 1], [:Precondition]}]}
+directive = { "{:" ~ directive_type ~ ", " ~ metadata ~ ", " ~ directive_arguments ~ "}" }
 
 ltl = { ltl_term ~ (ltl_binop ~ ltl_term)* }
 

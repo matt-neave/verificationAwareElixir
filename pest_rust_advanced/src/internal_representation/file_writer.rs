@@ -187,15 +187,20 @@ impl FileWriter {
     }
 
     fn condition_to_string(expr: &formatted_condition::FormattedCondition) -> String {
-        let mut symbol_map = HashMap::new();
-        symbol_map.insert("or", "||");
-        symbol_map.insert("and", "&&");   
-        symbol_map.insert(">=", ">=");
-        symbol_map.insert("<=", "<=");
-        symbol_map.insert(">", ">");
-        symbol_map.insert("<", "<"); 
-        symbol_map.insert("==", "==");
-        symbol_map.insert("!=", "!=");
+        let symbol_map: HashMap<&str, &str> = [
+            ("or", "||"),
+            ("and", "&&"),
+            (">=", ">="),
+            ("<=", "<="),
+            (">", ">"),
+            ("<", "<"),
+            ("==", "=="),
+            ("!=", "!="),
+            ("+", "+"),
+            ("-", "-"),
+            ("*", "*"),
+            ("/", "/"),
+        ].iter().cloned().collect();
         match expr {
             formatted_condition::FormattedCondition::Number(n) => n.to_string(),
             formatted_condition::FormattedCondition::Boolean(b) => {
@@ -225,6 +230,15 @@ impl FileWriter {
         self.function_body.last_mut().unwrap().push_str("if\n");
         self.function_body.last_mut().unwrap().push_str(format!(":: {} -> \n", Self::condition_to_string(&condition)).as_str());
     }
+
+    pub fn write_pre_condition(
+        &mut self,
+        condition: formatted_condition::FormattedCondition,
+        line_number: u32
+    ) {
+        self.function_body.last_mut().unwrap().push_str(format!("assert({}) /*{}*/ \n", Self::condition_to_string(&condition), line_number).as_str());
+    }
+
 
     pub fn write_else(&mut self) {
         self.function_body.last_mut().unwrap().push_str(":: else ->\n");
