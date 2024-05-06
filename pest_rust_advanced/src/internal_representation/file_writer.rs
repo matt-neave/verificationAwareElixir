@@ -36,6 +36,8 @@ pub struct FileWriter {
     array_var_stack: Vec<String>,
     anonymous_function_count: u32,
     returning_function: bool,
+    ltl_vars: Vec<String>,
+    used_ltl_vars: Vec<String>,
 }
 
 impl FileWriter {
@@ -68,6 +70,8 @@ impl FileWriter {
             array_var_stack: Vec::new(),
             anonymous_function_count: 0,
             returning_function: true,
+            ltl_vars: Vec::new(),
+            used_ltl_vars: Vec::new(),
         })
     }
 
@@ -116,13 +120,22 @@ impl FileWriter {
 }
 
 
-    pub fn new_function(&mut self, func_name: &str, arguments: &str, mut sym_table: sym_table::SymbolTable, init: bool, ltl_vars: Vec<String>) {
+    pub fn new_function(
+        &mut self, 
+        func_name: &str, 
+        arguments: &str, 
+        mut sym_table: sym_table::SymbolTable, 
+        init: bool, 
+        func_arg_ltl_vars: Vec<String>,
+        ltl_vars: Vec<String>,
+    ) {
         self.function_body.push(String::new());
         self.function_metabody.push(String::new());
         self.function_channels.push(String::new());
         let mut string_args = arguments.to_string();
         // Rename each arg in the ltl_vars with a unique name
-        for (i, var) in ltl_vars.iter().enumerate() {
+        self.ltl_vars = ltl_vars.clone();
+        for (i, var) in func_arg_ltl_vars.iter().enumerate() {
             // TODO for now, all ltl vars are INTEGERS
             let ltl_arg = format!("__ltl_{}", i);
             string_args  = string_args.replace(var, &ltl_arg);
@@ -156,6 +169,10 @@ impl FileWriter {
         // Commits the current function to the file
         self.content.push_str(&self.function_channels.pop().unwrap());
         self.content.push_str(&self.function_metabody.pop().unwrap());
+        // TODO: this is a place holder, instead we should profile functions.
+        if !self.returning_function {
+            self.function_body.last_mut().unwrap().push_str("ret ! 0;\n");
+        }
         self.content.push_str(&format!("{}}}\n\n", &*self.function_body.pop().unwrap()));
 
         // Only reset if the function is not an anonymous function
@@ -281,6 +298,10 @@ impl FileWriter {
         Ok(())
     }
 
+    pub fn write_number(&mut self, number: &str) {
+        self.function_body.last_mut().unwrap().push_str(&format!("{}", number));
+    }
+
     pub fn write_primitive(&mut self, primitive: &str, ret: bool) {
         let formatted_string = if ret && self.returning_function {
             format!("ret ! {};\n", primitive)
@@ -293,9 +314,12 @@ impl FileWriter {
 
     pub fn write_assignment_variable(&mut self, var: &str, typ: sym_table::SymbolType) {
         let formatted_var = &format!("int {};\n", var);
-        if self.ltl_func {
-            self.ltl_header.push_str(formatted_var)
-        } else {
+        if self.ltl_func && self.ltl_vars.contains(&var.to_string()) {
+            if !self.used_ltl_vars.contains(&var.to_string()) {
+                self.ltl_header.push_str(&formatted_var.clone());
+                self.used_ltl_vars.push(var.to_string());
+            }
+        } else if !self.function_sym_table.contains(var) {
             self.function_body.last_mut().unwrap().push_str(formatted_var);
         }
         self.function_body.last_mut().unwrap().push_str(&format!("{} = ", var));
@@ -303,6 +327,10 @@ impl FileWriter {
         // Push the variable name to the stack to be applied by spawn
         self.var_stack.push(String::from(var));
         self.function_sym_table.add_entry(String::from(var), typ);
+    }
+
+    pub fn commit_assignment(&mut self) {
+        self.function_body.last_mut().unwrap().push_str(";\n");
     }
 
     pub fn write_spawn_process(&mut self, proctype: &str, args: &str) {
@@ -541,7 +569,7 @@ impl FileWriter {
         self.function_channels.last_mut().unwrap().push_str(&format!("chan __anonymous_ret_{} = [1] of {{ int }};\n", self.anonymous_function_count));
         self.function_body.last_mut().unwrap().push_str(&format!("run __anonymous_{}(__anonymous_ret_{},__pid);\n", self.anonymous_function_count, self.anonymous_function_count)); 
         self.function_body.last_mut().unwrap().push_str(&format!("__anonymous_ret_{} ? {}[__iterator];\n", self.anonymous_function_count, assignee));
-        self.new_function(&format!("__anonymous_{}", self.anonymous_function_count), "", sym_table::SymbolTable::new(), false, Vec::new());
+        self.new_function(&format!("__anonymous_{}", self.anonymous_function_count), "", sym_table::SymbolTable::new(), false, Vec::new(), Vec::new());
         self.anonymous_function_count += 1;
     }
 

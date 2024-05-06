@@ -91,6 +91,10 @@ impl SymbolTable {
             &SymbolType::Unknown
         }
     }
+
+    pub fn contains(&mut self, name: &str) -> bool {
+        self.entries.contains_key(name)
+    }
 }
 
 pub fn get_array_inner_type(symbol_type: &SymbolType) -> &SymbolType {

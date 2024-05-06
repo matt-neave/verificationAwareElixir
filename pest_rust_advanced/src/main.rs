@@ -207,7 +207,8 @@ pub fn parse_block_statements(ast_node: Pair<Rule>, file_writer: &mut internal_r
     while let Some(pair) = inner_iter.next() {
         let last = inner_iter.peek().is_none();
         match pair.as_rule() {
-            Rule::block_statement => parse_block_statement(pair, file_writer, (last && func_def) || ret, func_def),
+            // TODO urgent: verify the logic shouldn't be (last && func_def) || ret!! This may disturb return calls!
+            Rule::block_statement => parse_block_statement(pair, file_writer, (ret || func_def) && last, func_def),
             _                     => parse_warn!("block statements", pair.as_rule()),
         }
     }
@@ -571,6 +572,7 @@ fn parse_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representat
     } else {
         panic!("No expression in assignment expression");
     }
+    file_writer.commit_assignment();
 }
 
 fn parse_array_assignment(
@@ -816,12 +818,13 @@ pub fn parse_function_definition(
     let args = &*argument_list_as_str(func_arg_node.expect("no function arguments"));
     let sym_table;
     let mut arg_var_intersect = Vec::new();
+    let mut ltl_vars = Vec::new();
     if let Some(x) = ltl_spec {
         // ltl spec will be last element
         let ltl = x.into_inner().next_back().unwrap();
-        let ltl_vars = get_vars_from_ltl(ltl.clone());
+        ltl_vars = get_vars_from_ltl(ltl.clone());
         // The intersection between the ltl vars and the args will be instrumented
-        arg_var_intersect = collect_common_elements(args, ltl_vars);
+        arg_var_intersect = collect_common_elements(args, ltl_vars.clone());
         file_writer.write_ltl(ltl.as_str());
     }
 
@@ -831,7 +834,7 @@ pub fn parse_function_definition(
         sym_table = internal_representation::sym_table::SymbolTable::new();
         error!("Missing type spec for function {}.", func_name);
     }
-    file_writer.new_function(&func_name, args, sym_table, vae_init, arg_var_intersect);
+    file_writer.new_function(&func_name, args, sym_table, vae_init, arg_var_intersect, ltl_vars);
     
     // Write the body 
     // Start by setting up the channels
@@ -1023,6 +1026,7 @@ fn parse_expression_tuple(
             Rule::array                => parse_array(pair, file_writer, ret),
             Rule::enum_call            => parse_enum_call(pair, file_writer, ret),
             Rule::binary_operation     => parse_binary_operation(pair, file_writer, ret),
+            Rule::number               => parse_number(pair, file_writer, ret, func_def),
             _                          => parse_warn!("expression tuple", pair.as_rule()),
         }
     }
@@ -1038,6 +1042,16 @@ fn parse_expression_tuple(
         }
     }
 
+}
+
+fn parse_number(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    _ret: bool,
+    _func_def: bool,
+) {
+    let number = ast_node.as_str();
+    file_writer.write_number(number);
 }
 
 fn parse_enum_call(
