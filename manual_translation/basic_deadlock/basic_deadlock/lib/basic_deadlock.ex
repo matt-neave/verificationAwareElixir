@@ -1,5 +1,6 @@
 defmodule BasicDeadlock do
   @vae_init true
+  @spec start_1() :: :ok
   def start_1 do
     IO.puts "BasicDeadlock running"
     p1 = spawn(BasicProcess, :start_2, [])
@@ -20,6 +21,8 @@ defmodule BasicDeadlock do
 end
 
 defmodule BasicProcess do
+
+  @spec start_2() :: :ok
   def start_2 do
     IO.puts "Process started"
     receive do

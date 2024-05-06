@@ -143,9 +143,8 @@ impl FileWriter {
             sym_table.add_entry(ltl_arg, sym_table::SymbolType::Integer);
             self.function_body.last_mut().unwrap().push_str(&format!("{} = __ltl_{};\n", var, i));
         }
-
-        self.returning_function = sym_table.get_return_type() != &sym_table::SymbolType::NoRet;
-
+        
+        self.returning_function = !matches!(*sym_table.get_return_type(), sym_table::SymbolType::NoRet);
         if init {
             // TODO: for now, function name is pushed to the channels as this is the first commit to the file
             self.function_channels.last_mut().unwrap().push_str("init {\n");
@@ -169,10 +168,6 @@ impl FileWriter {
         // Commits the current function to the file
         self.content.push_str(&self.function_channels.pop().unwrap());
         self.content.push_str(&self.function_metabody.pop().unwrap());
-        // TODO: this is a place holder, instead we should profile functions.
-        if !self.returning_function {
-            self.function_body.last_mut().unwrap().push_str("ret ! 0;\n");
-        }
         self.content.push_str(&format!("{}}}\n\n", &*self.function_body.pop().unwrap()));
 
         // Only reset if the function is not an anonymous function
@@ -180,6 +175,7 @@ impl FileWriter {
             self.function_call_count = 0;
             self.function_messages = 0;
             self.ltl_func = false;
+            self.var_stack = Vec::new();
         }
     }
 
@@ -194,15 +190,18 @@ impl FileWriter {
         // TODO make a mapping of variable name
         let call_arguments = call_arguments.replace('[', "(");
         let call_arguments = call_arguments.replace(']', "");
-        let return_variable;
-        if self.var_stack.is_empty() {
-           return_variable = format!("val{}", self.function_call_count); 
-           self.function_body.last_mut().unwrap().push_str(&format!("int {};\n", return_variable));
-        } else {
-           return_variable = self.var_stack.pop().unwrap(); 
-        }
+
+        // TODO determine if the function is returning
+        let mut return_variable = format!("ret{}", self.function_call_count);
+        let mut returning_call = false;
+        if !self.var_stack.is_empty() {
+            return_variable = self.var_stack.last().unwrap().to_string();
+            returning_call = true; 
+        } 
         self.function_body.last_mut().unwrap().push_str(&format!("run {}{}, ret{}, __pid);\n", func_name, call_arguments, self.function_call_count));
-        self.function_body.last_mut().unwrap().push_str(&format!("ret{} ? {};\n", self.function_call_count, return_variable));
+        if returning_call {
+            self.function_body.last_mut().unwrap().push_str(&format!("ret{} ? {};\n", self.function_call_count, return_variable));
+        }
         if ret && self.returning_function {
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! {};\n", return_variable));
         } 
@@ -330,6 +329,7 @@ impl FileWriter {
     }
 
     pub fn commit_assignment(&mut self) {
+        self.var_stack.pop();
         self.function_body.last_mut().unwrap().push_str(";\n");
     }
 
@@ -342,7 +342,7 @@ impl FileWriter {
         let formatted_args = format!("{}{}ret{},{}", args, if args.is_empty() {""} else {","}, self.function_call_count, self.function_call_count);
 
         // TODO verify logic, is a stack appropriate
-        let var_name = self.var_stack.pop();
+        let var_name = self.var_stack.last();
         let i = self.process_count;
         if let Some(x) = var_name {
             // Add to the lookup tables

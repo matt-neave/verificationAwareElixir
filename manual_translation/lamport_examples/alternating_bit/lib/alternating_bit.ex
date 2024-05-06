@@ -28,7 +28,7 @@ defmodule Sender do
   def start_sender do
     send self(), {:continue}
     receive do
-      {:bind, receiver, server} -> send_protocol(16, 0, 0, receiver, server, 10, 0)
+      {:bind, receiver, server} -> send_protocol(16, 0, 0, receiver, server, 2, 0)
     end
   end
 
