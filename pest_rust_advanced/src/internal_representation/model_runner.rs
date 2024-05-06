@@ -1,5 +1,6 @@
 // Runs spin, collects and triages information from the output
 
+use std::os::unix::process;
 use std::process::{Command, Stdio};
 use std::str::FromStr;
 use std::collections::HashMap;
@@ -56,6 +57,11 @@ fn profile_errors(model_path: &str, model_output: &str) {
                     trace_lines.insert(proc_num, line_num);
                 }
 
+                let non_accept_cycles = check_non_accept_cycles(model_path, model_output);
+                for (proc_num, line_num) in non_accept_cycles {
+                    trace_lines.insert(proc_num, line_num);
+                }
+
                 report_elixir_trace(model_path, trace_lines);
             } else {
                 println!("The verifier terminated with no errors.")
@@ -98,6 +104,13 @@ fn check_invalid_end_state(model_path: &str, model_output: &str) -> HashMap<u32,
             }
         }
     }
+    process_to_line_map
+}
+
+fn check_non_accept_cycles(model_path: &str, model_output: &str) -> HashMap<u32, u32> {
+    // Check for non acceptance cycles (livelock or ltl property not satisfied)
+    let process_to_line_map: HashMap<u32, u32> = HashMap::new();
+
     process_to_line_map
 }
 

@@ -17,7 +17,8 @@ defmodule AlternatingBit do
     receive do
       {:done, acks} ->
         IO.puts "Done"
-    end
+      end
+    send receiver, {:terminate}
     finished = 1
   end
 end
@@ -81,6 +82,8 @@ defmodule Receiver do
           send sender, {:ack, rBit}
           receive_protocol sent, sBit, 0, sender
         end
+      {:terminate} ->
+        IO.puts "Terminating"
       end
   end
 end
