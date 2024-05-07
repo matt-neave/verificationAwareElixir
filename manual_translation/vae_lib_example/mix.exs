@@ -1,9 +1,9 @@
-defmodule AlternatingBit.MixProject do
+defmodule VaeLibExample.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :alternating_bit,
+      app: :vae_lib_example,
       version: "0.1.0",
       elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
