@@ -189,13 +189,13 @@ impl FileWriter {
         }
     }
 
-    pub fn write_function_call(&mut self, func_name: &str, call_arguments: &str, ret: bool) {
+    pub fn write_function_call(&mut self, func_name: &str, call_arguments: &str, ret: bool, line_number: u32) {
         // Track how many function calls have taken place 
         // Create a channel for each
         // Name the receive variables appropriately
         // TODO determine return type    
         self.function_call_count += 1;
-        self.function_channels.last_mut().unwrap().push_str(&format!("chan ret{} = [1] of {{ int }};\n", self.function_call_count));
+        self.function_channels.last_mut().unwrap().push_str(&format!("chan ret{} = [1] of {{ int }}; /*{}*/\n", self.function_call_count, line_number));
         
         // TODO make a mapping of variable name
         let call_arguments = call_arguments.replace('[', "(");
@@ -208,13 +208,13 @@ impl FileWriter {
             return_variable = self.var_stack.last().unwrap().to_string();
             returning_call = true; 
         } 
-        self.function_body.last_mut().unwrap().push_str(&format!("run {}{}, ret{}, __pid);\n", func_name, call_arguments, self.function_call_count));
+        self.function_body.last_mut().unwrap().push_str(&format!("run {}{}, ret{}, __pid); /*{}*/\n", func_name, call_arguments, self.function_call_count, line_number));
         if returning_call {
-            self.function_body.last_mut().unwrap().push_str(&format!("ret{} ? {};\n", self.function_call_count, return_variable));
+            self.function_body.last_mut().unwrap().push_str(&format!("ret{} ? {}; /*{}*/\n", self.function_call_count, return_variable, line_number));
         }
         if ret && self.returning_function {
             self.post_condition_check(0);
-            self.function_body.last_mut().unwrap().push_str(&format!("ret ! {};\n", return_variable));
+            self.function_body.last_mut().unwrap().push_str(&format!("ret ! {}; /*{}*/\n", return_variable, line_number));
         } 
     }
 
@@ -259,10 +259,11 @@ impl FileWriter {
 
     pub fn write_if_condition(
         &mut self,
-        condition: formatted_condition::FormattedCondition
+        condition: formatted_condition::FormattedCondition,
+        line_number: u32
     ) {
         self.function_body.last_mut().unwrap().push_str("if\n");
-        self.function_body.last_mut().unwrap().push_str(format!(":: {} -> \n", Self::condition_to_string(&condition)).as_str());
+        self.function_body.last_mut().unwrap().push_str(format!(":: {} -> /*{}*/\n", Self::condition_to_string(&condition), line_number).as_str());
     }
 
     pub fn write_pre_condition(
@@ -320,12 +321,12 @@ impl FileWriter {
         self.function_body.last_mut().unwrap().push_str(&format!("{}", number));
     }
 
-    pub fn write_primitive(&mut self, primitive: &str, ret: bool) {
+    pub fn write_primitive(&mut self, primitive: &str, ret: bool, line_number: u32) {
         let formatted_string = if ret && self.returning_function {
             self.post_condition_check(0);
-            format!("ret ! {};\n", primitive)
+            format!("ret ! {}; /*{}*/\n", primitive, line_number)
         } else {
-            format!("{}\n", primitive)
+            format!("{} /*{}*/\n", primitive, line_number)
         };
         self.function_body.last_mut().unwrap().push_str(&formatted_string);
         
@@ -353,7 +354,7 @@ impl FileWriter {
         self.function_body.last_mut().unwrap().push_str(";\n");
     }
 
-    pub fn write_spawn_process(&mut self, proctype: &str, args: &str) {
+    pub fn write_spawn_process(&mut self, proctype: &str, args: &str, line_number: u32) {
         self.process_count += 1;
         self.function_call_count += 1;
         self.function_channels.last_mut().unwrap().push_str(&format!("chan ret{} = [1] of {{ int }};\n", self.function_call_count));
@@ -372,10 +373,10 @@ impl FileWriter {
         // Create a mailbox for each process
         self.function_channels.last_mut().unwrap().push_str(&format!("chan p{}_mailbox = [10] of {{ mtype, MessageList }};\n", self.process_count));            
         self.function_metabody.last_mut().unwrap().push_str(&format!("mailbox[{}] = p{}_mailbox;\n", i, i));
-        self.function_body.last_mut().unwrap().push_str(&format!("run {}({});\n", proctype, formatted_args));        
+        self.function_body.last_mut().unwrap().push_str(&format!("run {}({}); /*{}*/\n", proctype, formatted_args, line_number));        
     }
 
-    pub fn write_send(&mut self, mut target: &str, mut args: Vec<String>) {
+    pub fn write_send(&mut self, mut target: &str, mut args: Vec<String>, line_number: u32) {
         let mailbox: i32 = *self.mailbox_id.get(target).unwrap_or(&-1);
         let mtype = args.remove(0).replace(':', "").to_uppercase();
         self.mtype.push(mtype.clone());
@@ -385,20 +386,20 @@ impl FileWriter {
 
         // Create the message component
         let mut i = 1;
-        self.function_body.last_mut().unwrap().push_str(&format!("MessageList msg_{};\n", self.function_messages));
+        self.function_body.last_mut().unwrap().push_str(&format!("MessageList msg_{}; /*{}*/\n", self.function_messages, line_number));
         for mut arg in args {
             // TODO: replace third argument with type
             if arg.starts_with("{:self,") {
                 arg = String::from("__pid");
             }
 
-            self.function_body.last_mut().unwrap().push_str(&format!("msg_{}.m{}.data{} = {};\n", self.function_messages, i, 2, arg));
+            self.function_body.last_mut().unwrap().push_str(&format!("msg_{}.m{}.data{} = {}; /*{}*/\n", self.function_messages, i, 2, arg, line_number));
             i += 1;
         }
         if mailbox == -1 {
-            self.function_body.last_mut().unwrap().push_str(&format!("mailbox[{}] ! {}, msg_{};\n", target, mtype, self.function_messages));
+            self.function_body.last_mut().unwrap().push_str(&format!("mailbox[{}] ! {}, msg_{}; /*{}*/\n", target, mtype, self.function_messages, line_number));
         } else {
-            self.function_body.last_mut().unwrap().push_str(&format!("mailbox[{}] ! {}, msg_{};\n", mailbox, mtype, self.function_messages));
+            self.function_body.last_mut().unwrap().push_str(&format!("mailbox[{}] ! {}, msg_{}; /*{}*/\n", mailbox, mtype, self.function_messages, line_number));
         }
         self.function_messages += 1;
     }
@@ -411,8 +412,8 @@ impl FileWriter {
         self.receive_count += 1;
     }
 
-    pub fn commit_receive(&mut self) {
-        self.function_body.last_mut().unwrap().push_str(&format!(":: else -> mailbox[__pid] ! messageType, rec_v_{};\n", self.receive_count - 1));
+    pub fn commit_receive(&mut self, line_number: u32) {
+        self.function_body.last_mut().unwrap().push_str(&format!(":: else -> mailbox[__pid] ! messageType, rec_v_{}; /*{}*/\n", self.receive_count - 1, line_number));
         self.function_body.last_mut().unwrap().push_str("fi;\nod;\n");
     }
 
@@ -453,14 +454,15 @@ impl FileWriter {
     pub fn write_assigned_variable(
         &mut self,
         var: &str,
-        ret: bool
+        ret: bool,
+        line_number: u32
     ) {
         if ret && self.returning_function {
             self.post_condition_check(0);
-            self.function_body.last_mut().unwrap().push_str(&format!("ret ! {};\n", var));
+            self.function_body.last_mut().unwrap().push_str(&format!("ret ! {}; /*{}*/\n", var, line_number));
         } else {
             println!("Trying to write {} might not make sense", var);
-            self.function_body.last_mut().unwrap().push_str(&format!("{}\n", var));
+            self.function_body.last_mut().unwrap().push_str(&format!("{} /*{}*/\n", var, line_number));
         }
     }
 

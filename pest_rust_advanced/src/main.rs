@@ -245,8 +245,9 @@ fn parse_assigned_variable(
     file_writer: &mut internal_representation::file_writer::FileWriter, 
     ret: bool
 ) {
+    let line_number = get_line_number(ast_node.clone());
     let variable_name = get_variable_name(ast_node);
-    file_writer.write_assigned_variable(&variable_name, ret);
+    file_writer.write_assigned_variable(&variable_name, ret, line_number);
 }
 
 fn parse_io(
@@ -302,7 +303,7 @@ fn parse_receive(
             _ => parse_warn!("receive", pair.as_rule()),
         }
     }
-    file_writer.commit_receive();
+    file_writer.commit_receive(line_number);
 }
 
 fn parse_receive_statement(
@@ -431,6 +432,7 @@ fn parse_send(
     let mut send_arguments = None;
     let mut send_tupled_arguments = None;
     let mut send_atom = None;
+    let line_number = get_line_number(ast_node.clone());
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::send_target           => send_target = Some(pair),
@@ -446,7 +448,7 @@ fn parse_send(
     // Write the send to the file
     if let Some(x) = send_target {
         let var = get_variable_name(x);
-        file_writer.write_send(&var, send_args);
+        file_writer.write_send(&var, send_args, line_number);
     } else {
         panic!("No send target in send expression");
     }
@@ -1085,6 +1087,7 @@ fn parse_expression_tuple(
     let mut _io_node: Option<Pair<Rule>> = None;
     let mut atom_node: Option<Pair<Rule>> = None;
     let mut arguments_node: Option<Pair<Rule>> = None;
+    let line_number = get_line_number(ast_node.clone());
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::io                   => _io_node = Some(pair), 
@@ -1107,9 +1110,9 @@ fn parse_expression_tuple(
         func_name.remove(0);
         if let Some(arguments) = arguments_node {
             let call_args = parse_call_arguments(arguments);
-            file_writer.write_function_call(&func_name, &call_args, ret);
+            file_writer.write_function_call(&func_name, &call_args, ret, line_number);
         } else {
-            file_writer.write_function_call(&func_name, "", ret);
+            file_writer.write_function_call(&func_name, "", ret, line_number);
         }
     }
 
@@ -1240,6 +1243,7 @@ fn parse_spawn_process(
 ) {
     let mut process_type = None;
     let mut process_arguments = None;
+    let line_number = get_line_number(ast_node.clone());
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::atom                 => process_type = Some(pair),
@@ -1252,7 +1256,7 @@ fn parse_spawn_process(
     if let Some(x) = process_type {
         if let Some(y) = process_arguments {
             let args = &*argument_list_as_str(y);
-            file_writer.write_spawn_process(&x.as_str().replace(':', ""), args);
+            file_writer.write_spawn_process(&x.as_str().replace(':', ""), args, line_number);
         } else {
             panic!("No process type provided in spawn");
         }        
@@ -1520,6 +1524,7 @@ fn parse_conditions(
     let mut do_block: Option<Pair<Rule>> = None;
     let mut do_else_block: Option<Pair<Rule>> = None;
     let mut condition: Option<Pair<Rule>> = None;
+    let line_number = get_line_number(ast_node.clone());
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::boolean_operand      => condition = Some(pair), 
@@ -1537,7 +1542,7 @@ fn parse_conditions(
 
     // Write the if statement
     let formatted_condition = create_condition(condition);
-    file_writer.write_if_condition(formatted_condition);
+    file_writer.write_if_condition(formatted_condition, line_number);
 
     // Parse the do block
     if let Some(x) = do_block {
@@ -1610,7 +1615,8 @@ fn parse_primitive(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, ret: bool
 ) {
-    file_writer.write_primitive(ast_node.as_str(), ret);
+    let line_number = get_line_number(ast_node.clone());
+    file_writer.write_primitive(ast_node.as_str(), ret, line_number);
 }
 
 fn name_from_tuple_str(input: &str) -> &str {

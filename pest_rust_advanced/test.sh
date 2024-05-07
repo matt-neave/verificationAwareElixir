@@ -15,11 +15,10 @@ echo "Running the examples..."
 
 ### Example 1 ###
 echo "Example 1..."
-./target/release/vae -q ../manual_translation/majority_vote/lib/majority_vote.ex
 
-output=$(spin -search -DVECTORSZ=40960 test_out.pml 2>&1)
+output=$(./target/release/vae -q -v ../manual_translation/majority_vote/lib/majority_vote.ex 2>&1)
 
-if echo "$output" | grep -q "errors: 0"; then
+if echo "$output" | grep -q "0 error(s)"; then
     echo "Test passed"
     passing_tests=$((passing_tests + 1))
 else
@@ -29,11 +28,10 @@ fi
 
 ### Example 2 ###
 echo "Example 2..."
-./target/release/vae -q ../manual_translation/distributed_calculator/calc.ex
 
-output=$(spin test_out.pml 2>&1)
+output=$(./target/release/vae -q -v ../manual_translation/distributed_calculator/calc.ex 2>&1)
 
-if echo "$output" | grep -q "2 processes created"; then
+if echo "$output" | grep -q "0 error(s)"; then
     echo "Test passed"
     passing_tests=$((passing_tests + 1))
 else
@@ -43,11 +41,10 @@ fi
 
 ### Example 3 ###
 echo "Example 3..."
-./target/release/vae -q ../manual_translation/basic_deadlock/basic_deadlock/lib/basic_deadlock.ex
 
-output=$(spin -search -DVECTORSZ=40960 test_out.pml 2>&1)
+output=$(./target/release/vae -q -v ../manual_translation/basic_deadlock/basic_deadlock/lib/basic_deadlock.ex 2>&1)
 
-if echo "$output" | grep -q "errors: 1"; then
+if echo "$output" | grep -q "1 error(s)"; then
     echo "Test passed"
     passing_tests=$((passing_tests + 1))
 else
@@ -57,11 +54,10 @@ fi
 
 ### Example 4 ###
 echo "Example 4..."
-./target/release/vae -q ../manual_translation/basic_sequential/lib/basic_sequential.ex
 
-output=$(spin test_out.pml 2>&1)
+output=$(./target/release/vae -q -v ../manual_translation/basic_sequential/lib/basic_sequential.ex 2>&1)
 
-if echo "$output" | grep -q "4 processes created"; then
+if echo "$output" | grep -q "0 error(s)"; then
     echo "Test passed"
     passing_tests=$((passing_tests + 1))
 else
