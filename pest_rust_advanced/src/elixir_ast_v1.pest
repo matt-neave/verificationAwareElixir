@@ -32,7 +32,7 @@ float = { ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ }
 binary_operator = { "+" | "-" | "/" | "*" }
 
 // TODO: non-exhaustive
-boolean_operator = { "==" | "<=" | ">=" | "<" | ">" }
+boolean_operator = { "==" | "<=" | ">=" | "<" | ">" | "&&" | "||" }
 
 map_op = { "=>" }
 
@@ -82,7 +82,7 @@ block = { "{:__block__" ~ ", " ~ metadata ~ ", " ~ block_statements ~  "}" }
 block_statements = { "[" ~ (block_statement ~ ", ")* ~ block_statement* ~ "]" }
 
 // TODO merge with tuple
-block_statement = { string | assigned_variable | attribute | function_definition | macro | enum_call | io | for | pre | directive | array_read | array_assignment | assignment | spawn_process | send | receive | defmodule | tuple }
+block_statement = { string | assigned_variable | attribute | vae_function_definition | function_definition | macro | enum_call | io | for | pre | directive | array_read | array_assignment | assignment | spawn_process | send | receive | defmodule | tuple }
 
 tuple = { function_definition | if | unless | or | and | assigned_variable | binary_operation | expression_tuple }
 
@@ -97,6 +97,12 @@ assigned_variable = {
 array_assigned_variable = { "[" ~ (assigned_variable ~ ", ")* ~ assigned_variable ~ "]" }
 
 function_definition = { (ltl_spec ~ ", ")? ~ (vae_init ~ ", ")? ~ (type_spec ~ ", ")? ~ (ltl_spec ~ ", ")? ~ (vae_init ~ ", ")? ~ (( "{:defp" | "{:def") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}") }
+
+vae_function_definition = { (ltl_spec ~ ", ")? ~ (vae_init ~ ", ")? ~ (type_spec ~ ", ")? ~ (ltl_spec ~ ", ")? ~ (vae_init ~ ", ")? ~ ( "{:defv, " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", [" ~ pre* ~ ", "* ~ post* ~ ", "* ~ pre*  ~ "], " ~ do ~ "]}") }
+
+pre = { "pre: " ~ boolean_operand }
+
+post = { "post: " ~ boolean_operand }
 
 type_spec = { "{:@, " ~ metadata ~ ", [{:spec, " ~ metadata ~ ", [{:\"::\", " ~ metadata ~ ", [" ~ function_arguments_type ~ ", " ~ argument_type ~"]}]}]}" } 
 
@@ -126,8 +132,6 @@ for = { "{:for, " ~ metadata ~ ", [{:<-, " ~ metadata ~ ", [" ~ assigned_variabl
 
 if = { "{:if, " ~ metadata ~ ", " ~ conditions ~ "}" }
 
-pre = { "{:pre, " ~ metadata ~ ", " ~ pre_conditions ~ "}" }
-
 unless = { "{:unless" ~ ", " ~ metadata ~ ", " ~ conditions ~ "}" }
 
 variable = { letters }
@@ -151,8 +155,6 @@ false = { "false" }
 not = { "{:not, " ~ metadata ~ ", " ~ "[" ~ boolean_operand ~ "]}" }
 
 conditions = { "[" ~ boolean_operand ~ ", " ~ (do | do_else) ~ "]"}
-
-pre_conditions = { "[" ~ boolean_operand ~ "]"}
 
 binary_operand  = { number | string | assigned_variable | binary_operation | primitive_array | expression_tuple }
 

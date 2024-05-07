@@ -38,6 +38,7 @@ pub struct FileWriter {
     returning_function: bool,
     ltl_vars: Vec<String>,
     used_ltl_vars: Vec<String>,
+    post_condition: String,
 }
 
 impl FileWriter {
@@ -72,12 +73,19 @@ impl FileWriter {
             returning_function: true,
             ltl_vars: Vec::new(),
             used_ltl_vars: Vec::new(),
+            post_condition: String::new(),
         })
     }
 
     // Method to append text to the string
     pub fn write(&mut self, text: &str) {
         self.content.push_str(text);
+    }
+
+    fn post_condition_check(&mut self, line_number: u32) {
+        if !self.post_condition.is_empty() {
+            self.function_body.last_mut().unwrap().push_str(&format!("assert({}); /*{}*/\n", self.post_condition, line_number));
+        }
     }
 
     // Method to append text to the string with new line
@@ -87,9 +95,10 @@ impl FileWriter {
 
     pub fn write_operation(&mut self, operand: &str, left_e: &str, right_e: &str, ret: bool) {
         let formatted_string = if ret && self.returning_function {
+            self.post_condition_check(0);
             format!("ret ! {} {} {};\n", left_e, operand, right_e)
         } else {
-            format!("{} {} {};\n", left_e, operand, right_e)
+            format!("{} {} {}", left_e, operand, right_e)
         };
         self.function_body.last_mut().unwrap().push_str(formatted_string.as_str());
     }
@@ -176,6 +185,7 @@ impl FileWriter {
             self.function_messages = 0;
             self.ltl_func = false;
             self.var_stack = Vec::new();
+            self.post_condition = String::new();
         }
     }
 
@@ -203,6 +213,7 @@ impl FileWriter {
             self.function_body.last_mut().unwrap().push_str(&format!("ret{} ? {};\n", self.function_call_count, return_variable));
         }
         if ret && self.returning_function {
+            self.post_condition_check(0);
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! {};\n", return_variable));
         } 
     }
@@ -221,6 +232,8 @@ impl FileWriter {
             ("-", "-"),
             ("*", "*"),
             ("/", "/"),
+            ("&&", "&&"),
+            ("||", "||"),
         ].iter().cloned().collect();
         match expr {
             formatted_condition::FormattedCondition::Number(n) => n.to_string(),
@@ -260,6 +273,12 @@ impl FileWriter {
         self.function_body.last_mut().unwrap().push_str(format!("assert({}) /*{}*/ \n", Self::condition_to_string(&condition), line_number).as_str());
     }
 
+    pub fn write_post_condition(
+        &mut self,
+        condition: formatted_condition::FormattedCondition,
+    ) {
+        self.post_condition = Self::condition_to_string(&condition);
+    }
 
     pub fn write_else(&mut self) {
         self.function_body.last_mut().unwrap().push_str(":: else ->\n");
@@ -303,6 +322,7 @@ impl FileWriter {
 
     pub fn write_primitive(&mut self, primitive: &str, ret: bool) {
         let formatted_string = if ret && self.returning_function {
+            self.post_condition_check(0);
             format!("ret ! {};\n", primitive)
         } else {
             format!("{}\n", primitive)
@@ -436,6 +456,7 @@ impl FileWriter {
         ret: bool
     ) {
         if ret && self.returning_function {
+            self.post_condition_check(0);
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! {};\n", var));
         } else {
             println!("Trying to write {} might not make sense", var);

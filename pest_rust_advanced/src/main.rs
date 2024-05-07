@@ -222,20 +222,20 @@ pub fn parse_block_statement(
 ) {
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
-            Rule::function_definition  => parse_function_definition(pair, file_writer, ret),
-            Rule::defmodule            => parse_defmodule(pair, file_writer),
-            Rule::tuple                => parse_tuple(pair, file_writer, ret, func_def),
-            Rule::assignment           => parse_assignment(pair, file_writer, ret, func_def),
-            Rule::array_assignment     => parse_array_assignment(pair, file_writer, ret, func_def),
-            Rule::array_read           => parse_array_read(pair, file_writer, ret, func_def),
-            Rule::send                 => parse_send(pair, file_writer, ret),
-            Rule::receive              => parse_receive(pair, file_writer, ret, func_def),
-            Rule::io                   => parse_io(pair, file_writer, ret),
-            Rule::spawn_process        => parse_spawn_process(pair, file_writer, ret),
-            Rule::assigned_variable    => parse_assigned_variable(pair, file_writer, ret),
-            Rule::r#for                => parse_for(pair, file_writer, ret, func_def),
-            Rule::pre                  => parse_pre(pair, file_writer, ret, func_def),
-            _                          => parse_warn!("block statement", pair.as_rule()),
+            Rule::function_definition     => parse_function_definition(pair, file_writer, ret),
+            Rule::vae_function_definition => parse_vae_function_definition(pair, file_writer, ret),
+            Rule::defmodule               => parse_defmodule(pair, file_writer),
+            Rule::tuple                   => parse_tuple(pair, file_writer, ret, func_def),
+            Rule::assignment              => parse_assignment(pair, file_writer, ret, func_def),
+            Rule::array_assignment        => parse_array_assignment(pair, file_writer, ret, func_def),
+            Rule::array_read              => parse_array_read(pair, file_writer, ret, func_def),
+            Rule::send                    => parse_send(pair, file_writer, ret),
+            Rule::receive                 => parse_receive(pair, file_writer, ret, func_def),
+            Rule::io                      => parse_io(pair, file_writer, ret),
+            Rule::spawn_process           => parse_spawn_process(pair, file_writer, ret),
+            Rule::assigned_variable       => parse_assigned_variable(pair, file_writer, ret),
+            Rule::r#for                   => parse_for(pair, file_writer, ret, func_def),
+            _                             => parse_warn!("block statement", pair.as_rule()),
         }
     }
 }
@@ -846,6 +846,77 @@ pub fn parse_function_definition(
     // file_writer.commit().expect("Failed to commit to file");
 }
 
+pub fn parse_vae_function_definition(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    _ret: bool,
+) {
+    // Write a new function name to the output file
+    let mut func_name = String::new();
+    // [function_name, metadata, arguments, do]
+    let mut func_name_node: Option<Pair<Rule>> = None;
+    let mut func_body_node: Option<Pair<Rule>> = None;
+    let mut func_arg_node: Option<Pair<Rule>> = None;
+    let mut func_type_spec: Option<Pair<Rule>> = None;
+    let mut vae_init = false;
+    let mut ltl_spec: Option<Pair<Rule>> = None;
+    let mut _func_metadata_node: Option<Pair<Rule>> = None;
+    let mut pre = None;
+    let mut post = None;
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::function_name      => func_name_node = Some(pair), 
+            Rule::function_arguments => func_arg_node = Some(pair),
+            Rule::r#do               => func_body_node = Some(pair),
+            Rule::metadata           => _func_metadata_node = Some(pair),
+            Rule::type_spec          => func_type_spec = Some(pair),
+            Rule::vae_init           => vae_init = true,
+            Rule::ltl_spec           => ltl_spec = Some(pair),
+            Rule::pre                => pre = Some(pair),
+            Rule::post               => post = Some(pair),
+            _                        => parse_warn!("function definition", pair.as_rule()),
+        }
+    }
+    
+    get_function_name(func_name_node.clone().unwrap(), &mut func_name);
+    let args = &*argument_list_as_str(func_arg_node.expect("no function arguments"));
+    let sym_table;
+    let mut arg_var_intersect = Vec::new();
+    let mut ltl_vars = Vec::new();
+    let line_number = get_line_number(func_name_node.unwrap());
+    if let Some(x) = ltl_spec {
+        // ltl spec will be last element
+        let ltl = x.into_inner().next_back().unwrap();
+        ltl_vars = get_vars_from_ltl(ltl.clone());
+        // The intersection between the ltl vars and the args will be instrumented
+        arg_var_intersect = collect_common_elements(args, ltl_vars.clone());
+        file_writer.write_ltl(ltl.as_str());
+    }
+
+    if let Some(x) = func_type_spec {
+        sym_table = create_function_symbol_table(args, x);
+    } else {
+        sym_table = internal_representation::sym_table::SymbolTable::new();
+        error!("Missing type spec for function {}.", func_name);
+    }
+    file_writer.new_function(&func_name, args, sym_table, vae_init, arg_var_intersect, ltl_vars);
+    
+    if let Some(x) = pre {
+        parse_pre_conditions(x, file_writer, line_number)
+    }
+    if let Some(x) = post {
+        parse_post_conditions(x, file_writer);
+    }
+    // Write the body 
+    // Start by setting up the channels
+    // Use predefiend code blocks for send and recv
+    parse_do(func_body_node.unwrap(), file_writer, false, !vae_init);
+
+    // Close the function 
+    file_writer.commit_function();
+    // file_writer.commit().expect("Failed to commit to file");
+}
+
 fn collect_common_elements<'a>(args: &'a str, ltl_vars: Vec<String>) -> Vec<String> {
     // Helper function for collecting intersection of args and ltl vars
     let mut common = Vec::new();
@@ -1275,26 +1346,9 @@ fn parse_if(
     }
 }
 
-fn parse_pre(
-    ast_node: Pair<Rule>, 
-    file_writer: &mut internal_representation::file_writer::FileWriter, 
-    ret: bool,
-    func_def: bool,
-) {
-    let line_number = get_line_number(ast_node.clone());
-    for pair in ast_node.into_inner() {
-        match pair.as_rule() {
-            Rule::pre_conditions => parse_pre_conditions(pair, file_writer, ret, func_def, line_number),
-            _                    => parse_warn!("pre", pair.as_rule()),
-        }
-    }
-}
-
 fn parse_pre_conditions(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
-    _ret: bool,
-    _func_def: bool,
     line_number: u32,
 ) {
     let mut condition: Option<Pair<Rule>> = None;
@@ -1311,6 +1365,26 @@ fn parse_pre_conditions(
 
     let formatted_condition = create_condition(condition);
     file_writer.write_pre_condition(formatted_condition, line_number);
+}
+
+fn parse_post_conditions(
+    ast_node: Pair<Rule>,
+    file_writer: &mut internal_representation::file_writer::FileWriter,
+) {
+    let mut condition: Option<Pair<Rule>> = None;
+    for pair in ast_node.clone().into_inner() {
+        match pair.as_rule() {
+            Rule::boolean_operand      => condition = Some(pair), 
+            _                          => parse_warn!("conditions", pair.as_rule()),
+        }
+    };
+    // To do, reformat so that parse block returns the
+    // list of instructions to write
+    let condition = condition
+        .unwrap_or_else(|| panic!("Unconditional pre condition"));
+
+    let formatted_condition = create_condition(condition);
+    file_writer.write_post_condition(formatted_condition);
 }
 
 fn create_condition(

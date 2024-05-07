@@ -1,4 +1,4 @@
-defmodule Vae do
+defmodule VaeLib do
   # \\ [] sets default value
   defmacro defv(call, opts \\ [], do: do_block) do
     # Extract `pre` and `post` conditions from the keyword options
@@ -61,16 +61,5 @@ defmodule Vae do
         raise ArgumentError, "Postcondition failed: #{inspect(unquote(post_expr))}"
       end
     end
-  end
-end
-
-# Example usage
-defmodule Example do
-  import Vae
-
-  defv example(x), pre: x > 0, post: ret == x * x do
-    ret = x * x
-    IO.inspect ret
-    ret
   end
 end
