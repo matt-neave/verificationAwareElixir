@@ -39,6 +39,7 @@ pub struct FileWriter {
     ltl_vars: Vec<String>,
     used_ltl_vars: Vec<String>,
     post_condition: String,
+    init: bool,
 }
 
 impl FileWriter {
@@ -74,6 +75,7 @@ impl FileWriter {
             ltl_vars: Vec::new(),
             used_ltl_vars: Vec::new(),
             post_condition: String::new(),
+            init: false,
         })
     }
 
@@ -155,10 +157,11 @@ impl FileWriter {
         
         self.returning_function = !matches!(*sym_table.get_return_type(), sym_table::SymbolType::NoRet);
         if init {
+            self.init = true;
             // TODO: for now, function name is pushed to the channels as this is the first commit to the file
             self.function_channels.last_mut().unwrap().push_str("init {\n");
-            self.function_channels.last_mut().unwrap().push_str("chan p0_mailbox = [10] of { mtype, MessageList };\n");
-            self.function_body.last_mut().unwrap().push_str("mailbox[0] = p0_mailbox;\n");
+            // self.function_channels.last_mut().unwrap().push_str("chan p0_mailbox = [10] of { mtype, MessageList };\n");
+            // self.function_body.last_mut().unwrap().push_str("mailbox[0] = p0_mailbox;\n");
             self.function_body.last_mut().unwrap().push_str("int __pid = 0;\n");
         } else if string_args .is_empty() {
             self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} (chan ret; int __pid) {{\n", func_name));
@@ -175,6 +178,9 @@ impl FileWriter {
 
     pub fn commit_function(&mut self) {
         // Commits the current function to the file
+        if self.init {
+            self.function_channels.last_mut().unwrap().push_str("__channel_hook\n");
+        }
         self.content.push_str(&self.function_channels.pop().unwrap());
         self.content.push_str(&self.function_metabody.pop().unwrap());
         self.content.push_str(&format!("{}}}\n\n", &*self.function_body.pop().unwrap()));
@@ -186,6 +192,7 @@ impl FileWriter {
             self.ltl_func = false;
             self.var_stack = Vec::new();
             self.post_condition = String::new();
+            self.init=false;
         }
     }
 
@@ -301,7 +308,20 @@ impl FileWriter {
             var_name = String::from(&format!("mtype = {{{}}};\n", unique_mtypes.join(",")));
         }
         // Messages
-        var_name.push_str(&format!("typedef MessageType {{\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n}};\ntypedef\nMessageList {{\nMessageType m1;\nMessageType m2;\nMessageType m3;\n}};\nchan mailbox[{}] = [10] of {{ mtype, MessageList }};\n\n", self.process_count + 1));
+        var_name.push_str(&format!("typedef MessageType {{\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n}};\ntypedef\nMessageList {{\nMessageType m1;\nMessageType m2;\nMessageType m3;\n}};\n\n"));
+        
+        let mut mailbox_assignment = String::new();
+        for mtype in unique_mtypes.iter() {
+            var_name.push_str(&format!("chan __{}[{}] = [10] of {{ mtype, MessageList }};\n", mtype, self.process_count + 1));
+            for i in 0..self.process_count + 1 {
+                var_name.push_str(&format!("chan __p{}_{} = [10] of {{ mtype, MessageList }};\n", i, mtype));
+            }
+            for i in 0..self.process_count + 1 {
+                mailbox_assignment.push_str(&format!("__{}[{}] = __p{}_{};\n", mtype, i, i, mtype));
+            }
+        }
+        self.content = self.content.replace("__channel_hook\n", &mailbox_assignment);
+
         // TODO remove or refactor Elixir list c_decl
         // let typ = "int";
         // var_name.push_str(&format!("c_decl {{\ntypedef struct LinkedList {{\n{} val;\nstruct LinkedList *next;\n}} LinkedList;\n\nLinkedList* newLinkedList({} val) {{\nLinkedList *newNode = (LinkedList *)malloc(sizeof(LinkedList));\nnewNode->val = val;\nnewNode->next = NULL;\nreturn newNode;\n}};\n\nLinkedList* prepend(LinkedList *head, {} val) {{\nLinkedList *newNode = (LinkedList *)malloc(sizeof(LinkedList));\nnewNode->val = val;\nnewNode->next = head;\nreturn newNode;\n}};\n\nLinkedList* append(LinkedList *head, {} vals[], size_t size) {{\nLinkedList *newNode = head;\nfor ({} i = 0; i < size; i++) {{\nnewNode->next = newLinkedList(vals[i]);\nnewNode = newNode->next;\n}};\nreturn head;\n}};\n}}\n\n", typ, typ, typ, typ, typ));
@@ -371,8 +391,6 @@ impl FileWriter {
             self.mailbox_id.insert(x.clone(), i);
         }
         // Create a mailbox for each process
-        self.function_channels.last_mut().unwrap().push_str(&format!("chan p{}_mailbox = [10] of {{ mtype, MessageList }};\n", self.process_count));            
-        self.function_metabody.last_mut().unwrap().push_str(&format!("mailbox[{}] = p{}_mailbox;\n", i, i));
         self.function_body.last_mut().unwrap().push_str(&format!("run {}({}); /*{}*/\n", proctype, formatted_args, line_number));        
     }
 
@@ -397,24 +415,25 @@ impl FileWriter {
             i += 1;
         }
         if mailbox == -1 {
-            self.function_body.last_mut().unwrap().push_str(&format!("mailbox[{}] ! {}, msg_{}; /*{}*/\n", target, mtype, self.function_messages, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("__{}[{}] ! {}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
         } else {
-            self.function_body.last_mut().unwrap().push_str(&format!("mailbox[{}] ! {}, msg_{}; /*{}*/\n", mailbox, mtype, self.function_messages, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("__{}[{}] ! {}, msg_{}; /*{}*/\n", mtype, mailbox, mtype, self.function_messages, line_number));
         }
         self.function_messages += 1;
     }
 
     pub fn write_receive(&mut self, line_number: u32) {
-        self.function_body.last_mut().unwrap().push_str(&format!("do /*{}*/\n:: true -> /*{}*/\n", line_number, line_number));
-        self.function_body.last_mut().unwrap().push_str(&format!("mtype messageType; /*{}*/\n", line_number));
         self.function_body.last_mut().unwrap().push_str(&format!("MessageList rec_v_{}; /*{}*/\n", self.receive_count, line_number));
-        self.function_body.last_mut().unwrap().push_str(&format!("mailbox[__pid] ? messageType, rec_v_{}; /*{}*/\nif /*{}*/\n", self.receive_count, line_number, line_number));
+        self.function_body.last_mut().unwrap().push_str(&format!("do /*{}*/\n", line_number));
+        // self.function_body.last_mut().unwrap().push_str(&format!("mtype messageType; /*{}*/\n", line_number));
+        // self.function_body.last_mut().unwrap().push_str(&format!("mailbox[__pid] ? messageType, rec_v_{}; /*{}*/\nif /*{}*/\n", self.receive_count, line_number, line_number));
         self.receive_count += 1;
     }
 
     pub fn commit_receive(&mut self, line_number: u32) {
-        self.function_body.last_mut().unwrap().push_str(&format!(":: else -> mailbox[__pid] ! messageType, rec_v_{}; /*{}*/\n", self.receive_count - 1, line_number));
-        self.function_body.last_mut().unwrap().push_str("fi;\nod;\n");
+        // self.function_body.last_mut().unwrap().push_str(&format!(":: else -> mailbox[__pid] ! messageType, rec_v_{}; /*{}*/\n", self.receive_count - 1, line_number));
+        self.function_body.last_mut().unwrap().push_str("od;\n");
+        
     }
 
     pub fn write_receive_assignment(&mut self, assignments: Vec<String>, line_number: u32) {
@@ -422,7 +441,9 @@ impl FileWriter {
         for (i, assignment) in assignments.iter().enumerate() {
             if i == 0 {
                 self.mtype.push(assignment.to_uppercase());
-                self.function_body.last_mut().unwrap().push_str(&format!(":: messageType == {} -> /*{}*/\n", assignment.to_uppercase(), line_number));
+                // self.function_body.last_mut().unwrap().push_str(&format!(":: messageType == {} -> /*{}*/\n", assignment.to_uppercase(), line_number));
+                self.function_body.last_mut().unwrap().push_str(&format!(":: __{}[__pid] ? {}, rec_v_{} -> /*{}*/\n", assignment.to_uppercase(), assignment.to_uppercase(), self.receive_count-1, line_number));
+                
             } else {
                 self.function_body.last_mut().unwrap().push_str(&format!("int {}; /*{}*/\n", assignment, line_number));
                 self.function_body.last_mut().unwrap().push_str(&format!("{} = rec_v_{}.m{}.{}; /*{}*/\n", assignment, self.receive_count - 1, i, "data2", line_number));
