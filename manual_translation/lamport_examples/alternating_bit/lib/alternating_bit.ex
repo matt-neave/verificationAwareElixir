@@ -1,7 +1,6 @@
 # Alternate implementation of Alternating Bit Protocol
 # presented by Lamport. The implementation is bounded.
-
-import Precondition
+import VaeLib
 
 defmodule AlternatingBit do
 
@@ -36,8 +35,7 @@ defmodule Sender do
   # Lamport's model is infinite, for SPIN, we require a bound (the size of the bound impacts the model checking)
   # This is a good discussion point for the paper
   @spec send_protocol(integer(), integer(), integer(), integer(), integer(), integer(), integer()) :: :ok
-  def send_protocol sent, sBit, rBit, receiver, server, upper_bound, acks_received do
-    pre upper_bound >= 0
+  defv send_protocol(sent, sBit, rBit, receiver, server, upper_bound, acks_received), pre: upper_bound >= 0 do
     if upper_bound == 0 do
       send server, {:done, acks_received}
     else
