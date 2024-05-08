@@ -38,6 +38,8 @@ fn main() {
     let model_check_flag = args.contains(&"--verify".to_string()) || args.contains(&"-v".to_string());
     let silent_flag = args.contains(&"--quiet".to_string()) || args.contains(&"-q".to_string());
     let simulate_flag = args.contains(&"--sim".to_string()) || args.contains(&"-s".to_string());
+    // Stops a process blocking on sending to a full, bounded channel
+    let bounded_channels_skip = args.contains(&"--skip-bounded".to_string()) || args.contains(&"-b".to_string());
     
     extract_elixir_ast(path, silent_flag);
     init_logger(silent_flag);
@@ -50,7 +52,7 @@ fn main() {
         .next()
         .unwrap();
     
-    let mut writer = internal_representation::file_writer::FileWriter::new(model_path).unwrap();
+    let mut writer = internal_representation::file_writer::FileWriter::new(model_path, bounded_channels_skip).unwrap();
 
     if !silent_flag {
         println!("{}", prog_ast);
@@ -865,7 +867,7 @@ pub fn parse_vae_function_definition(
     let mut _func_metadata_node: Option<Pair<Rule>> = None;
     let mut pre = None;
     let mut post = None;
-    for pair in ast_node.into_inner() {
+    for pair in ast_node.clone().into_inner() {
         match pair.as_rule() {
             Rule::function_name      => func_name_node = Some(pair), 
             Rule::function_arguments => func_arg_node = Some(pair),
@@ -885,7 +887,7 @@ pub fn parse_vae_function_definition(
     let sym_table;
     let mut arg_var_intersect = Vec::new();
     let mut ltl_vars = Vec::new();
-    let line_number = get_line_number(func_name_node.unwrap());
+    let line_number = get_line_number(ast_node);
     if let Some(x) = ltl_spec {
         // ltl spec will be last element
         let ltl = x.into_inner().next_back().unwrap();

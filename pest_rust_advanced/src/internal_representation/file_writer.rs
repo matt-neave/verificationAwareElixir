@@ -40,11 +40,12 @@ pub struct FileWriter {
     used_ltl_vars: Vec<String>,
     post_condition: String,
     init: bool,
+    skip_bounded: bool,
 }
 
 impl FileWriter {
     // Constructor method to create a new instance
-    pub fn new(file_path: &str) -> io::Result<Self> {
+    pub fn new(file_path: &str, skip_bounded: bool) -> io::Result<Self> {
         let file = File::create(file_path)?;
         Ok(Self {
             _header: String::new(),
@@ -76,6 +77,7 @@ impl FileWriter {
             used_ltl_vars: Vec::new(),
             post_condition: String::new(),
             init: false,
+            skip_bounded,
         })
     }
 
@@ -306,7 +308,7 @@ impl FileWriter {
             var_name = String::from(&format!("mtype = {{{}}};\n", unique_mtypes.join(",")));
         }
         // Messages
-        var_name.push_str(&"typedef MessageType {\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n};\ntypedef\nMessageList {\nMessageType m1;\nMessageType m2;\nMessageType m3;\n};\n\n".to_string());
+        var_name.push_str("typedef MessageType {\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n};\ntypedef\nMessageList {\nMessageType m1;\nMessageType m2;\nMessageType m3;\n};\n\n");
         
         let mut mailbox_assignment = String::new();
         for mtype in unique_mtypes.iter() {
@@ -413,7 +415,13 @@ impl FileWriter {
             i += 1;
         }
         if mailbox == -1 {
-            self.function_body.last_mut().unwrap().push_str(&format!("__{}[{}] ! {}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
+            if self.skip_bounded {
+                self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}[{}]) -> __{}[{}] ! {}, msg_{}; /*{}*/\n:: full(__{}[{}]) -> skip; /*{}*/\nfi /*{}*/\n", line_number, mtype, target, mtype, target, mtype, self.function_messages, line_number, mtype, target, line_number, line_number));
+            } else {
+                self.function_body.last_mut().unwrap().push_str(&format!("__{}[{}] ! {}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
+            }
+        } else if self.skip_bounded {
+            self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}[{}]) -> __{}[{}] ! {}, msg_{}; /*{}*/\n:: full(__{}[{}]) -> skip; /*{}*/\nfi /*{}*/\n", line_number, mtype, mailbox, mtype, mailbox, mtype, self.function_messages, line_number, mtype, mailbox, line_number, line_number));
         } else {
             self.function_body.last_mut().unwrap().push_str(&format!("__{}[{}] ! {}, msg_{}; /*{}*/\n", mtype, mailbox, mtype, self.function_messages, line_number));
         }

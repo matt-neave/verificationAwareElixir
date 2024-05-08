@@ -77,6 +77,11 @@ fn profile_errors(model_path: &str, model_output: &str) {
                     trace_lines.push(trace);
                 }
 
+                let too_many_queues = check_too_many_queues(model_path, model_output);
+                for trace in too_many_queues {
+                    trace_lines.push(trace);
+                }
+
                 report_elixir_trace(model_path, trace_lines);
             } else {
                 println!("The verifier terminated with no errors.")
@@ -110,6 +115,18 @@ fn check_non_accept_cycles(model_path: &str, model_output: &str) -> Vec<ErrorLin
 
     if model_output.contains(match_str) {
         println!("The program is livelocked, or an ltl property was violated. Generating trace.");
+        trace = generate_trace(model_path);
+    }
+    trace
+}
+
+fn check_too_many_queues(model_path: &str, model_output: &str) -> Vec<ErrorLine> {
+    // Check for too many queues
+    let match_str = "too many queues";
+    let mut trace = Vec::new();
+
+    if model_output.contains(match_str) {
+        println!("The execution depth implies a non-terminating path (a process is likely iterating unconditionally). Generating trace.");
         trace = generate_trace(model_path);
     }
     trace
