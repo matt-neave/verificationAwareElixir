@@ -41,6 +41,7 @@ pub struct FileWriter {
     post_condition: String,
     init: bool,
     skip_bounded: bool,
+    random_count: u32,
 }
 
 impl FileWriter {
@@ -78,6 +79,7 @@ impl FileWriter {
             post_condition: String::new(),
             init: false,
             skip_bounded,
+            random_count: 0,
         })
     }
 
@@ -189,6 +191,7 @@ impl FileWriter {
         if self.function_body.is_empty() {
             self.function_call_count = 0;
             self.function_messages = 0;
+            self.random_count = 0;
             self.ltl_func = false;
             self.var_stack = Vec::new();
             self.post_condition = String::new();
@@ -338,7 +341,7 @@ impl FileWriter {
     }
 
     pub fn write_number(&mut self, number: &str) {
-        self.function_body.last_mut().unwrap().push_str(&format!("{}", number));
+        self.function_body.last_mut().unwrap().push_str(number);
     }
 
     pub fn write_primitive(&mut self, primitive: &str, ret: bool, line_number: u32) {
@@ -582,8 +585,9 @@ impl FileWriter {
         // TODO only pseudorandom as Promela does not support randomness
         let array = &args[0];
         let size = get_array_size(self.function_sym_table.lookup(array));
-        let random_index = rand::thread_rng().gen_range(0..size);
-        self.function_body.last_mut().unwrap().push_str(&format!("{}[{}];\n", array, random_index));
+        self.function_metabody.last_mut().unwrap().push_str(&format!("int __random_index_{};\nselect (__random_index_{} : 0 .. {});\n", self.random_count, self.random_count, size - 1));
+        self.function_body.last_mut().unwrap().push_str(&format!("{}[__random_index_{}];\n", array, self.random_count));
+        self.random_count += 1;
         warn!("Random number generation is not supported in Promela");
     }
 
