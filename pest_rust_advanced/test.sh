@@ -64,5 +64,17 @@ else
     echo "Test failed: basic sequential"
 fi
 
+### Example 5 ###
+echo "Example 5..."
+
+output=$(./target/release/vae -q -v ../manual_translation/wrong_message_order/lib/wrong_message_order.ex 2>&1)
+
+if echo "$output" | grep -q "0 error(s)"; then
+    echo "Test passed"
+    passing_tests=$((passing_tests + 1))
+else
+    echo "Test failed: basic sequential"
+fi
+
 # Report the number of passing tests
-echo "Passed: $passing_tests / 4"
+echo "Passed: $passing_tests / 5"
