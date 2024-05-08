@@ -160,8 +160,6 @@ impl FileWriter {
             self.init = true;
             // TODO: for now, function name is pushed to the channels as this is the first commit to the file
             self.function_channels.last_mut().unwrap().push_str("init {\n");
-            // self.function_channels.last_mut().unwrap().push_str("chan p0_mailbox = [10] of { mtype, MessageList };\n");
-            // self.function_body.last_mut().unwrap().push_str("mailbox[0] = p0_mailbox;\n");
             self.function_body.last_mut().unwrap().push_str("int __pid = 0;\n");
         } else if string_args .is_empty() {
             self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} (chan ret; int __pid) {{\n", func_name));
@@ -308,7 +306,7 @@ impl FileWriter {
             var_name = String::from(&format!("mtype = {{{}}};\n", unique_mtypes.join(",")));
         }
         // Messages
-        var_name.push_str(&format!("typedef MessageType {{\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n}};\ntypedef\nMessageList {{\nMessageType m1;\nMessageType m2;\nMessageType m3;\n}};\n\n"));
+        var_name.push_str(&"typedef MessageType {\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n};\ntypedef\nMessageList {\nMessageType m1;\nMessageType m2;\nMessageType m3;\n};\n\n".to_string());
         
         let mut mailbox_assignment = String::new();
         for mtype in unique_mtypes.iter() {
@@ -425,13 +423,10 @@ impl FileWriter {
     pub fn write_receive(&mut self, line_number: u32) {
         self.function_body.last_mut().unwrap().push_str(&format!("MessageList rec_v_{}; /*{}*/\n", self.receive_count, line_number));
         self.function_body.last_mut().unwrap().push_str(&format!("do /*{}*/\n", line_number));
-        // self.function_body.last_mut().unwrap().push_str(&format!("mtype messageType; /*{}*/\n", line_number));
-        // self.function_body.last_mut().unwrap().push_str(&format!("mailbox[__pid] ? messageType, rec_v_{}; /*{}*/\nif /*{}*/\n", self.receive_count, line_number, line_number));
         self.receive_count += 1;
     }
 
-    pub fn commit_receive(&mut self, line_number: u32) {
-        // self.function_body.last_mut().unwrap().push_str(&format!(":: else -> mailbox[__pid] ! messageType, rec_v_{}; /*{}*/\n", self.receive_count - 1, line_number));
+    pub fn commit_receive(&mut self, _line_number: u32) {
         self.function_body.last_mut().unwrap().push_str("od;\n");
         
     }
