@@ -6,13 +6,14 @@ typedef node {
 }
 
 typedef linked_list {
-    node vals[10];
+    chan val = [10] of {int};
+    chan allocated = [10] of {bool};
 }
 
 #define LIST_LIMIT 10
 
-#define LIST_ALLOCATED(ls, idx) ls.vals[(idx)].allocated
-#define LIST_VAL(ls, idx) ls.vals[(idx)].val
+#define LIST_ALLOCATED(ls, idx) ls.allocated[(idx)]
+#define LIST_VAL(ls, idx) ls.val[(idx)]
 
 int __list_ptr;
 int __list_last;
@@ -100,7 +101,6 @@ inline __list_remove_first (ls)
 
 inline __list_random (ls, assignee)
 {
-    atomic {
     __list_ptr = 0;
     __list_last = 0;
     do
@@ -119,16 +119,15 @@ inline __list_random (ls, assignee)
         assignee = LIST_VAL(ls, __list_last);
         break;
     od
-    }
 }
 
 init {
-    linked_list __test_ls;
-    __list_append(__test_ls, 10);
-    __list_append(__test_ls, 12);
-    __list_append(__test_ls, 42);
-    __list_remove_first(__test_ls);
+    __list_append(__init_ls, 10);
+    __list_append(__init_ls, 12);
+    __list_append(__init_ls, 42);
+    __list_remove_first(__init_ls);
     int x;
-    __list_random(__test_ls, x);
+    __list_random(__init_ls, x);
     printf("Val: %d\n", x);
 }
+

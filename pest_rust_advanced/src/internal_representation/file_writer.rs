@@ -1,6 +1,5 @@
 use std::fs::File;
 use std::collections::HashMap;
-use rand::Rng;
 
 use std::io::{self, Write};
 
@@ -8,6 +7,7 @@ use log::warn;
 
 use crate::formatted_condition;
 use crate::internal_representation::sym_table::{self, get_array_size};
+use crate::internal_representation::boilerplate::add_linked_list_boiler_plate;
 
 // Todo: bodies should be stack based to handle nesting
 pub struct FileWriter {
@@ -329,6 +329,7 @@ impl FileWriter {
         // let typ = "int";
         // var_name.push_str(&format!("c_decl {{\ntypedef struct LinkedList {{\n{} val;\nstruct LinkedList *next;\n}} LinkedList;\n\nLinkedList* newLinkedList({} val) {{\nLinkedList *newNode = (LinkedList *)malloc(sizeof(LinkedList));\nnewNode->val = val;\nnewNode->next = NULL;\nreturn newNode;\n}};\n\nLinkedList* prepend(LinkedList *head, {} val) {{\nLinkedList *newNode = (LinkedList *)malloc(sizeof(LinkedList));\nnewNode->val = val;\nnewNode->next = head;\nreturn newNode;\n}};\n\nLinkedList* append(LinkedList *head, {} vals[], size_t size) {{\nLinkedList *newNode = head;\nfor ({} i = 0; i < size; i++) {{\nnewNode->next = newLinkedList(vals[i]);\nnewNode = newNode->next;\n}};\nreturn head;\n}};\n}}\n\n", typ, typ, typ, typ, typ));
         // ltl specs
+        var_name = add_linked_list_boiler_plate(var_name);
         var_name.push_str(&format!("{}\n", self.ltl_header));
         let header_buf = var_name
             .as_bytes();
