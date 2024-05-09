@@ -30,6 +30,8 @@ end
 defmodule Voter do
   @spec vote(integer()) :: :ok
   def vote(master) do
-    send(master, {:vote, 1})
+    options = [0, 1]
+    choice = Enum.random(options)
+    send(master, {:vote, choice})
   end
 end

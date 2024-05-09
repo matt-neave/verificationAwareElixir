@@ -224,7 +224,9 @@ impl FileWriter {
         }
         if ret && self.returning_function {
             self.post_condition_check(0);
-            self.function_body.last_mut().unwrap().push_str(&format!("ret ! {}; /*{}*/\n", return_variable, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("int __ret_placeholder_{}; /*{}*/\n", self.function_call_count, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("{} ? __ret_placeholder_{}; /*{}*/\n", return_variable, self.function_call_count, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("ret ! __ret_placeholder_{}; /*{}*/\n", self.function_call_count, line_number));
         } 
     }
 
