@@ -13,9 +13,11 @@ typedef linked_list {
 
 #define LIST_ALLOCATED(ls, idx) ls.vals[(idx)].allocated
 #define LIST_VAL(ls, idx) ls.vals[(idx)].val
+#define __list_at(ls, idx) ls.vals[(idx)].val
 
 int __list_ptr;
 int __list_last;
+int __list_ptr_new;
 inline __list_append (ls, v)
 {
     atomic {
@@ -122,13 +124,82 @@ inline __list_random (ls, assignee)
     }
 }
 
+inline __list_append_list (ls_new, ls_old)
+{
+    atomic {
+        __list_ptr = 0;
+        __list_ptr_new = 0;
+        do
+        :: __list_ptr >= LIST_LIMIT || __list_ptr_new >= LIST_LIMIT -> break;
+        :: else ->
+            if
+            :: ! LIST_ALLOCATED(ls_new, __list_ptr_new) ->
+            if 
+            :: LIST_ALLOCATED(ls_old, __list_ptr) ->
+                LIST_ALLOCATED(ls_new, __list_ptr_new) = true;
+                LIST_VAL(ls_new, __list_ptr_new) = LIST_VAL(ls_old, __list_ptr);
+                __list_ptr++;
+                __list_ptr_new++;
+            :: else ->
+                __list_ptr++;
+            fi
+            :: else ->
+                __list_ptr_new++;
+            fi
+        od
+    }
+}
+
+inline __list_map_assign (ls_new, ls_old, fn, fn_ret, pd)
+{
+    atomic {
+        __list_ptr = 0;
+        do
+        :: __list_ptr >= LIST_LIMIT -> break;
+        :: else ->
+            if
+            :: LIST_ALLOCATED(ls_old, __list_ptr) ->
+            run fn(LIST_VAL(ls_old, __list_ptr),fn_ret,pd);
+            LIST_ALLOCATED(ls_new, __list_ptr) = true;
+            fn_ret ? LIST_VAL(ls_new, __list_ptr);
+            __list_ptr++;
+            :: else -> __list_ptr++;
+            fi
+        od
+    }
+}
+
+proctype __anonymous_0 (int x; chan ret; int __pid) {
+ret ! x * x;
+}
+
 init {
+    chan ret1 = [1] of { int };
     linked_list __test_ls;
     __list_append(__test_ls, 10);
     __list_append(__test_ls, 12);
     __list_append(__test_ls, 42);
-    __list_remove_first(__test_ls);
     int x;
-    __list_random(__test_ls, x);
-    printf("Val: %d\n", x);
+    x = __list_at(__test_ls, 1);
+    linked_list __test_ls_new;
+    __list_append(__test_ls_new, 420);
+    __list_append_list(__test_ls_new, __test_ls);
+
+    int a,b,c,d;
+    a = __list_at(__test_ls_new, 0);
+    b = __list_at(__test_ls_new, 1);
+    c = __list_at(__test_ls_new, 2);
+    d = __list_at(__test_ls_new, 3);
+    printf("New list: [%d,%d,%d,%d]\n", a,b,c,d);
+
+
+    int __pid = 0;
+    linked_list __test_ls_mapped;
+    __list_map_assign(__test_ls_mapped, __test_ls_new, __anonymous_0, ret1, __pid);
+    int _mapped_a, _mapped_b, _mapped_c, _mapped_d;
+    _mapped_a = __list_at(__test_ls_mapped, 0);
+    _mapped_b = __list_at(__test_ls_mapped, 1);
+
+    printf("Mapped list: [%d,%d,...]\n", _mapped_a, _mapped_b);
+
 }

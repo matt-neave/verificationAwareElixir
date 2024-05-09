@@ -73,7 +73,19 @@ if echo "$output" | grep -q "0 error(s)"; then
     echo "Test passed"
     passing_tests=$((passing_tests + 1))
 else
-    echo "Test failed: basic sequential"
+    echo "Test failed: wrong message order"
+fi
+
+### Example 6 ###
+echo "Example 6..."
+
+output=$(./target/release/vae -q -v ../manual_translation/basic_array/lib/basic_array.ex 2>&1)
+
+if echo "$output" | grep -q "0 error(s)"; then
+    echo "Test passed"
+    passing_tests=$((passing_tests + 1))
+else
+    echo "Test failed: basic array"
 fi
 
 # Report the number of passing tests

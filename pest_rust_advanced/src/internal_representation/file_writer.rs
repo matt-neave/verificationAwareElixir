@@ -514,7 +514,7 @@ impl FileWriter {
         var: &str,
         typ: sym_table::SymbolType,
     ) {
-        self.function_body.last_mut().unwrap().push_str(&format!("int {}[{}];\n", var, self.array_capacity));
+        self.function_body.last_mut().unwrap().push_str(&format!("linked_list {};\n", var));
         self.array_var_stack.push(var.to_string());
         self.function_sym_table.add_entry(var.to_string(), typ);
     }
@@ -529,12 +529,10 @@ impl FileWriter {
             for element in elements {
                 // Check if the element type is an array
                 if let Some(sym_table::SymbolType::Array(_, size)) = self.function_sym_table.safe_lookup(&element) {
-                    for j in 0..*size {
-                        self.function_body.last_mut().unwrap().push_str(&format!("{}[{}] = {}[{}];\n", var, i, element, j));
-                        i += 1;
-                    }
+                    self.function_body.last_mut().unwrap().push_str(&format!("__list_append_list({}, {});\n", var, element));
+                    i += 1;
                 } else {
-                    self.function_body.last_mut().unwrap().push_str(&format!("{}[{}] = {};\n", var, i, element));
+                    self.function_body.last_mut().unwrap().push_str(&format!("__list_append({}, {});\n", var, element));
                     i += 1;
                 }
             };
@@ -550,7 +548,7 @@ impl FileWriter {
     ) {
         for (i, assignee) in assignees.iter().enumerate() {
             self.function_body.last_mut().unwrap().push_str(&format!("int {};\n", assignee));
-            self.function_body.last_mut().unwrap().push_str(&format!("{} = {}[{}];\n", assignee, assignment, i));
+            self.function_body.last_mut().unwrap().push_str(&format!("{} = __list_at({}, {});\n", assignee, assignment, i));
         }
     }
 
@@ -585,10 +583,8 @@ impl FileWriter {
     ) {
         // TODO only pseudorandom as Promela does not support randomness
         let array = &args[0];
-        let size = get_array_size(self.function_sym_table.lookup(array));
-        self.function_metabody.last_mut().unwrap().push_str(&format!("int __random_index_{};\nselect (__random_index_{} : 0 .. {});\n", self.random_count, self.random_count, size - 1));
-        self.function_body.last_mut().unwrap().push_str(&format!("{}[__random_index_{}];\n", array, self.random_count));
-        self.random_count += 1;
+        let assignee = self.var_stack.last().unwrap().to_string();
+        self.function_body.last_mut().unwrap().push_str(&format!("__list_random({}, {});\n", array, assignee));
         warn!("Random number generation is not supported in Promela");
     }
 
@@ -598,7 +594,7 @@ impl FileWriter {
     ) {
         let list = &args[0];
         let index = &args[1];
-        self.function_body.last_mut().unwrap().push_str(&format!("{}[{}];\n", list, index));
+        self.function_body.last_mut().unwrap().push_str(&format!("__list_at({}, {})", list, index));
     }
     
     pub fn write_enum_map(
@@ -610,18 +606,36 @@ impl FileWriter {
         let size = sym_table::get_array_size(self.function_sym_table.lookup(&iterable));
         let typ = Self::type_to_str(sym_table::get_array_inner_type(self.function_sym_table.lookup(&iterable)));
         self.function_sym_table.update_array_size(&assignee, size);
-        self.function_body.last_mut().unwrap().push_str(&format!("int __iterator;\nfor (__iterator : 0..{}) {{\n", size - 1));
         
         // TODO only supports single argument functions for now
         if fn_args.len() != 1 {
             panic!("Enum map only supports single argument functions");
         }
         let arg = &fn_args[0];
-        self.function_body.last_mut().unwrap().push_str(&format!("{} {};\n{} = {}[__iterator];\n", typ, arg, arg, iterable));
         self.function_channels.last_mut().unwrap().push_str(&format!("chan __anonymous_ret_{} = [1] of {{ int }};\n", self.anonymous_function_count));
-        self.function_body.last_mut().unwrap().push_str(&format!("run __anonymous_{}(__anonymous_ret_{},__pid);\n", self.anonymous_function_count, self.anonymous_function_count)); 
-        self.function_body.last_mut().unwrap().push_str(&format!("__anonymous_ret_{} ? {}[__iterator];\n", self.anonymous_function_count, assignee));
-        self.new_function(&format!("__anonymous_{}", self.anonymous_function_count), "", sym_table::SymbolTable::new(), false, Vec::new(), Vec::new());
+        self.function_body.last_mut().unwrap().push_str(&format!(
+            "atomic {{\n\
+                int __iter;\n\
+                __iter = 0;\n\
+                do\n\
+                :: __iter >= LIST_LIMIT -> break;\n\
+                :: else ->\n\
+                    if\n\
+                    :: LIST_ALLOCATED({}, __iter) ->\n\
+                    run __anonymous_{}(LIST_VAL({}, __iter),__anonymous_ret_{},__pid);\n\
+                    LIST_ALLOCATED({}, __iter) = true;\n\
+                    __anonymous_ret_{} ? LIST_VAL({}, __iter);\n\
+                    __iter++;\n\
+                    :: else -> __iter++;\n\
+                    fi\n\
+                od\n\
+            }}\n"
+        , iterable, self.anonymous_function_count, iterable, self.anonymous_function_count, assignee, self.anonymous_function_count, assignee));
+        
+        let mut anonymous_sym_table = sym_table::SymbolTable::new();
+        // TODO only supports integer arguments for now
+        anonymous_sym_table.add_entry(arg.to_string(), sym_table::SymbolType::Integer);
+        self.new_function(&format!("__anonymous_{}", self.anonymous_function_count), &arg.to_string(), anonymous_sym_table, false, Vec::new(), Vec::new());
         self.anonymous_function_count += 1;
     }
 
@@ -629,6 +643,5 @@ impl FileWriter {
         &mut self,
     ) {
         self.commit_function();
-        self.function_body.last_mut().unwrap().push_str("}\n");
     }
 }
