@@ -82,12 +82,16 @@ block = { "{:__block__" ~ ", " ~ metadata ~ ", " ~ block_statements ~  "}" }
 block_statements = { "[" ~ (block_statement ~ ", ")* ~ block_statement* ~ "]" }
 
 // TODO merge with tuple
-block_statement = { string | assigned_variable | attribute | vae_function_definition | function_definition | macro | enum_call | io | for | pre | directive | array_read | array_assignment | assignment | spawn_process | send | receive | defmodule | tuple }
+block_statement = { string | assigned_variable | attribute | vae_function_definition | function_definition | macro | enum_call | io | for | pre | directive | array_read | array_assignment  | assignment | statement_assignment | spawn_process | send | receive | defmodule | tuple }
 
 tuple = { function_definition | if | unless | or | and | assigned_variable | binary_operation | expression_tuple }
 
 assignment = { "{:=, " ~ metadata ~ ", [" ~ assigned_variable ~ ", " ~ expression_argument ~ "]}" }
+
+statement_assignment = { "{:=, " ~ metadata ~ ", [" ~ assigned_variable ~ ", " ~ block_statement ~ "]}" }
+
 array_assignment = { "{:=, " ~ metadata ~ ", [" ~ assigned_variable ~ ", " ~ array ~ "]}" }
+
 array_read = { "{:=, " ~ metadata ~ ", [" ~ array_assigned_variable ~ ", " ~ expression_argument ~ "]}" }
 
 assigned_variable = { 

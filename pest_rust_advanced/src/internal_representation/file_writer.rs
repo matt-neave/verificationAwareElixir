@@ -42,6 +42,7 @@ pub struct FileWriter {
     init: bool,
     skip_bounded: bool,
     random_count: u32,
+    block_assignment: bool,
 }
 
 impl FileWriter {
@@ -80,6 +81,7 @@ impl FileWriter {
             init: false,
             skip_bounded,
             random_count: 0,
+            block_assignment: false,
         })
     }
 
@@ -355,6 +357,8 @@ impl FileWriter {
         let formatted_string = if ret && self.returning_function {
             self.post_condition_check(0);
             format!("ret ! {}; /*{}*/\n", primitive, line_number)
+        } else if self.block_assignment {
+            format!("{} = {};", self.var_stack.last().unwrap(), primitive)
         } else {
             format!("{} /*{}*/\n", primitive, line_number)
         };
@@ -362,7 +366,8 @@ impl FileWriter {
         
     }
 
-    pub fn write_assignment_variable(&mut self, var: &str, typ: sym_table::SymbolType) {
+    pub fn write_assignment_variable(&mut self, var: &str, typ: sym_table::SymbolType, block_assignment: bool) {
+        self.block_assignment = block_assignment;
         let formatted_var = &format!("int {};\n", var);
         if self.ltl_func && self.ltl_vars.contains(&var.to_string()) {
             if !self.used_ltl_vars.contains(&var.to_string()) {
@@ -372,7 +377,9 @@ impl FileWriter {
         } else if !self.function_sym_table.contains(var) {
             self.function_body.last_mut().unwrap().push_str(formatted_var);
         }
-        self.function_body.last_mut().unwrap().push_str(&format!("{} = ", var));
+        if !block_assignment {
+            self.function_body.last_mut().unwrap().push_str(&format!("{} = ", var));
+        }
 
         // Push the variable name to the stack to be applied by spawn
         self.var_stack.push(String::from(var));
@@ -382,6 +389,11 @@ impl FileWriter {
     pub fn commit_assignment(&mut self) {
         self.var_stack.pop();
         self.function_body.last_mut().unwrap().push_str(";\n");
+    }
+
+    pub fn commit_statement_assignment(&mut self) {
+        self.var_stack.pop();
+        self.block_assignment = false;
     }
 
     pub fn write_spawn_process(&mut self, proctype: &str, args: &str, line_number: u32) {
@@ -494,6 +506,8 @@ impl FileWriter {
         if ret && self.returning_function {
             self.post_condition_check(0);
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! {}; /*{}*/\n", var, line_number));
+        } else if self.block_assignment {
+            self.function_body.last_mut().unwrap().push_str(&format!("{} = {}; /*{}*/\n", self.var_stack.last().unwrap(), var, line_number));
         } else {
             println!("Trying to write {} might not make sense", var);
             self.function_body.last_mut().unwrap().push_str(&format!("{} /*{}*/\n", var, line_number));

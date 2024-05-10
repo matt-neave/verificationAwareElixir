@@ -229,6 +229,7 @@ pub fn parse_block_statement(
             Rule::defmodule               => parse_defmodule(pair, file_writer),
             Rule::tuple                   => parse_tuple(pair, file_writer, ret, func_def),
             Rule::assignment              => parse_assignment(pair, file_writer, ret, func_def),
+            Rule::statement_assignment    => parse_statement_assignment(pair, file_writer, ret, func_def),
             Rule::array_assignment        => parse_array_assignment(pair, file_writer, ret, func_def),
             Rule::array_read              => parse_array_read(pair, file_writer, ret, func_def),
             Rule::send                    => parse_send(pair, file_writer, ret),
@@ -567,7 +568,7 @@ fn parse_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representat
     }
     if let Some(x) = assigned_variable {
         let variable_name = get_variable_name(x);
-        file_writer.write_assignment_variable(&variable_name, typ);
+        file_writer.write_assignment_variable(&variable_name, typ, false);
     } else {
         panic!("No variable name in assignment expression");
     }
@@ -577,6 +578,32 @@ fn parse_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representat
         panic!("No expression in assignment expression");
     }
     file_writer.commit_assignment();
+}
+
+fn parse_statement_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter, ret: bool, func_def: bool) {
+    let mut assigned_variable = None;
+    let mut block_statement = None;
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::assigned_variable   => assigned_variable = Some(pair),
+            Rule::block_statement     => block_statement = Some(pair),
+            _                         => (),
+        }
+    }
+
+    if let Some(x) = assigned_variable {
+        let variable_name = get_variable_name(x);
+        // TODO only support integer for now
+        file_writer.write_assignment_variable(&variable_name, sym_table::SymbolType::Integer, true);
+    } else {
+        panic!("No variable name in assignment expression");
+    }
+    if let Some(x) = block_statement {
+        parse_block_statement(x, file_writer, ret, func_def);
+    } else {
+        panic!("No block_statement in assignment expression");
+    }
+    file_writer.commit_statement_assignment();
 }
 
 fn parse_array_assignment(
