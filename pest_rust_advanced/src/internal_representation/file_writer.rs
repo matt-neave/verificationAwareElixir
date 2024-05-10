@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::fs::File;
 use std::collections::HashMap;
 
@@ -43,6 +44,7 @@ pub struct FileWriter {
     skip_bounded: bool,
     random_count: u32,
     block_assignment: bool,
+    max_process_count: u32,
 }
 
 impl FileWriter {
@@ -82,6 +84,7 @@ impl FileWriter {
             skip_bounded,
             random_count: 0,
             block_assignment: false,
+            max_process_count: 10,
         })
     }
 
@@ -122,7 +125,7 @@ impl FileWriter {
         }
     }
 
-    fn format_arguments(arguments: &str, sym_table: sym_table::SymbolTable) -> String {
+    fn format_arguments(arguments: &str, sym_table: &sym_table::SymbolTable) -> String {
     let mut out = String::new();
     let arg_ls = arguments.split(',');
     for arg in arg_ls {
@@ -170,13 +173,14 @@ impl FileWriter {
         } else if string_args .is_empty() {
             self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} (chan ret; int __pid) {{\n", func_name));
         } else {
-            let formatted_args = Self::format_arguments(&string_args , sym_table);
+            let formatted_args = Self::format_arguments(&string_args , &sym_table);
             self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} ({}; chan ret; int __pid) {{\n", func_name, &*formatted_args));
         }
+        self.function_body.last_mut().unwrap().push_str("if\n::__pid==-1 -> __pid = _pid;\n::else->skip;\nfi;\n");
 
         // Only create a new symbol table if the function is not an anonymous function
         if self.function_body.len() == 1 {
-            self.function_sym_table = sym_table::SymbolTable::new();
+            self.function_sym_table = sym_table;
         }
     }
 
@@ -319,11 +323,11 @@ impl FileWriter {
             var_name = String::from(&format!("mtype = {{{}}};\n", unique_mtypes.join(",")));
         }
         // Messages
-        var_name.push_str("typedef MessageType {\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n};\ntypedef\nMessageList {\nMessageType m1;\nMessageType m2;\nMessageType m3;\n};\n\n");
+        var_name.push_str("typedef MessageType {\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n};\ntypedef\nMessageList {\nMessageType m1;\nMessageType m2;\nMessageType m3;\nMessageType m4;\nMessageType m5;\nMessageType m6;\n};\n\n");
         
         let mut mailbox_assignment = String::new();
         for mtype in unique_mtypes.iter() {
-            var_name.push_str(&format!("chan __{}[{}] = [10] of {{ mtype, MessageList }};\n", mtype, self.process_count + 1));
+            var_name.push_str(&format!("chan __{}[{}] = [10] of {{ mtype, MessageList }};\n", mtype, self.max_process_count));
             for i in 0..self.process_count + 1 {
                 var_name.push_str(&format!("chan __p{}_{} = [10] of {{ mtype, MessageList }};\n", i, mtype));
             }
@@ -378,7 +382,8 @@ impl FileWriter {
             self.function_body.last_mut().unwrap().push_str(formatted_var);
         }
         if !block_assignment {
-            self.function_body.last_mut().unwrap().push_str(&format!("{} = ", var));
+            
+            self.function_body.last_mut().unwrap().push_str(&format!("atomic {{\n{} = ", var));
         }
 
         // Push the variable name to the stack to be applied by spawn
@@ -388,7 +393,7 @@ impl FileWriter {
 
     pub fn commit_assignment(&mut self) {
         self.var_stack.pop();
-        self.function_body.last_mut().unwrap().push_str(";\n");
+        self.function_body.last_mut().unwrap().push_str(";\n}\n");
     }
 
     pub fn commit_statement_assignment(&mut self) {
@@ -402,7 +407,7 @@ impl FileWriter {
         self.function_channels.last_mut().unwrap().push_str(&format!("chan ret{} = [1] of {{ int }};\n", self.function_call_count));
 
         // Format args depending on if they are empty
-        let formatted_args = format!("{}{}ret{},{}", args, if args.is_empty() {""} else {","}, self.function_call_count, self.function_call_count);
+        let formatted_args = format!("{}{}ret{},-1", args, if args.is_empty() {""} else {","}, self.function_call_count);
 
         // TODO verify logic, is a stack appropriate
         let var_name = self.var_stack.last();
@@ -413,7 +418,7 @@ impl FileWriter {
             self.mailbox_id.insert(x.clone(), i);
         }
         // Create a mailbox for each process
-        self.function_body.last_mut().unwrap().push_str(&format!("run {}({}); /*{}*/\n", proctype, formatted_args, line_number));        
+        self.function_body.last_mut().unwrap().push_str(&format!("run {}({}); /*{}*/\n", proctype, formatted_args, line_number));
     }
 
     pub fn write_send(&mut self, mut target: &str, mut args: Vec<String>, line_number: u32) {
@@ -445,7 +450,7 @@ impl FileWriter {
         } else if self.skip_bounded {
             self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}[{}]) -> __{}[{}] ! {}, msg_{}; /*{}*/\n:: full(__{}[{}]) -> skip; /*{}*/\nfi /*{}*/\n", line_number, mtype, mailbox, mtype, mailbox, mtype, self.function_messages, line_number, mtype, mailbox, line_number, line_number));
         } else {
-            self.function_body.last_mut().unwrap().push_str(&format!("__{}[{}] ! {}, msg_{}; /*{}*/\n", mtype, mailbox, mtype, self.function_messages, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("__{}[{}] ! {}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
         }
         self.function_messages += 1;
     }
@@ -577,24 +582,35 @@ impl FileWriter {
         iterator: &str,
         iterable: &str,
     ) {
-        // Look up the inner type of iterable 
-        let arr_type = self.function_sym_table.lookup(iterable);
-        let typ = Self::type_to_str(sym_table::get_array_inner_type(arr_type));
-        let arr_size = sym_table::get_array_size(arr_type);
-        
-        // Copies the array to be iterated through into a temporary array of the correct size
-        self.function_body.last_mut().unwrap().push_str(&format!("{} __temp_iterable[{}];\n{} __temp_iterator;\n", typ, arr_size, typ));
-        self.function_body.last_mut().unwrap().push_str(&format!("for (__temp_iterator : 0..{}) {{\n__temp_iterable[__temp_iterator] = {}[__temp_iterator];\n}}\n", arr_size - 1, iterable));
-        
-        // Loop through the temporary array
-        self.function_body.last_mut().unwrap().push_str(&format!("{} {};\n", typ, iterator));
-        self.function_body.last_mut().unwrap().push_str(&format!("for ({} in __temp_iterable) {{\n", iterator));
+        self.function_body.last_mut().unwrap().push_str(&format!(
+            "atomic {{\n\
+                __list_ptr = 0;\n\
+                __list_ptr_new = 0;\n\
+                do\n\
+                :: __list_ptr >= LIST_LIMIT || __list_ptr_new >= LIST_LIMIT -> break;\n\
+                :: else ->\n\
+                    if\n\
+                    :: LIST_ALLOCATED({}, __list_ptr) ->\n\
+        ", iterable));
+        if iterator != "_" {
+            self.function_body.last_mut().unwrap().push_str(&format!("int {};\n", iterator));
+            self.function_body.last_mut().unwrap().push_str(&format!("{} = LIST_VAL({}, __list_ptr);\n", iterator, iterable));
+        };
+        if !self.array_var_stack.is_empty() {
+            let var = self.array_var_stack.pop().unwrap();
+            self.function_body.last_mut().unwrap().push_str(&format!("LIST_ALLOCATED({}, __list_ptr_new) = true;\nLIST_VAL({}, __list_ptr_new) = ", var, var));
+        };
     }
 
     pub fn commit_for_loop(
         &mut self,
     ) {
-        self.function_body.last_mut().unwrap().push_str("}\n");
+        self.function_body.last_mut().unwrap().push_str("__list_ptr_new++;\n\
+            __list_ptr++;\n\
+            :: else -> __list_ptr++;\n\
+            fi\n\
+        od\n\
+        }\n");
     }
 
     pub fn write_enum_random(

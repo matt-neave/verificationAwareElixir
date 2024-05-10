@@ -238,6 +238,7 @@ pub fn parse_block_statement(
             Rule::spawn_process           => parse_spawn_process(pair, file_writer, ret),
             Rule::assigned_variable       => parse_assigned_variable(pair, file_writer, ret),
             Rule::r#for                   => parse_for(pair, file_writer, ret, func_def),
+            Rule::r#if                    => parse_if(pair, file_writer, ret, func_def),
             _                             => parse_warn!("block statement", pair.as_rule()),
         }
     }
@@ -590,15 +591,19 @@ fn parse_statement_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_r
             _                         => (),
         }
     }
-
-    if let Some(x) = assigned_variable {
-        let variable_name = get_variable_name(x);
-        // TODO only support integer for now
-        file_writer.write_assignment_variable(&variable_name, sym_table::SymbolType::Integer, true);
-    } else {
-        panic!("No variable name in assignment expression");
-    }
     if let Some(x) = block_statement {
+        if let Some(y) = assigned_variable {
+            let variable_name = get_variable_name(y);
+            // TODO only support integer for now
+            let typ = sym_table::SymbolType::Integer;
+            if x.clone().into_inner().next().unwrap().as_rule() == Rule::r#for {
+                file_writer.write_array_assignment(&variable_name, typ);
+            } else {
+                file_writer.write_assignment_variable(&variable_name, typ, true);
+            }
+        } else {
+            panic!("No variable name in assignment expression");
+        }
         parse_block_statement(x, file_writer, ret, func_def);
     } else {
         panic!("No block_statement in assignment expression");
@@ -1048,7 +1053,6 @@ fn parse_tuple(
         match pair.as_rule() {
             Rule::expression_tuple    => parse_expression_tuple(pair, file_writer, ret, func_def),  
             Rule::binary_operation    => parse_binary_operation(pair, file_writer, ret),
-            Rule::r#if                => parse_if(pair, file_writer, ret, func_def),
             Rule::unless              => parse_unless(pair, file_writer, ret, func_def),
             Rule::function_definition => parse_function_definition(pair, file_writer, ret),
             Rule::metadata            => (),
@@ -1130,6 +1134,7 @@ fn parse_expression_tuple(
             Rule::enum_call            => parse_enum_call(pair, file_writer, ret),
             Rule::binary_operation     => parse_binary_operation(pair, file_writer, ret),
             Rule::number               => parse_number(pair, file_writer, ret, func_def),
+            Rule::assigned_variable    => parse_assigned_variable(pair, file_writer, ret),
             _                          => parse_warn!("expression tuple", pair.as_rule()),
         }
     }
@@ -1304,7 +1309,14 @@ fn parse_array(
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::primitive_array => {
-                pair.into_inner().for_each(|x| elements.push(x.as_str().to_string()));
+                for arg in pair.into_inner() {
+                    let arg_type = arg.into_inner().next().unwrap();
+                    match arg_type.as_rule() {
+                        Rule::primitive => elements.push(get_primitive_as_str(arg_type)),
+                        Rule::assigned_variable => elements.push(get_variable_name(arg_type)),
+                        _ => (),
+                    }
+                }
             },
             Rule::function_argument => {
                 let arg = pair.into_inner().next().unwrap();

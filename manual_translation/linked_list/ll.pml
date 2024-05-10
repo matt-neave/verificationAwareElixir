@@ -150,25 +150,6 @@ inline __list_append_list (ls_new, ls_old)
     }
 }
 
-inline __list_map_assign (ls_new, ls_old, fn, fn_ret, pd)
-{
-    atomic {
-        __list_ptr = 0;
-        do
-        :: __list_ptr >= LIST_LIMIT -> break;
-        :: else ->
-            if
-            :: LIST_ALLOCATED(ls_old, __list_ptr) ->
-            run fn(LIST_VAL(ls_old, __list_ptr),fn_ret,pd);
-            LIST_ALLOCATED(ls_new, __list_ptr) = true;
-            fn_ret ? LIST_VAL(ls_new, __list_ptr);
-            __list_ptr++;
-            :: else -> __list_ptr++;
-            fi
-        od
-    }
-}
-
 proctype __anonymous_0 (int x; chan ret; int __pid) {
 ret ! x * x;
 }
@@ -193,13 +174,24 @@ init {
     printf("New list: [%d,%d,%d,%d]\n", a,b,c,d);
 
 
-    int __pid = 0;
-    linked_list __test_ls_mapped;
-    __list_map_assign(__test_ls_mapped, __test_ls_new, __anonymous_0, ret1, __pid);
-    int _mapped_a, _mapped_b, _mapped_c, _mapped_d;
-    _mapped_a = __list_at(__test_ls_mapped, 0);
-    _mapped_b = __list_at(__test_ls_mapped, 1);
-
-    printf("Mapped list: [%d,%d,...]\n", _mapped_a, _mapped_b);
-
+    // For loop implementation
+    atomic {
+        __list_ptr = 0;
+        __list_ptr_new = 0;
+        do
+        :: __list_ptr >= LIST_LIMIT || __list_ptr_new >= LIST_LIMIT -> break;
+        :: else ->
+            if
+            :: LIST_ALLOCATED(ls_old, __list_ptr) ->
+            LIST_ALLOCATED(ls_new, __list_ptr_new) = true;
+            LIST_VAL(ls_new, __list_ptr_new) = 
+            // if assignment, write assignment variable here
+            // loop body
+            __list_ptr_new++;
+            __list_ptr++;
+            :: else -> __list_ptr++;
+            fi
+        od
+    }
+    }
 }

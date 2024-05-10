@@ -89,4 +89,4 @@ else
 fi
 
 # Report the number of passing tests
-echo "Passed: $passing_tests / 5"
+echo "Passed: $passing_tests / 6"

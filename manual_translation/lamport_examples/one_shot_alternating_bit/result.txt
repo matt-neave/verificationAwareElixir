@@ -1,0 +1,52 @@
+------ Results of paxos
+spin -search -m100000 -DVECTORSZ=409600 -DNFAIR=100 -DVMAX=5000 -DPMAX=500 -DQMAX=500 -DBITSTATE -DSPACE test_out.pml
+Depth=     243 States=    1e+06 Transitions= 1.28e+06 Memory=   117.188 t=      636 R=   2e+03
+Depth=     243 States=    2e+06 Transitions= 2.57e+06 Memory=   117.188 t= 1.25e+03 R=   2e+03
+Depth=     243 States=    3e+06 Transitions= 3.86e+06 Memory=   156.250 t= 1.88e+03 R=   2e+03
+
+(Spin Version 6.5.2 -- 6 December 2019)
+        + Partial Order Reduction
+
+Bit statespace search for:
+        never claim             - (none specified)
+        assertion violations    +
+        cycle checks            - (disabled by -DSAFETY)
+        invalid end states      +
+
+State-vector 198752 byte, depth reached 243, errors: 0
+  3186588 states, stored
+   910478 states, matched
+  4097066 transitions (= stored+matched)
+   479363 atomic steps
+
+hash factor: 42.1196 (best if > 100.)
+
+bits set per state: 3 (-k3)
+
+Stats on memory usage (in Megabytes):
+604061.575      equivalent memory usage for states (stored*(State-vector + overhead))
+   16.000       memory used for hash array (-w27)
+    0.763       memory used for bit stack
+    5.341       memory used for DFS stack (-m100000)
+  133.939       other (proc and chan stacks)
+  156.250       total actual memory usage
+
+
+unreached in init
+        test_out.pml:68, state 33, "list_ptr = (list_ptr+1)"
+        (1 of 124 states)
+unreached in proctype start_proposer
+        test_out.pml:272, state 4, "(1)"
+        (1 of 26 states)
+unreached in proctype start_proposal
+        test_out.pml:68, state 17, "list_ptr = (list_ptr+1)"
+        (1 of 132 states)
+unreached in proctype start_link
+        (0 of 8 states)
+unreached in proctype accept_loop
+        test_out.pml:405, state 21, "(run accept_loop(last_accepted,last_proposal_id,ret2,pid))"
+        test_out.pml:429, state 41, "(run accept_loop(last_accepted,last_proposal_id,ret3,pid))"
+        (2 of 48 states)
+
+pan: elapsed time 1.99e+03 seconds
+pan: rate 1600.8741 states/second
