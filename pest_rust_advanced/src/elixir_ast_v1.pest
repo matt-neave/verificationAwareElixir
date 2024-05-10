@@ -163,7 +163,7 @@ binary_operation = { "{:" ~ binary_operator ~ ", " ~ metadata ~ ", [" ~ binary_o
 // TODO Seems expression tuple with atom is always function call, can extract this to function call and refactor 
 expression_tuple = { "{" ~ (annotation | atom) ~ ", " ~ metadata ~ ", " ~ expression_arguments ~ "}" } 
 
-expression_arguments = { ("[" ~ (expression_argument ~ ", ")* ~ expression_argument ~ "]") | condensed_list | nil }
+expression_arguments = { ("[" ~ (expression_argument ~ ", ")* ~ expression_argument ~ "]") | condensed_list | nil | "[]" }
 
 // TODO allows for lazy evaluation of negative numbers, doesn't handle subtraction
 negative_number = { "{:-, " ~ metadata ~ ", [" ~ number ~ "]}" }

@@ -1,9 +1,14 @@
 defmodule MajorityVote do
 
-  @ltl "<>(maj>1)"
   @vae_init true
   @spec start() :: :ok
   def start do
+    run_consensus()
+  end
+
+  @ltl "<>(maj>1)"
+  @spec run_consensus() :: :ok
+  def run_consensus do
     spawn(Voter, :vote, [self()])
     spawn(Voter, :vote, [self()])
     spawn(Voter, :vote, [self()])
@@ -11,7 +16,7 @@ defmodule MajorityVote do
     if maj > 1 do
       IO.puts("Majority reached")
     else
-      IO.puts("Majority not reached")
+      run_consensus()
     end
   end
 

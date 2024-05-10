@@ -218,7 +218,11 @@ impl FileWriter {
             return_variable = self.var_stack.last().unwrap().to_string();
             returning_call = true; 
         } 
-        self.function_body.last_mut().unwrap().push_str(&format!("run {}{}, ret{}, __pid); /*{}*/\n", func_name, call_arguments, self.function_call_count, line_number));
+        if call_arguments.is_empty() {
+            self.function_body.last_mut().unwrap().push_str(&format!("run {}(ret{}, __pid); /*{}*/\n", func_name, self.function_call_count, line_number));
+        } else {
+            self.function_body.last_mut().unwrap().push_str(&format!("run {}{}, ret{}, __pid); /*{}*/\n", func_name, call_arguments, self.function_call_count, line_number));
+        }
         if returning_call {
             self.function_body.last_mut().unwrap().push_str(&format!("ret{} ? {}; /*{}*/\n", self.function_call_count, return_variable, line_number));
         }
