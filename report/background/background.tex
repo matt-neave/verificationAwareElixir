@@ -60,15 +60,24 @@ Similarly, we can read messages from channels. A process can input any value $x$
 That concludes a brief overview of the process algebra proposed by Tony Hoare. We saw how event sequencing constructs processes, how processes can be composed and the special communication event $c.v$ which allows message-passing over channels. Tools have been built from similar syntax and concepts, for example, Promela \ref{sec:promela}, which models channels and messages with a similar approach.
 \section{Model Checking}
 Model checking is the process of determining if a finite-state machine (FSM) is correct under a provided specification. It typically involves enumerating all possible states of an FSM and ensuring the correctness of each state. For example, given a model M and a property $\varphi$, if no state of M violates $\varphi$, then we can say M satisfies $\varphi$. In software development, model checkers are beneficial in providing guarantees for safety-critical systems as well as concurrent systems. Concurrent systems can often cause issues with uncommon instruction execution interleavings that are not easily identifiable until long into a runtime. For example, deadlocks can occur when instructions being run by two processes are dependent on one another making progress. A simple example of a deadlock that can occur is the following interleaving of instructions executed by two processes, $\tau_1$ and $\tau_2$. 
-\[
-\begin{aligned}
-& \tau_1: \text{ acquire lock A} \\
-& \tau_2: \text{ acquire lock B} \\
-& \tau_1: \text{ acquire lock B} \\
-& \tau_2: \text{ acquire lock A}
-\end{aligned}
-\]
-This simple interleaving results in $\tau_1$ blocking until it can acquire lock B, and $\tau_2$ blocking until it can acquire lock A, hence the program is in a deadlock. Due to the nature of concurrent systems, we could run our program and never experience this interleaving of instructions from occurring, hence we could deem our program deadlock-free. By instead abstracting our program as a model, and verifying the correctness using a model checker, we could exhaustively check all possible states (interleavings of concurrent processes) and catch this deadlock. 
+\begin{multicols}{2}
+    \[
+    \begin{aligned}
+    & \tau_1: \text{ acquire lock A} \\
+    & \tau_1: \text{ acquire lock B} \\
+    & \tau_1: \text{ release locks}
+    \end{aligned}
+    \]
+    \vline
+    \[
+    \begin{aligned}
+    & \tau_2: \text{ acquire lock B} \\
+    & \tau_2: \text{ acquire lock A} \\
+    & \tau_2: \text{ release locks}
+    \end{aligned}
+    \]
+    \end{multicols}
+An interleaving such as ($\tau_1$, $\tau_2$, $\tau_1$, $\tau_2$, \dots) results in $\tau_1$ blocking until it can acquire lock B, and $\tau_2$ blocking until it can acquire lock A, hence the program is in a deadlock. Due to the nature of concurrent systems, we could run our program and never experience this interleaving of instructions from occurring, hence we could deem our program deadlock-free. By instead abstracting our program as a model, and verifying the correctness using a model checker, we could exhaustively check all possible states (interleavings of concurrent processes) and catch this deadlock. 
 \par
 Alongside determining progress can be made within a system, model checkers are also used to guarantee the correctness of a specification. To demonstrate, we model a very simple 24-hour clock, where at each time step, we progress time by an hour.
 \[
@@ -138,16 +147,25 @@ Theorem proving is another process to verify programs. In theorem proving, axiom
 \subsection{Hoare Logic}
 Hoare Logic was discovered in 1969 by Tony Hoare \cite{hoare_logic}. Hoare Logic defines the Hoare Triple, an essential idea in describing how code execution changes the state of a computation. A Hoare Triple is composed of a pre-condition assertion $P$, a post-condition assertion $Q$, and a command $C$.
 \[
-\{P\}C\{Q\}
+\{P\} C \{Q\}
 \]
 Note how the postcondition is the same as the precondition for this command.
 \par
 Hoare Logic provides axioms and inference rules required to construct a simple imperative programming language. If $P$ holds in the given state and $C$ terminates, then $Q$ will hold after. Below is an example of a simple Hoare Triple for the \texttt{skip} command, which leaves the program state unchanged.
 \[
-\overline{\{P\}\text{skip}\{P\}}
+\{P\} \text{skip} \{P\}
 \]
 Hoare describes many more rules that allow for assignment, composition, consequence and so forth. These rules have led to the development of modern-day theorem provers, such as Z3, which will detailed more later.
-
+\par
+To help understand, we show a concrete example of a Hoare Triple. In this example, the pre-condition $P$ and post-condition $Q$ represent the known program state for a variable, $x$. We informally describe a command $C$ as an assignment to $x$ that modifies the known state of the program.
+\[
+\{ x \rightarrow 1 \} \text{ x := x + 1 } \{ x \rightarrow 2 \}
+\]
+To formalise this notation, we should define rules for commands, but for brevity, these have been omitted.
+\section{Temporal Logics TODO}
+\subsection{Linear Temporal Logic TODO}
+\subsection{Computation Tree Logic TODO}
+\subsection{Alternating-time Temporal Logic TODO}
 \section{Existing Work}
 Much work has gone into model checking, theorem-proving and verifying the implementations of systems. For Elixir, there are tools such as dialyzer \cite{dialyzer}, which statically analyse Elixir programs for type errors or dead code. Whilst tools like such provide Elixir developers better guarantees their code is correct, it does not verify the correctness of a system as a whole. 
 \subsection{Lean}
