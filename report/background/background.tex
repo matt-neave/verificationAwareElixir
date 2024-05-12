@@ -6,11 +6,15 @@ CSP defines processes and events. The alphabet of a process, $\alpha P$ is the s
 \[
 \alpha S = \{study, sleep\}
 \]
-The process with the alphabet $A$ which never engages in the events of A is called $STOP_A$. We can now construct a sequence of events for a process.
+The process with the alphabet $A$ which never engages in the events of A is called $STOP_A$. $STOP$ can be considered a constant, and it is used to define a process that never engages in any available action. $STOP$ is used to describe behaviour of a broken object, such that the object terminates unsuccessfully. Similarly, $SKIP_A$ is defined as a process which does nothing but terminates successfully. We can now construct a sequence of events for a process that takes three actions and then breaks.
 \[
 (study \rightarrow (sleep \rightarrow (study \rightarrow STOP_{\alpha S})))
 \]
-Using the same alphabet, we now define two simple processes modeling a student $S$ and a strict teacher $T$, who never accepts students sleeping.
+Similarly, a sequence of events for a process that takes an action and then terminates successfully.
+\[
+(study \rightarrow SKIP_{\alpha S})
+\]
+Using the same alphabet, we now define two simple processes modeling a student $L$ and a strict teacher $T$, who never accepts students sleeping.
 \[
 \begin{aligned}
 & L = (study \rightarrow sleep \rightarrow L) \\
@@ -19,7 +23,7 @@ Using the same alphabet, we now define two simple processes modeling a student $
 \]
 Note that both processes are recursively defined, hence a valid \texttt{trace} for $L$ could be $\langle study, sleep, study, sleep \rangle$.
 \par
-We can now introduce the process algebra for concurrency, using the parallel composition operator (`||'). To help reason about concurrent processes, we also introduce $\mu X \bullet F(X)$ to define recursive processes. This now lets us denote a process that behaves like a system of composed processes, where both processes have the same algebra $\alpha S$.
+We can now introduce the process algebra for concurrency, using the parallel composition operator (`||'). To help reason about concurrent processes, we also introduce $\mu X \bullet F(X)$ to define anonymous recursive processes (this is named the fixed-point operator and it will become clear how this simplifies notation through examples). This now lets us denote a process that behaves like a system of composed processes, where both processes have the same algebra $\alpha S$.
 \[
 (T \,||\, L)    
 \]
@@ -27,16 +31,19 @@ Using the definitions for $T$ and $L$, and the recursive process definition, we 
 \[
 (T \,||\, L) = (study \rightarrow STOP)    
 \]
-This is the composition of both processes. As both begin with a \texttt{study} event, so does the composition. However, after \texttt{study} each component process is prepared to take another event but as these are different, the processes can not agree on what event to take next. The resulting \texttt{STOP} is known as a deadlock. Alternatively, had the student and teacher processes been defined with behaviour that composes without deadlock, we could describe that behaviour with process algebra.
+This is the composition of both processes. As both begin with a \texttt{study} event, so does the composition. However, after \texttt{study} each component process is prepared to take different events, as these are different, the processes can not agree on what action to take next. The resulting \texttt{STOP} is known as a deadlock. Alternatively, had the student and teacher processes been defined with behaviour composed without deadlock, we could describe that behaviour with process algebra. In this example, the student and teacher have multiple actions that can be taken, denoted by the choice, $|$, notation.
 \[
 \begin{aligned}
-& L = (study \rightarrow L \,|\, sleep \rightarrow L) \\
-& T = (study \rightarrow study \rightarrow T) \\
+& \alpha = \{learn, revise, exam\} \\
+& L = (learn \rightarrow L \,|\, exam \rightarrow L \,|\, revise \rightarrow exam \rightarrow L) \\
+& T = revise \rightarrow (exam \rightarrow T \,|\, learn \rightarrow T) \\
 & \\ 
-& (T \,||\, L) = \mu X \bullet (study \rightarrow study \rightarrow X)
+& (T \,||\, L) = \mu X \bullet (revise \rightarrow exam \rightarrow X)
 \end{aligned}
 \]
-Note how now under the composed behaviour, the sleep event never occurs. The composition can be described as a single process. Also, note the use of recursion with the fixed-point operator $\mu X \bullet F(X)$ \cite[p.74]{csp_paper}, where $X$ marks recursion under the composed process.
+The composition can be described as a single process. Also, note the use of recursion with the fixed-point operator $\mu X \bullet F(X)$ \cite[p.74]{csp_paper}, where $X$ marks recursion under the composed process. Under this model, to compose two processes, we require simultaneous participation of the same event from both processes. Therefore, each event in the composed process can be attributed to events in both individual participants.
+\par
+We extend this notion to concurrency by considering separate alphabets for each process. Again, take our student $L$ and teacher $T$. If the alphabets of both processes differ, an event in the alphabet of $L$ that is not in the alphabet of $T$ is of no concern to $T$, thus becomes a valid event in the composition of the processes. Similarly to before, events that are in both alphabets can only be composed if they can be simultaneously taken by both processes individually.
 \par
 Finally, we will briefly look at how Hoare modelled communication between processes. Hoare designed communication over channels. A pair $c.v$ represents communication taking place over a channel $c$ and $v$ is the value of a message being passed. Hoare describes the set of all messages that a process $P$ can communicate on channel $c$ as $\{ v \,|\, c.v \in \alpha P \}.$
 \[
@@ -163,7 +170,8 @@ To help understand, we show a concrete example of a Hoare Triple. In this exampl
 \]
 To formalise this notation, we should define rules for commands, but for brevity, these have been omitted.
 \section{Temporal Logics TODO}
-\subsection{Linear Temporal Logic TODO}
+
+\subsection{Linear Time Temporal Logic TODO}
 \subsection{Computation Tree Logic TODO}
 \subsection{Alternating-time Temporal Logic TODO}
 \section{Existing Work}

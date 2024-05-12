@@ -554,9 +554,11 @@ fn get_variable_name(ast_node: Pair<Rule>) -> String {
 fn parse_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter, ret: bool, func_def: bool) {
     let mut assigned_variable = None;
     let mut expression = None;
+    let mut tupled_vars = None;
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::assigned_variable   => assigned_variable = Some(pair),
+            Rule::tupled_vars         => tupled_vars = Some(pair),
             Rule::expression_argument => expression = Some(pair),
             _                         => (),
         }
@@ -570,13 +572,20 @@ fn parse_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representat
     if let Some(x) = assigned_variable {
         let variable_name = get_variable_name(x);
         file_writer.write_assignment_variable(&variable_name, typ, false);
+    } else if let Some(x) = tupled_vars {
+        let mut vars = Vec::new();
+        for var in x.into_inner() {
+            let var_name = get_variable_name(var);
+            if var_name.as_str() != "_" {
+                vars.push(var_name);
+            }
+        }
+        file_writer.write_assignment_tuple(vars, typ);
     } else {
-        panic!("No variable name in assignment expression");
+        panic!("No variable name in assignment expression");        
     }
     if let Some(x) = expression {
         parse_expression_tuple(x, file_writer, ret, func_def);
-    } else {
-        panic!("No expression in assignment expression");
     }
     file_writer.commit_assignment();
 }
@@ -1135,6 +1144,7 @@ fn parse_expression_tuple(
             Rule::binary_operation     => parse_binary_operation(pair, file_writer, ret),
             Rule::number               => parse_number(pair, file_writer, ret, func_def),
             Rule::assigned_variable    => parse_assigned_variable(pair, file_writer, ret),
+            Rule::tupled_elements      => parse_tupled_elements(pair, file_writer, ret),
             _                          => parse_warn!("expression tuple", pair.as_rule()),
         }
     }
@@ -1214,6 +1224,20 @@ fn parse_enum_call(
         }
     } else {
         panic!("No function name in enum call");
+    }
+}
+
+fn parse_tupled_elements(
+    ast_node: Pair<Rule>,
+    file_writer: &mut internal_representation::file_writer::FileWriter,
+    ret: bool,
+) {
+    for pair in ast_node.into_inner() {
+        match pair.as_rule() {
+            Rule::primitive         => parse_primitive(pair, file_writer, ret),
+            Rule::assigned_variable => parse_assigned_variable(pair, file_writer, ret),
+            _                       => parse_warn!("tupled elements", pair.as_rule()),
+        }
     }
 }
 

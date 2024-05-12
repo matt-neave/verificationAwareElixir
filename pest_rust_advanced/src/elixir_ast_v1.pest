@@ -42,7 +42,7 @@ unused_characters = { "{" | "}" | "_" | "\\" }
 
 letters = { ( ASCII_ALPHANUMERIC | operator | unused_characters ) * }
 
-alpha_letters = { ASCII_ALPHA+ }
+alpha_letters = { (ASCII_ALPHANUMERIC | "_") + }
 
 string = { "\"" ~ (ASCII_ALPHANUMERIC | operator | unused_characters | "," | " " | ":")* ~ "\"" }
 
@@ -82,11 +82,11 @@ block = { "{:__block__" ~ ", " ~ metadata ~ ", " ~ block_statements ~  "}" }
 block_statements = { "[" ~ (block_statement ~ ", ")* ~ block_statement* ~ "]" }
 
 // TODO merge with tuple
-block_statement = { string | assigned_variable | attribute | vae_function_definition | function_definition | macro | enum_call | io | for | if | pre | directive | array_read | array_assignment  | assignment | statement_assignment | spawn_process | send | receive | defmodule | tuple }
+block_statement = { string | bool | assigned_variable | attribute | vae_function_definition | function_definition | macro | enum_call | io | for | if | pre | directive | array_read | array_assignment  | assignment | statement_assignment | spawn_process | send | receive | defmodule | tuple }
 
 tuple = { function_definition | unless | or | and | assigned_variable | binary_operation | expression_tuple }
 
-assignment = { "{:=, " ~ metadata ~ ", [" ~ assigned_variable ~ ", " ~ expression_argument ~ "]}" }
+assignment = { "{:=, " ~ metadata ~ ", [" ~ (assigned_variable | tupled_vars) ~ ", " ~ expression_argument ~ "]}" }
 
 statement_assignment = { "{:=, " ~ metadata ~ ", [" ~ assigned_variable ~ ", " ~ block_statement ~ "]}" }
 
@@ -96,6 +96,14 @@ array_read = { "{:=, " ~ metadata ~ ", [" ~ array_assigned_variable ~ ", " ~ exp
 
 assigned_variable = { 
     ("{" ~ atom ~ ", " ~ metadata ~ ", nil}")  
+}
+
+tupled_vars = {
+    "{" ~ (assigned_variable ~ ", ")* ~ assigned_variable ~ "}"
+}
+
+tupled_elements = {
+    "{" ~ ((assigned_variable | primitive) ~ ", ")* ~ (assigned_variable | primitive) ~ "}"
 }
 
 array_assigned_variable = { "[" ~ (assigned_variable ~ ", ")* ~ assigned_variable ~ "]" }
@@ -215,7 +223,7 @@ spawn_process = { "{:spawn, " ~ metadata ~ ", [" ~ process_name ~ ", " ~ atom ~ 
 // {:__aliases__, [line: 3], [:Calculator]}
 process_name = { "{:__aliases__, " ~ metadata ~ ", [" ~ atom ~ "]}" }
 
-expression_argument = { number | negative_number | bool | self_pid | string | spawn_process | enum_call | array | assigned_variable | binary_operation | anonymous_function | tuple | do }
+expression_argument = { number | negative_number | bool | self_pid | string | spawn_process | enum_call | array | assigned_variable | binary_operation | anonymous_function | tupled_elements | tuple | do }
 
 attribute = { ":@" ~ ", " ~ metadata ~ ", " ~ attributes }
 
