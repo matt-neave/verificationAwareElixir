@@ -222,6 +222,7 @@ impl FileWriter {
         let mut returning_call = false;
         if !self.var_stack.is_empty() {
             return_variable = self.var_stack.pop().unwrap().to_string();
+            self.function_body.last_mut().unwrap().push_str(&format!("{} = ", return_variable));
             returning_call = true; 
         } 
         if call_arguments.is_empty() {
@@ -642,6 +643,9 @@ impl FileWriter {
     ) {
         let list = &args[0];
         let index = &args[1];
+        if let Some(x) = self.var_stack.pop() {
+            self.function_body.last_mut().unwrap().push_str(&format!("{} = ", x));
+        }
         self.function_body.last_mut().unwrap().push_str(&format!("__list_at({}, {})", list, index));
     }
     

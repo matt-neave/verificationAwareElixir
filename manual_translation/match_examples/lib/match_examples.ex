@@ -1,4 +1,4 @@
-defmodule Test do
+defmodule MatchExamples do
 
   @vae_init true
   @spec start() :: :ok
@@ -8,6 +8,11 @@ defmodule Test do
     {test_1, test_2} = {1, 2}
     options = [0, 1]
     choice = Enum.random(options)
+    {opt_1, opt2} = if true do
+      {1, 2}
+    else
+      {3, 4}
+    end
   end
 
   @spec get_num() :: integer()
