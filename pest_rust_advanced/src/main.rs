@@ -1045,6 +1045,7 @@ fn parse_do_single(
         match pair.as_rule() {
             Rule::tuple           => parse_tuple(pair, file_writer, ret || func_def, func_def),
             Rule::block_statement => parse_block_statement(pair, file_writer, ret || func_def, func_def),
+            Rule::primitive       => parse_primitive(pair, file_writer, ret || func_def),
             _                     => parse_warn!("do single", pair.as_rule()), 
            }
     }

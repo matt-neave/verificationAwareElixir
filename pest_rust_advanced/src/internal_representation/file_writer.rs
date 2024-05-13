@@ -386,7 +386,8 @@ impl FileWriter {
             self.function_body.last_mut().unwrap().push_str(formatted_var);
         }
         if !block_assignment {
-            self.function_body.last_mut().unwrap().push_str(&format!("atomic {{\n"));
+            // TODO Verify
+            // self.function_body.last_mut().unwrap().push_str(&format!("atomic {{\n"));
         }
 
         // Push the variable name to the stack to be applied by spawn
@@ -395,7 +396,7 @@ impl FileWriter {
     }
 
     pub fn write_assignment_tuple(&mut self, vars: Vec<String>, typ: sym_table::SymbolType) {
-        self.function_body.last_mut().unwrap().push_str(&format!("atomic {{\n"));
+        // self.function_body.last_mut().unwrap().push_str(&format!("atomic {{\n"));
         for var in vars {
             self.function_body.last_mut().unwrap().push_str(&format!("int {};\n", var));
             self.var_stack.push(var);
@@ -403,7 +404,7 @@ impl FileWriter {
     }
 
     pub fn commit_assignment(&mut self) {
-        self.function_body.last_mut().unwrap().push_str(";\n}\n");
+        self.function_body.last_mut().unwrap().push_str(";\n");//}\n");
     }
 
     pub fn commit_statement_assignment(&mut self) {
