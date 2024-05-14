@@ -25,7 +25,8 @@ pub struct FileWriter {
     process_count: i32,
     mailbox_id: HashMap<String, i32>,
     process_name: HashMap<i32, String>,
-    var_stack: Vec<String>,
+    var_stack: Vec<Vec<String>>,
+    var_stack_p: usize,
     mtype: Vec<String>,
     _maximum_message_size: u32,
     function_messages: u32,
@@ -66,6 +67,7 @@ impl FileWriter {
             mailbox_id: HashMap::new(),
             process_name: HashMap::new(),
             var_stack: Vec::new(),
+            var_stack_p: 0,
             mtype: Vec::new(),
             _maximum_message_size: 1,
             function_messages: 0,
@@ -108,6 +110,8 @@ impl FileWriter {
         let formatted_string = if ret && self.returning_function {
             self.post_condition_check(0);
             format!("ret ! {} {} {};\n", left_e, operand, right_e)
+        } else if let Some(x) = self.get_next_var_safe() {
+            format!("{} = {} {} {}; \n", x, left_e, operand, right_e)            
         } else {
             format!("{} {} {}", left_e, operand, right_e)
         };
@@ -205,6 +209,23 @@ impl FileWriter {
         }
     }
 
+    fn get_next_var(&mut self) -> String {
+        if self.var_stack_p >= self.var_stack.last().unwrap().len() {
+            self.var_stack_p = 0;
+        }
+        let var = self.var_stack.last().unwrap()[self.var_stack_p].clone();
+        self.var_stack_p += 1;
+        var
+    }
+
+    fn get_next_var_safe(&mut self) -> Option<String> {
+        if self.var_stack.is_empty() {
+            return None
+        } else {
+            Some(self.get_next_var())
+        }
+    }
+
     pub fn write_function_call(&mut self, func_name: &str, call_arguments: &str, ret: bool, line_number: u32) {
         // Track how many function calls have taken place 
         // Create a channel for each
@@ -221,7 +242,7 @@ impl FileWriter {
         let mut return_variable = format!("ret{}", self.function_call_count);
         let mut returning_call = false;
         if !self.var_stack.is_empty() {
-            return_variable = self.var_stack.pop().unwrap().to_string();
+            return_variable = self.get_next_var();
             self.function_body.last_mut().unwrap().push_str(&format!("{} = ", return_variable));
             returning_call = true; 
         } 
@@ -354,11 +375,27 @@ impl FileWriter {
         Ok(())
     }
 
-    pub fn write_number(&mut self, number: &str) {
-        if !self.var_stack.is_empty() {
-            self.function_body.last_mut().unwrap().push_str(&format!("{} = {};\n", self.var_stack.pop().unwrap(), number));
+    pub fn write_number(&mut self, number: &str, ret: bool) {
+        if ret && self.returning_function {
+            self.post_condition_check(0);
+            self.function_body.last_mut().unwrap().push_str(&format!("ret ! {}; /*{}*/\n", number, 0));
+        } else if !self.var_stack.is_empty() {
+            let var = self.get_next_var();
+            self.function_body.last_mut().unwrap().push_str(&format!("{} = {};\n", var, number));
         } else {   
             self.function_body.last_mut().unwrap().push_str(number);
+        }
+    }
+
+    pub fn write_boolean(&mut self, val: &str, ret: bool) {
+        if ret && self.returning_function {
+            self.post_condition_check(0);
+            self.function_body.last_mut().unwrap().push_str(&format!("ret ! {}; /*{}*/\n", val, 0));
+        } else if self.block_assignment || !self.var_stack.is_empty() {
+            let assignee = self.get_next_var();
+            self.function_body.last_mut().unwrap().push_str(&format!("{} = {}; /*{}*/\n", assignee, val, 0));
+        } else {
+            self.function_body.last_mut().unwrap().push_str(&format!("{} /*{}*/\n", val, 0));
         }
     }
 
@@ -367,7 +404,8 @@ impl FileWriter {
             self.post_condition_check(0);
             format!("ret ! {}; /*{}*/\n", primitive, line_number)
         } else if self.block_assignment || !self.var_stack.is_empty() {
-            format!("{} = {};\n", self.var_stack.pop().unwrap(), primitive)
+            let assignee = self.get_next_var();
+            format!("{} = {};\n", assignee, primitive)
         } else {
             format!("{} /*{}*/\n", primitive, line_number)
         };
@@ -392,24 +430,33 @@ impl FileWriter {
         }
 
         // Push the variable name to the stack to be applied by spawn
-        self.var_stack.push(String::from(var));
+        self.var_stack.push(vec![String::from(var)]);
         self.function_sym_table.add_entry(String::from(var), typ);
     }
 
     pub fn write_assignment_tuple(&mut self, vars: Vec<String>, typ: sym_table::SymbolType) {
         // self.function_body.last_mut().unwrap().push_str(&format!("atomic {{\n"));
+        let mut var_names = Vec::new();
         for var in vars {
-            self.function_body.last_mut().unwrap().push_str(&format!("int {};\n", var));
-            self.var_stack.push(var);
+            // TODO, for now only integer
+            if !self.function_sym_table.contains(&var.clone()) {
+                self.function_body.last_mut().unwrap().push_str(&format!("int {};\n", var.clone()));
+                self.function_sym_table.add_entry(var.clone(), sym_table::SymbolType::Integer);
+            } 
+            var_names.push(var);
         };
+        self.var_stack.push(var_names);
     }
 
     pub fn commit_assignment(&mut self) {
+        self.var_stack.pop();
+        self.var_stack_p = 0;
         self.function_body.last_mut().unwrap().push_str(";\n");//}\n");
     }
 
     pub fn commit_statement_assignment(&mut self) {
         self.var_stack.pop();
+        self.var_stack_p = 0;
         self.block_assignment = false;
     }
 
@@ -422,7 +469,7 @@ impl FileWriter {
         let formatted_args = format!("{}{}ret{},-1", args, if args.is_empty() {""} else {","}, self.function_call_count);
 
         // TODO verify logic, is a stack appropriate
-        let var_name = self.var_stack.pop();
+        let var_name = self.get_next_var_safe();
         let i = self.process_count;
         if let Some(x) = var_name {
             // Add to the lookup tables
@@ -488,7 +535,10 @@ impl FileWriter {
                 self.function_body.last_mut().unwrap().push_str(&format!(":: __{}[__pid] ? {}, rec_v_{} -> /*{}*/\n", assignment.to_uppercase(), assignment.to_uppercase(), self.receive_count-1, line_number));
                 
             } else {
-                self.function_body.last_mut().unwrap().push_str(&format!("int {}; /*{}*/\n", assignment, line_number));
+                if !self.function_sym_table.contains(assignment) {
+                    self.function_body.last_mut().unwrap().push_str(&format!("int {}; /*{}*/\n", assignment, line_number));
+                    self.function_sym_table.add_entry(String::from(assignment), sym_table::SymbolType::Integer);
+                }
                 self.function_body.last_mut().unwrap().push_str(&format!("{} = rec_v_{}.m{}.{}; /*{}*/\n", assignment, self.receive_count - 1, i, "data2", line_number));
             }
         }
@@ -525,7 +575,10 @@ impl FileWriter {
             self.post_condition_check(0);
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! {}; /*{}*/\n", var, line_number));
         } else if self.block_assignment {
-            self.function_body.last_mut().unwrap().push_str(&format!("{} = {}; /*{}*/\n", self.var_stack.pop().unwrap(), var, line_number));
+            let assignee = self.get_next_var();
+            self.function_body.last_mut().unwrap().push_str(&format!("{} = {}; /*{}*/\n", assignee, var, line_number));
+        } else if let Some(x) = self.get_next_var_safe() {
+            self.function_body.last_mut().unwrap().push_str(&format!("{} = {}; /*{}*/\n", x, var, line_number)); 
         } else {
             println!("Trying to write {} might not make sense", var);
             self.function_body.last_mut().unwrap().push_str(&format!("{} /*{}*/\n", var, line_number));
@@ -632,7 +685,7 @@ impl FileWriter {
     ) {
         // TODO only pseudorandom as Promela does not support randomness
         let array = &args[0];
-        let assignee = self.var_stack.pop().unwrap().to_string();
+        let assignee = self.get_next_var();
         self.function_body.last_mut().unwrap().push_str(&format!("__list_random({}, {});\n", array, assignee));
         warn!("Random number generation is not supported in Promela");
     }
@@ -643,7 +696,7 @@ impl FileWriter {
     ) {
         let list = &args[0];
         let index = &args[1];
-        if let Some(x) = self.var_stack.pop() {
+        if let Some(x) = self.get_next_var_safe() {
             self.function_body.last_mut().unwrap().push_str(&format!("{} = ", x));
         }
         self.function_body.last_mut().unwrap().push_str(&format!("__list_at({}, {})", list, index));

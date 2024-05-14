@@ -228,6 +228,7 @@ pub fn parse_block_statement(
             Rule::vae_function_definition => parse_vae_function_definition(pair, file_writer, ret),
             Rule::defmodule               => parse_defmodule(pair, file_writer),
             Rule::tuple                   => parse_tuple(pair, file_writer, ret, func_def),
+            Rule::tupled_elements         => parse_tupled_elements(pair, file_writer, ret),
             Rule::assignment              => parse_assignment(pair, file_writer, ret, func_def),
             Rule::statement_assignment    => parse_statement_assignment(pair, file_writer, ret, func_def),
             Rule::array_assignment        => parse_array_assignment(pair, file_writer, ret, func_def),
@@ -239,6 +240,7 @@ pub fn parse_block_statement(
             Rule::assigned_variable       => parse_assigned_variable(pair, file_writer, ret),
             Rule::r#for                   => parse_for(pair, file_writer, ret, func_def),
             Rule::r#if                    => parse_if(pair, file_writer, ret, func_def),
+            Rule::bool                    => parse_boolean(pair, file_writer, ret),
             _                             => parse_warn!("block statement", pair.as_rule()),
         }
     }
@@ -593,9 +595,11 @@ fn parse_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representat
 fn parse_statement_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter, ret: bool, func_def: bool) {
     let mut assigned_variable = None;
     let mut block_statement = None;
+    let mut tupled_vars = None;
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::assigned_variable   => assigned_variable = Some(pair),
+            Rule::tupled_vars         => tupled_vars = Some(pair),
             Rule::block_statement     => block_statement = Some(pair),
             _                         => (),
         }
@@ -610,9 +614,21 @@ fn parse_statement_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_r
             } else {
                 file_writer.write_assignment_variable(&variable_name, typ, true);
             }
+        } else if let Some(y) = tupled_vars {
+            let mut vars = Vec::new();
+            for var in y.into_inner() {
+                let var_name = get_variable_name(var);
+                if var_name.as_str() != "_" {
+                    vars.push(var_name);
+                }
+            }
+            // TODO only support integer for now
+            let typ = sym_table::SymbolType::Integer;
+            file_writer.write_assignment_tuple(vars, typ);
         } else {
-            panic!("No variable name in assignment expression");
+            panic!("No variable name in statement assignment expression");
         }
+
         parse_block_statement(x, file_writer, ret, func_def);
     } else {
         panic!("No block_statement in assignment expression");
@@ -790,11 +806,11 @@ fn get_symbol_type(
     type_node: Pair<Rule>
 ) -> internal_representation::sym_table::SymbolType {
     match type_node.as_str() {
-        ":integer" => internal_representation::sym_table::SymbolType::Integer,
-        ":string"  => internal_representation::sym_table::SymbolType::String,
-        ":bool"    => internal_representation::sym_table::SymbolType::Boolean,
-        ":ok"      => internal_representation::sym_table::SymbolType::NoRet,
-        _          => internal_representation::sym_table::SymbolType::Integer,
+        ":integer"    => internal_representation::sym_table::SymbolType::Integer,
+        ":string"     => internal_representation::sym_table::SymbolType::String,
+        ":boolean"    => internal_representation::sym_table::SymbolType::Boolean,
+        ":ok"         => internal_representation::sym_table::SymbolType::NoRet,
+        _             => internal_representation::sym_table::SymbolType::Integer,
     }
 }
 
@@ -1070,6 +1086,7 @@ fn parse_tuple(
             Rule::receive             => parse_receive(pair, file_writer, ret, func_def),
             // TODO this case doesn't make sense, error in parsing somewhere
             Rule::tuple               => parse_tuple(pair, file_writer, ret, func_def),
+            Rule::tupled_elements     => parse_tupled_elements(pair, file_writer, ret),
             _                         => parse_warn!("tuple", pair.as_rule()),
         }
     }
@@ -1166,11 +1183,11 @@ fn parse_expression_tuple(
 fn parse_number(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
-    _ret: bool,
+    ret: bool,
     _func_def: bool,
 ) {
     let number = ast_node.as_str();
-    file_writer.write_number(number);
+    file_writer.write_number(number, ret);
 }
 
 fn parse_enum_call(
@@ -1703,6 +1720,14 @@ fn name_from_tuple_str(input: &str) -> &str {
 
     // If not a tuple, likely already primitive
     input
+}
+
+fn parse_boolean(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    ret: bool
+) {
+    file_writer.write_boolean(ast_node.as_str(), ret);
 }
 
 fn parse_binary_operation(

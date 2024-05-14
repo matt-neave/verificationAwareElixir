@@ -1,0 +1,1 @@
+- The [Elixir compiler](https://github.com/elixir-lang/elixir/blob/v1.12.3/lib/elixir/src/elixir_compiler.erl) is written in Erlang

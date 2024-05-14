@@ -128,7 +128,9 @@ argument_types = { ("[" ~ (argument_type ~ ", ")* ~ argument_type ~ "]") | "[]" 
 
 integer_type = { ":integer" }
 
-type = { integer_type }
+boolean_type = { ":boolean" }
+
+type = { integer_type | boolean_type }
 
 argument_type = { ("{" ~ type ~ ", " ~ metadata ~ ", []}") | atom }
 
