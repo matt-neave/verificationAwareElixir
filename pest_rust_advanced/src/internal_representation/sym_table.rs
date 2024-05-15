@@ -5,6 +5,7 @@ pub enum SymbolType {
     Integer,
     String,
     Boolean,
+    Atom,
     NoRet,  // Special type for non returning function
     Array(Box<SymbolType>, i32),
     Unknown,

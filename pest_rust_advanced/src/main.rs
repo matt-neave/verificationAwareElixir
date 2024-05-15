@@ -241,6 +241,7 @@ pub fn parse_block_statement(
             Rule::r#for                   => parse_for(pair, file_writer, ret, func_def),
             Rule::r#if                    => parse_if(pair, file_writer, ret, func_def),
             Rule::bool                    => parse_boolean(pair, file_writer, ret),
+            Rule::case                    => parse_case(pair, file_writer, ret, func_def),
             _                             => parse_warn!("block statement", pair.as_rule()),
         }
     }
@@ -280,6 +281,63 @@ fn io_to_str(ast_node: Pair<Rule>) -> String {
         }
     }
     out
+}
+
+fn parse_case(
+    ast_node: Pair<Rule>,
+    file_writer: &mut internal_representation::file_writer::FileWriter,
+    ret: bool,
+    func_def: bool,
+) {
+    let var = get_variable_name(ast_node.clone().into_inner().nth(1).unwrap());
+    let line_number = get_line_number(ast_node.clone());
+    file_writer.write_case(line_number);
+    let statements = ast_node.clone().into_inner().nth(2).unwrap();
+    for pair in statements.into_inner() {
+        match pair.as_rule() {
+            Rule::receive_statement => parse_case_statement(pair, file_writer, var.clone(), ret, func_def),
+            _ => parse_warn!("case", pair.as_rule()),
+        }
+    }
+    file_writer.commit_case();
+}
+
+fn parse_case_statement(
+    ast_node: Pair<Rule>,
+    file_writer: &mut internal_representation::file_writer::FileWriter,
+    var: String,
+    ret: bool,
+    func_def: bool,
+) {
+    let mut cmp = String::new();
+    for pair in ast_node.clone().into_inner() {
+        match pair.as_rule() {
+            Rule::receive_atom       => {
+                cmp = pair.into_inner().next().unwrap().as_str().to_string();
+            },
+            Rule::receive_primitive  => {
+                let primitive = pair.into_inner().next().unwrap();
+                if primitive.as_rule() == Rule::assigned_variable {
+                    cmp = get_variable_name(primitive);
+                } else {
+                    cmp = get_primitive_as_str(primitive)
+                }
+            },
+            _ => (),
+        };
+    };
+    file_writer.write_case_statement(var, cmp);
+    for pair in ast_node.clone().into_inner() {
+        match pair.as_rule() {
+            Rule::block_statement => parse_block_statement(pair, file_writer, ret, func_def),
+            Rule::block           => parse_block(pair, file_writer, ret, func_def),
+            _                     => (),
+        };
+    };
+
+    file_writer.write_end_receive_statement();
+
+
 }
 
 fn parse_receive(
@@ -322,10 +380,11 @@ fn parse_receive_statement(
     // Preserve order and type
     for pair in ast_node.clone().into_inner() {
         match pair.as_rule() {
-            Rule::receive_atom      => parse_receive_atom(pair, file_writer, ret),
-            Rule::single_assignment => parse_receive_single(pair, file_writer, ret),
-            Rule::pair_assignment   => parse_receive_pair(pair, file_writer, ret),
-            Rule::multi_assignment  => parse_receive_multi(pair, file_writer, ret),
+            Rule::receive_atom       => parse_receive_atom(pair, file_writer, ret),
+            Rule::single_assignment  => parse_receive_single(pair, file_writer, ret),
+            Rule::pair_assignment    => parse_receive_pair(pair, file_writer, ret),
+            Rule::multi_assignment   => parse_receive_multi(pair, file_writer, ret),
+            Rule::receive_multi_atom => parse_receive_multi_atom(pair, file_writer, ret),
             _ => "".to_string(),
         };
     };
@@ -354,6 +413,18 @@ fn parse_receive_atom(
     let mtype = ast_node.into_inner().next().unwrap().as_str().replace(':', "");
     assignments.push(mtype.clone());
     file_writer.write_receive_assignment(assignments, line_number);
+    mtype
+}
+
+fn parse_receive_multi_atom(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    _ret: bool
+) -> String {
+    let line_number = get_line_number(ast_node.clone());
+    let mtype = ast_node.clone().into_inner().next().unwrap().as_str().replace(':', "");
+    let atom = ast_node.into_inner().nth(1).unwrap().as_str().replace(':', "").to_uppercase();
+    file_writer.write_receive_multi_atom(mtype.clone(), atom, line_number);
     mtype
 }
 
@@ -386,7 +457,7 @@ fn parse_receive_pair(
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::alpha_letters => assignments.push(pair.as_str().to_string()),
-            Rule::atom          => assignments.push(pair.as_str().to_string().replace(':', "")),
+            Rule::atom          => assignments.push(pair.as_str().to_string()),
             Rule::assigned_variable => assignments.push(get_variable_name(pair)),
             Rule::metadata => metadata = Some(pair),
             _ => parse_warn!("receive pair", pair.as_rule()),
@@ -412,7 +483,12 @@ fn parse_receive_multi(
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::recv_binding => {
-                assignments.push(get_variable_name(pair));
+                let inner = pair.clone().into_inner().next().unwrap();
+                if inner.as_rule() == Rule::atom {
+                    assignments.push(inner.as_str().to_string());
+                } else {
+                    assignments.push(get_variable_name(pair));
+                }
             },
             Rule::metadata => metadata = Some(pair),
             _ => parse_warn!("receive multi", pair.as_rule()),
@@ -805,10 +881,12 @@ fn argument_list_as_str(argument_list: Pair<Rule>) -> String {
 fn get_symbol_type(
     type_node: Pair<Rule>
 ) -> internal_representation::sym_table::SymbolType {
-    match type_node.as_str() {
+    let atom = type_node.into_inner().next().unwrap();
+    match atom.as_str() {
         ":integer"    => internal_representation::sym_table::SymbolType::Integer,
         ":string"     => internal_representation::sym_table::SymbolType::String,
         ":boolean"    => internal_representation::sym_table::SymbolType::Boolean,
+        ":atom"       => internal_representation::sym_table::SymbolType::Atom,
         ":ok"         => internal_representation::sym_table::SymbolType::NoRet,
         _             => internal_representation::sym_table::SymbolType::Integer,
     }
@@ -838,7 +916,8 @@ fn create_function_symbol_table(
 
     if let Some(x) = argument_types.clone().expect("no argument types").into_inner().find(|y| y.as_rule() == Rule::argument_types) {
         for (i, pair) in x.into_inner().enumerate() {
-            sym_table.add_entry(args_v.get(i).expect("arguments and types size misalign").to_string(), get_symbol_type(pair));
+            let typ = get_symbol_type(pair);
+            sym_table.add_entry(args_v.get(i).expect("arguments and types size misalign").to_string(), typ);
         }
     } else {
         panic!("no argument types");
@@ -1127,6 +1206,7 @@ fn parse_call_arguments(ast_node: Pair<Rule>) -> String {
                     variable_name.to_string()
                 },
                 Rule::binary_operation => operation_as_string(arg),
+                Rule::atom => arg.as_str().to_string(),
                 _ => panic!("Failed to find argument in argument list: {}", ast_node.as_str()),
             };
             out.push_str(&arg_s);

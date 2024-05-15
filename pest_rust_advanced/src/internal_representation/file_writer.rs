@@ -123,6 +123,7 @@ impl FileWriter {
             sym_table::SymbolType::Integer => String::from("int"),
             sym_table::SymbolType::String => String::from("byte"),
             sym_table::SymbolType::Boolean => String::from("int"),
+            sym_table::SymbolType::Atom    => String::from("int"),
             sym_table::SymbolType::NoRet   => String::from("unparsable type"),
             sym_table::SymbolType::Array(x, _) => format!("{}[]", Self::type_to_str(x)),
             sym_table::SymbolType::Unknown => String::from("int"),
@@ -237,6 +238,7 @@ impl FileWriter {
         // TODO make a mapping of variable name
         let call_arguments = call_arguments.replace('[', "(");
         let call_arguments = call_arguments.replace(']', "");
+        let call_arguments = call_arguments.replace(':', "");
 
         // TODO determine if the function is returning
         let mut return_variable = format!("ret{}", self.function_call_count);
@@ -491,14 +493,23 @@ impl FileWriter {
 
         // Create the message component
         let mut i = 1;
+        let mut data = 2;
         self.function_body.last_mut().unwrap().push_str(&format!("MessageList msg_{}; /*{}*/\n", self.function_messages, line_number));
         for mut arg in args {
             // TODO: replace third argument with type
             if arg.starts_with("{:self,") {
                 arg = String::from("__pid");
+            } else if arg.starts_with(':') {
+                // Now an mtype
+                arg = arg.replace(':', "").to_uppercase();
+                self.mtype.push(arg.clone());
+                data = 2;
+            } else if self.function_sym_table.contains(&arg) && self.function_sym_table.lookup(&arg) == &sym_table::SymbolType::Atom {
+                arg = arg.replace(':', "");
+                data = 2;
             }
 
-            self.function_body.last_mut().unwrap().push_str(&format!("msg_{}.m{}.data{} = {}; /*{}*/\n", self.function_messages, i, 2, arg, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("msg_{}.m{}.data{} = {}; /*{}*/\n", self.function_messages, i, data, arg, line_number));
             i += 1;
         }
         if mailbox == -1 {
@@ -530,18 +541,29 @@ impl FileWriter {
         // First element is the message type
         for (i, assignment) in assignments.iter().enumerate() {
             if i == 0 {
-                self.mtype.push(assignment.to_uppercase());
+                let mtype = assignment.replace(':', "").to_uppercase();
+                self.mtype.push(mtype.clone());
                 // self.function_body.last_mut().unwrap().push_str(&format!(":: messageType == {} -> /*{}*/\n", assignment.to_uppercase(), line_number));
-                self.function_body.last_mut().unwrap().push_str(&format!(":: __{}[__pid] ? {}, rec_v_{} -> /*{}*/\n", assignment.to_uppercase(), assignment.to_uppercase(), self.receive_count-1, line_number));
+                self.function_body.last_mut().unwrap().push_str(&format!(":: __{}[__pid] ? {}, rec_v_{} -> /*{}*/\n", mtype, mtype, self.receive_count-1, line_number));
                 
-            } else {
+            } else if !assignment.starts_with(':') {
                 if !self.function_sym_table.contains(assignment) {
                     self.function_body.last_mut().unwrap().push_str(&format!("int {}; /*{}*/\n", assignment, line_number));
                     self.function_sym_table.add_entry(String::from(assignment), sym_table::SymbolType::Integer);
                 }
                 self.function_body.last_mut().unwrap().push_str(&format!("{} = rec_v_{}.m{}.{}; /*{}*/\n", assignment, self.receive_count - 1, i, "data2", line_number));
+            } else {
+                let var = assignment.replace(':', "");
+                self.mtype.push(var.clone().to_uppercase());
+                self.function_body.last_mut().unwrap().push_str(&format!("int {}; /*{}*/\n", var, line_number));
+                self.function_sym_table.add_entry(String::from(assignment), sym_table::SymbolType::Atom);
+                self.function_body.last_mut().unwrap().push_str(&format!("{} = rec_v_{}.m{}.{}; /*{}*/\n", var, self.receive_count - 1, i, "data2", line_number));
             }
         }
+    }
+
+    pub fn write_receive_multi_atom(&mut self, mtype: String, atom: String, line_number: u32) {
+        self.function_body.last_mut().unwrap().push_str(&format!(":: __{}[__pid] ? {}, {} -> /*{}*/\n", mtype.to_uppercase(), mtype.to_uppercase(), atom, line_number));
     }
     
     pub fn write_end_receive_statement(&mut self) {
@@ -748,5 +770,21 @@ impl FileWriter {
         &mut self,
     ) {
         self.commit_function();
+    }
+
+    pub fn write_case(&mut self, _line_number: u32) {
+        self.function_body.last_mut().unwrap().push_str("do\n");
+    }
+
+    pub fn write_case_statement(&mut self, var: String, cmp: String) {
+        if cmp.contains(':') {
+            self.function_body.last_mut().unwrap().push_str(&format!(":: {} == {} ->\n", var, cmp.replace(':', "").to_uppercase()));
+        } else {
+            self.function_body.last_mut().unwrap().push_str(&format!(":: {} == {} ->\n", var, cmp));
+        }
+    }
+
+    pub fn commit_case(&mut self) {
+        self.function_body.last_mut().unwrap().push_str("od\n");
     }
 }
