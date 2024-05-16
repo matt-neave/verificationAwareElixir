@@ -7,8 +7,9 @@ use std::io::{self, Write};
 use log::warn;
 
 use crate::formatted_condition;
-use crate::internal_representation::sym_table::{self, get_array_size};
+use crate::internal_representation::sym_table::{self};
 use crate::internal_representation::boilerplate::add_linked_list_boiler_plate;
+use crate::internal_representation::model_generator::PARAM_STR;
 
 // Todo: bodies should be stack based to handle nesting
 pub struct FileWriter {
@@ -34,7 +35,6 @@ pub struct FileWriter {
     ltl_count: u32,
     file: File,
     module: String,
-    array_capacity: u32,
     array_var_stack: Vec<String>,
     anonymous_function_count: u32,
     returning_function: bool,
@@ -46,11 +46,15 @@ pub struct FileWriter {
     random_count: u32,
     block_assignment: bool,
     max_process_count: u32,
+    parameterized_model: bool,
+    parameterized_function: bool,
+    parameterized_vars: Vec<String>,
 }
+
 
 impl FileWriter {
     // Constructor method to create a new instance
-    pub fn new(file_path: &str, skip_bounded: bool) -> io::Result<Self> {
+    pub fn new(file_path: &str, skip_bounded: bool, gen_params: bool) -> io::Result<Self> {
         let file = File::create(file_path)?;
         Ok(Self {
             _header: String::new(),
@@ -75,7 +79,6 @@ impl FileWriter {
             ltl_count: 0,
             file,
             module: String::new(),
-            array_capacity: 100,
             array_var_stack: Vec::new(),
             anonymous_function_count: 0,
             returning_function: true,
@@ -87,6 +90,9 @@ impl FileWriter {
             random_count: 0,
             block_assignment: false,
             max_process_count: 10,
+            parameterized_model: gen_params,
+            parameterized_function: false,
+            parameterized_vars: Vec::new(),
         })
     }
 
@@ -206,7 +212,9 @@ impl FileWriter {
             self.ltl_func = false;
             self.var_stack = Vec::new();
             self.post_condition = String::new();
-            self.init=false;
+            self.init = false;
+            self.parameterized_function = false;
+            self.parameterized_vars = Vec::new();
         }
     }
 
@@ -221,7 +229,7 @@ impl FileWriter {
 
     fn get_next_var_safe(&mut self) -> Option<String> {
         if self.var_stack.is_empty() {
-            return None
+            None
         } else {
             Some(self.get_next_var())
         }
@@ -233,7 +241,8 @@ impl FileWriter {
         // Name the receive variables appropriately
         // TODO determine return type    
         self.function_call_count += 1;
-        self.function_channels.last_mut().unwrap().push_str(&format!("chan ret{} = [1] of {{ int }}; /*{}*/\n", self.function_call_count, line_number));
+        let rendezvous = if self.var_stack.is_empty() {1} else {0}; 
+        self.function_channels.last_mut().unwrap().push_str(&format!("chan ret{} = [{}] of {{ int }}; /*{}*/\n", self.function_call_count, rendezvous, line_number));
         
         // TODO make a mapping of variable name
         let call_arguments = call_arguments.replace('[', "(");
@@ -347,13 +356,13 @@ impl FileWriter {
             var_name = String::from(&format!("mtype = {{{}}};\n", unique_mtypes.join(",")));
         }
         // Messages
-        var_name.push_str("typedef MessageType {\nbyte data1[20];\nint data2;\nbyte data3[20];\nbool data4;\n};\ntypedef\nMessageList {\nMessageType m1;\nMessageType m2;\nMessageType m3;\nMessageType m4;\nMessageType m5;\nMessageType m6;\n};\n\n");
+        var_name.push_str("typedef MessageType {\nbyte data1[2];\nint data2;\nbyte data3[2];\nbool data4;\n};\ntypedef\nMessageList {\nMessageType m1;\nMessageType m2;\nMessageType m3;\nMessageType m4;\nMessageType m5;\nMessageType m6;\n};\n\n");
         
         let mut mailbox_assignment = String::new();
         for mtype in unique_mtypes.iter() {
-            var_name.push_str(&format!("chan __{}[{}] = [10] of {{ mtype, MessageList }};\n", mtype, self.max_process_count));
+            var_name.push_str(&format!("chan __{}[{}] = [3] of {{ mtype, MessageList }};\n", mtype, self.max_process_count));
             for i in 0..self.process_count + 1 {
-                var_name.push_str(&format!("chan __p{}_{} = [10] of {{ mtype, MessageList }};\n", i, mtype));
+                var_name.push_str(&format!("chan __p{}_{} = [3] of {{ mtype, MessageList }};\n", i, mtype));
             }
             for i in 0..self.process_count + 1 {
                 mailbox_assignment.push_str(&format!("__{}[{}] = __p{}_{};\n", mtype, i, i, mtype));
@@ -383,7 +392,11 @@ impl FileWriter {
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! {}; /*{}*/\n", number, 0));
         } else if !self.var_stack.is_empty() {
             let var = self.get_next_var();
-            self.function_body.last_mut().unwrap().push_str(&format!("{} = {};\n", var, number));
+            if self.parameterized_function && self.parameterized_model && self.parameterized_vars.contains(&var.to_string()) {
+                self.function_body.last_mut().unwrap().push_str(&format!("{} = {};\n", var, PARAM_STR));
+            } else {
+                self.function_body.last_mut().unwrap().push_str(&format!("{} = {};\n", var, number));
+            }
         } else {   
             self.function_body.last_mut().unwrap().push_str(number);
         }
@@ -395,7 +408,11 @@ impl FileWriter {
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! {}; /*{}*/\n", val, 0));
         } else if self.block_assignment || !self.var_stack.is_empty() {
             let assignee = self.get_next_var();
-            self.function_body.last_mut().unwrap().push_str(&format!("{} = {}; /*{}*/\n", assignee, val, 0));
+            if self.parameterized_function && self.parameterized_model && self.parameterized_vars.contains(&assignee.to_string()) {
+                self.function_body.last_mut().unwrap().push_str(&format!("{} = {};\n", assignee, PARAM_STR));
+            } else {
+                self.function_body.last_mut().unwrap().push_str(&format!("{} = {}; /*{}*/\n", assignee, val, 0));
+            }
         } else {
             self.function_body.last_mut().unwrap().push_str(&format!("{} /*{}*/\n", val, 0));
         }
@@ -407,7 +424,11 @@ impl FileWriter {
             format!("ret ! {}; /*{}*/\n", primitive, line_number)
         } else if self.block_assignment || !self.var_stack.is_empty() {
             let assignee = self.get_next_var();
-            format!("{} = {};\n", assignee, primitive)
+            if self.parameterized_function && self.parameterized_model && self.parameterized_vars.contains(&assignee.to_string()) {
+                format!("{} = {};\n", assignee, PARAM_STR)
+            } else {
+                format!("{} = {};\n", assignee, primitive)
+            }
         } else {
             format!("{} /*{}*/\n", primitive, line_number)
         };
@@ -453,7 +474,6 @@ impl FileWriter {
     pub fn commit_assignment(&mut self) {
         self.var_stack.pop();
         self.var_stack_p = 0;
-        self.function_body.last_mut().unwrap().push_str(";\n");//}\n");
     }
 
     pub fn commit_statement_assignment(&mut self) {
@@ -739,7 +759,7 @@ impl FileWriter {
             panic!("Enum map only supports single argument functions");
         }
         let arg = &fn_args[0];
-        self.function_channels.last_mut().unwrap().push_str(&format!("chan __anonymous_ret_{} = [1] of {{ int }};\n", self.anonymous_function_count));
+        self.function_channels.last_mut().unwrap().push_str(&format!("chan __anonymous_ret_{} = [0] of {{ int }};\n", self.anonymous_function_count));
         self.function_body.last_mut().unwrap().push_str(&format!(
             "atomic {{\n\
                 int __iter;\n\
@@ -786,5 +806,10 @@ impl FileWriter {
 
     pub fn commit_case(&mut self) {
         self.function_body.last_mut().unwrap().push_str("od\n");
+    }
+
+    pub fn mark_paramaterized(&mut self, vars: Vec<String>) {
+        self.parameterized_function = true;
+        self.parameterized_vars = vars;
     }
 }

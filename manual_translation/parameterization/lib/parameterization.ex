@@ -9,12 +9,12 @@ defmodule Parameterization do
     IO.puts "All messages received"
   end
 
-  @param {:bound1, :bound2, :bound3}
+  @param {:count1, :count2, :count3}
   @spec run_program() :: integer()
   defv run_program(), post: total_message_count == count1 + count2 + count3 do
-    count1 = 3
-    count2 = 3
-    count3 = 3
+    count1 = 1
+    count2 = 1
+    count3 = 1
     client1 = spawn(Client, :start, [])
     client2 = spawn(Client, :start, [])
     client3 = spawn(Client, :start, [])

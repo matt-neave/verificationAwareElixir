@@ -4,8 +4,8 @@ use std::process::{Command, Stdio};
 use std::str::FromStr;
 use regex::Regex;
 
-const SPIN_CMD: &str = "spin";
-const MEM_LIMIT: &str = "409600";
+pub const SPIN_CMD: &str = "spin";
+pub const STATE_VEC_SIZE: &str = "409600";
 const DEPTH_LIMIT: &str = "100000";
 const FAIRNESS_LIMIT: &str = "100";
 const QUEUE_MEMORY: &str = "5000";
@@ -23,7 +23,7 @@ pub fn run_model(model_path: &str) {
     let output = Command::new(SPIN_CMD)
         .arg("-search")
         .arg(&format!("-m{}", DEPTH_LIMIT))
-        .arg(&format!("-DVECTORSZ={}", MEM_LIMIT))
+        .arg(&format!("-DVECTORSZpub ={}", STATE_VEC_SIZE))
         .arg(&format!("-DNFAIR{}", FAIRNESS_LIMIT))
         .arg(&format!("-DVMAX{}", QUEUE_MEMORY))
         .arg(&format!("-DPMAX{}", PROESS_MEMORY))

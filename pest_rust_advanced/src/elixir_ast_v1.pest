@@ -122,7 +122,7 @@ vae_init = { "{:@, " ~ metadata ~ ", [{:vae_init, " ~ metadata ~ ", [true]}]}" }
 
 ltl_spec = { "{:@, " ~ metadata ~ ", [{:ltl, " ~ metadata ~ ", [\"" ~ ltl ~ "\"]}]}" }
 
-parameterization = { "{:@, " ~ metadata ~ ", [{:param, " ~ metadata ~ ", [{:{}, " ~ metadata ~ ", [" ~ (atom ~ ", ")* ~ atom ~ "]}]}]}" }
+parameterization = { "{:@, " ~ metadata ~ ", [{:param, " ~ metadata ~ (", [{:{}, " ~ metadata ~ ", [" ~ (atom ~ ", ")* ~ atom ~ "]}]}]}" | ", [" ~ alpha_letters ~ ": " ~ atom ~ "]}]}") }
 
 function_arguments_type = { "{" ~ atom ~ ", " ~ metadata ~ ", " ~ argument_types ~ "}" }
 
@@ -208,7 +208,7 @@ receive = { "{:receive, " ~ metadata ~ ", [[do: " ~ (receive_statements) ~ "]]}"
 
 receive_statements = { "[" ~ (receive_statement ~ ", ")* ~ receive_statement ~ "]" }
 
-receive_statement = { "{:->, " ~ metadata ~ ", [" ~ (receive_atom | receive_primitive | single_assignment | pair_assignment | multi_assignment | receive_multi_atom) ~ ", "  ~ (block_statement | block) ~ "]}"}
+receive_statement = { "{:->, " ~ metadata ~ ", [" ~ (receive_atom | receive_primitive | single_assignment | pair_assignment | multi_assignment | receive_multi_atom) ~ ", "  ~ (block | block_statement) ~ "]}"}
 
 // Case where receive is purely an atom to match
 receive_atom = { "[" ~ atom ~ "]" }

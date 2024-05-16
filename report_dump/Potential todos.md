@@ -6,6 +6,15 @@
 - Improve the traces produced by results
 - Add macros in Elixir to specify if fairness should be applied
 	- In TLA+, Lamport uses WF_Vars and SF_Vars to expand to the relevant properties
+	- ![[Pasted image 20240515174608.png]]
+```
+WF_v(A) == 
+<>[](ENABLED <<A>>_v) => []<><<A>>_v
+
+SF_v(A) ==
+[]<>(ENABLED <<A>>_v) => []<><<A>>_v
+```
+
 - Work out what a type system is (check Steffan notes)
 	- Explore [static types for Erlang](https://github.com/WhatsApp/eqwalizer)
 	- Explore [Elixir type system](https://www.irif.fr/_media/users/gduboc/elixir-types.pdf)

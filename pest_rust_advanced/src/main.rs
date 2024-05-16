@@ -20,7 +20,7 @@ use log::LevelFilter;
 use env_logger::fmt::Color;
 
 mod internal_representation;
-use internal_representation::{formatted_condition, sym_table, model_runner};
+use internal_representation::{formatted_condition, sym_table, model_runner, model_generator};
 
 #[path = "macros/parse_macros.rs"]
 #[macro_use]
@@ -35,9 +35,14 @@ fn main() {
     let model_path = "test_out.pml";
 
     let args = std::env::args().collect::<Vec<String>>();
+    // Runs the tool in verification mode
     let model_check_flag = args.contains(&"--verify".to_string()) || args.contains(&"-v".to_string());
+    // Hides warnings and errors produced by the tool
     let silent_flag = args.contains(&"--quiet".to_string()) || args.contains(&"-q".to_string());
+    // Runs the tool in simulation mode
     let simulate_flag = args.contains(&"--sim".to_string()) || args.contains(&"-s".to_string());
+    // Uses param annotations to generate multiple models
+    let gen_params = args.contains(&"--param".to_string()) || args.contains(&"-p".to_string());
     // Stops a process blocking on sending to a full, bounded channel
     let bounded_channels_skip = args.contains(&"--skip-bounded".to_string()) || args.contains(&"-b".to_string());
     
@@ -52,7 +57,7 @@ fn main() {
         .next()
         .unwrap();
     
-    let mut writer = internal_representation::file_writer::FileWriter::new(model_path, bounded_channels_skip).unwrap();
+    let mut writer = internal_representation::file_writer::FileWriter::new(model_path, bounded_channels_skip, gen_params).unwrap();
 
     if !silent_flag {
         println!("{}", prog_ast);
@@ -65,9 +70,13 @@ fn main() {
     if simulate_flag {
         model_runner::simulate_model(model_path);
     }
-    if model_check_flag {
+    else if model_check_flag {
         model_runner::run_model(model_path);
     }
+    else if gen_params {
+        model_generator::generate_models(model_path);
+    }
+
 }
 
 fn extract_elixir_ast(out_file: &str, silent: bool) {
@@ -583,7 +592,11 @@ fn operation_as_string(ast_node: Pair<Rule>) -> String {
     repr
 }
 
-fn extract_send_arguments<'a>(send_arguments: Option<Pair<'a, Rule>>, send_tupled_arguments: Option<Pair<'a, Rule>>, send_atom: Option<Pair<'a, Rule>>) -> Vec<String> {
+fn extract_send_arguments<'a>(
+    send_arguments: Option<Pair<'a, Rule>>, 
+    send_tupled_arguments: Option<Pair<'a, Rule>>, 
+    send_atom: Option<Pair<'a, Rule>>,
+) -> Vec<String> {
     let mut send_args = Vec::new();
     if let Some(x) = send_arguments {
         for pair in x.into_inner() {
@@ -950,6 +963,7 @@ pub fn parse_function_definition(
             Rule::type_spec          => func_type_spec = Some(pair),
             Rule::vae_init           => vae_init = true,
             Rule::ltl_spec           => ltl_spec = Some(pair),
+            Rule::parameterization   => extract_params(pair, file_writer),
             _                        => parse_warn!("function definition", pair.as_rule()),
         }
     }
@@ -1014,6 +1028,7 @@ pub fn parse_vae_function_definition(
             Rule::ltl_spec           => ltl_spec = Some(pair),
             Rule::pre                => pre = Some(pair),
             Rule::post               => post = Some(pair),
+            Rule::parameterization   => extract_params(pair, file_writer),
             _                        => parse_warn!("function definition", pair.as_rule()),
         }
     }
@@ -1055,6 +1070,19 @@ pub fn parse_vae_function_definition(
     // Close the function 
     file_writer.commit_function();
     // file_writer.commit().expect("Failed to commit to file");
+}
+
+
+fn extract_params(ast_node: Pair<Rule>, file_writer: &mut internal_representation::file_writer::FileWriter) {
+    let mut vars: Vec<String> = Vec::new();
+    for pair in ast_node.into_inner() {
+        if let Rule::atom = pair.as_rule() {
+            vars.push(pair.as_str().replace(':', ""))
+        } else if let Rule::alpha_letters = pair.as_rule() {
+            vars.push(pair.as_str().to_string())
+        }
+    }
+    file_writer.mark_paramaterized(vars);
 }
 
 fn collect_common_elements<'a>(args: &'a str, ltl_vars: Vec<String>) -> Vec<String> {
@@ -1100,20 +1128,6 @@ fn get_vars_from_ltl(ltl: Pair<Rule>) -> Vec<String> {
     vars.dedup();
     vars
 }
-
-// fn parse_function_body(
-//     ast_node: Pair<Rule>, 
-//     file_writer: &mut internal_representation::file_writer::FileWriter, ret: bool,
-// ) {
-//     for pair in ast_node.into_inner() {
-//         match pair.as_rule() {
-//             Rule::r#do        => parse_do(pair, file_writer, ret),
-//             Rule::r#do_single => parse_do_single(pair, file_writer, ret),
-//             Rule::r#do_block  => parse_do_block(pair, file_writer, ret),
-//             _                 => println!("{}", pair),
-//         } 
-//     }
-// }
 
 fn parse_do(
     ast_node: Pair<Rule>, 

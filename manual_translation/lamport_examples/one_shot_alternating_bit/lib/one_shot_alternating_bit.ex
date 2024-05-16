@@ -8,10 +8,12 @@ defmodule OneShotAlternatingBit do
 
   @vae_init true
   @spec start() :: :ok
-  @ltl "<>(finished==limit)"
+  @ltl "<>[](finished==limit)"
+  @param {:limit, :test}
   def start do
     finished = 0
     limit = 2
+    test = 1
     sender = spawn(Sender, :start_sender, [])
     receiver = spawn(Receiver, :start_receiver, [])
     send sender, {:bind, receiver, self(), limit}
@@ -42,14 +44,12 @@ defmodule Sender do
       send server, {:done, acks_received}
     else
       if sBit == rBit do
-        send self(), {:continue}
         sBit_ = (1-sBit)
         send receiver, {:data, sBit_, sent}
       end
       receive do
         {:ack, rBit_} ->
           IO.puts "Received ack"
-          send self(), {:continue}
           send_protocol sent, sBit, rBit_, receiver, server, (upper_bound - 1), (acks_received + 1)
       end
     end
@@ -70,7 +70,7 @@ defmodule Receiver do
     receive do
       {:data, sBit, sent} ->
           send sender, {:ack, rBit}
-          receive_protocol sent, sBit, sender
+          receive_protocol(sent, sBit, sender)
       {:terminate} ->
         IO.puts "Terminating"
       end

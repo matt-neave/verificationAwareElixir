@@ -61,7 +61,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Limitations.md",
+                "file": "Potential todos.md",
                 "mode": "source",
                 "source": false
               }
@@ -134,7 +134,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Limitations.md",
+                "file": "Potential todos.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -151,7 +151,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Limitations.md",
+                "file": "Potential todos.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -174,7 +174,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Limitations.md"
+                "file": "Potential todos.md"
               }
             }
           }
@@ -197,8 +197,9 @@
   },
   "active": "f35f24a371c32a80",
   "lastOpenFiles": [
-    "Potential todos.md",
+    "Pasted image 20240515174608.png",
     "Limitations.md",
+    "Potential todos.md",
     "Gomela analysis, comparison and inspiration.md",
     "Verification of Elixir paper.md",
     "Pasted image 20240514102955.png",

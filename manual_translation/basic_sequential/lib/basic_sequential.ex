@@ -1,6 +1,7 @@
 defmodule BasicSequential do
 
   @vae_init true
+  @spec start() :: :ok
   def start do
     add(1024, 12)
     add(0, 12)
