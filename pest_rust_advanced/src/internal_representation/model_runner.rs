@@ -23,7 +23,7 @@ pub fn run_model(model_path: &str) {
     let output = Command::new(SPIN_CMD)
         .arg("-search")
         .arg(&format!("-m{}", DEPTH_LIMIT))
-        .arg(&format!("-DVECTORSZpub ={}", STATE_VEC_SIZE))
+        .arg(&format!("-DVECTORSZ={}", STATE_VEC_SIZE))
         .arg(&format!("-DNFAIR{}", FAIRNESS_LIMIT))
         .arg(&format!("-DVMAX{}", QUEUE_MEMORY))
         .arg(&format!("-DPMAX{}", PROESS_MEMORY))
