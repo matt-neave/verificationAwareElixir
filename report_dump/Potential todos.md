@@ -22,3 +22,7 @@ SF_v(A) ==
 	- Read up on [type checking Elixir](https://www.erlang-solutions.com/blog/type-checking-erlang-and-elixir/)
 - Read up on the theorem prover Viper, which supports concurrency and has been used to prove correctness claims about rust 
 - Attempt to use @type annotation to create LTL instead of strings
+- Implement range ..
+- Investigate more flags for Elixir implementation
+- Predicate definitions and labels using [definitions](https://spinroot.com/spin/Man/ltl.html). 
+- 

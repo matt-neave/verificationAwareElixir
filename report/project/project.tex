@@ -5,7 +5,92 @@ LTLixir is the multi-purpose specification language that compiles to BEAM byte-c
 \par
 
 \section{Constructing a Verifiable Elixir Program} \label{sec:verifiable}
+This section will walk through the basic construction of an LTLixir program, and show how we can verify the properties of the program using Veriflixir. To begin, we define a server and client process. The server is responsible for creating clients and communicating with them. 
+\begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={Elixir definition for a server and client module}., label={fig:basic_server}]
+    defmodule Server do
+        def start_server do
+            client = spawn(Client, :start_client, [])
+        end
+    end
+
+    defmodule Client do
+        def start_client do
+            IO.puts "Client booted"
+        end
+    end
+\end{lstlisting}
+To begin, the server spawns a single client process, which writes to stdio. To ensure correctness when verifying properties of the system, we remove ambiguity by being particular in our naming of the functions \texttt{start\_server} and \texttt{start\_client}. Notice we could name both functions \texttt{start}, but this ambiguity can make it more difficult to digest a trail produced by Veriflixir. With the system implemented, we must now declare an entry point to the system that Veriflixir will use to begin verification. For this example, we can define \texttt{Server.server\_start} as the entry point using an attribute \texttt{\@vae\_init}.
+
+\begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={Declaring an entry point to the system}., label={fig:vae_init}]
+    @vae_init true
+    def start_server do
+        client = spawn(Client, :start_client, [])
+    end
+\end{lstlisting}
+Although we set the attribute \texttt{vae\_init} to \texttt{true}, note it is not required that other functions are set to \texttt{false}, this is already implied. With an entry point specified, we can begin using the available tools. By default, Veriflixir reports the presence deadlocks and livelocks in the system. When specifying systems in LTLixir, we do not lose the capability to compile our program to BEAM byte-code, hence the system can still run as a regular Elixir program. For example, using mix \cite{mix}.
+\begin{lstlisting}[language=bash, xleftmargin=.3\linewidth]
+    $ mix run -e "Server.start_server"
+    Generated app
+    Client booted
+\end{lstlisting}
+More interestingly, we can now use Veriflixir before the Erlang Run-Time System (ERTS) to verify the system adheres to our specification. With no additional properties defined, by running Veriflixir we are ensuring that every possible execution results in a program termination. The presence of a deadlock or livelock will be reported. We can run the Veriflixir executable by passing optional arguments as the path to the specification file. For example, we use the simulator flag $-s$ to run a single simulation of the system.
+\begin{lstlisting}[language=bash, xleftmargin=.3\linewidth]
+    $ ./veriflixir -s basic_example.ex 
+    Client booted
+\end{lstlisting}
+Alternatively, we can use the $-v$ flag to run the verifier on the specification.
+\begin{lstlisting}[language=bash, xleftmargin=.3\linewidth]
+    $ ./veriflixir -v basic_example.ex 
+    Model checking ran successfully. 0 error(s) found.
+    The verifier terminated with no errors.
+\end{lstlisting}
 \subsection{Detecting a Deadlock} \label{sec:deadlock}
-\subsection{Inspecting a Trace} 
+Now we have a basic understanding of what is required to write a specification, we will use Veriflixir to detect a deadlock in the system. By default, the verifier will detect the presence of deadlocks and livelocks in the system. Deadlocks in Elixir programs can be introduced by circular waits, where two simultaneously executing processes are both waiting for a message from the other. To demonstrate this, we modify the existing client and server by introducing a circular wait. The server will now spawn the process, and expect to receive a message from the client, meanwhile, the client will expect to receive a message from the server. The resulting server and client processes are modeled below.
+\begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={A simple Elixir system with a deadlock}.]
+    defmodule Server do
+    @vae_init true
+    def start_server do
+      client = spawn(Client, :start_client, [])
+      receive do
+        {:im_alive} -> IO.puts "Client is alive"
+      end
+    end
+  end
+  
+  defmodule Client do
+    def start_client do
+      receive do
+        {:binding} -> IO.puts "Client bound"
+      end
+    end
+  end  
+\end{lstlisting}
+In this simple example, any execution of the system will result in a deadlock, the system can be considered deterministic in this regard. In many real-world systems with multiple processes, the presence of a deadlock can be difficult to detect due to multiple interleavings. Let's take another look at what happens when we execute the program, run a simulation and run the verifier.
+\begin{lstlisting}[language=bash, xleftmargin=.3\linewidth]
+$ mix run -e Server.start_server
+Generated app
+Client booted
+
+\end{lstlisting}
+Notice when running the Elixir program, nothing is output to stdio, even though a naive Elixir programmer could think one of the two \texttt{IO.puts} statements is executed. Of course, we know this not to be the case but let's compare the outputs from running Veriflixir.
+\begin{lstlisting}[language=bash, xleftmargin=.3\linewidth]
+    $ ./veriflixir -s basic_example.ex
+    timeout
+\end{lstlisting}
+The simulator terminates, reporting a timeout. Already, running our specification using Veriflixir provides more information than running the Elixir program. Let's now run the verifier.
+\begin{lstlisting}[language=bash, xleftmargin=.2\linewidth]
+    $ ./veriflixir -v basic_example.ex
+    Model checking ran successfully. 1 error(s) found.
+    The program likely reached a deadlock. Generating trace.
+    [8] (proc_0) init:4 [receive do]
+    [9] (proc_0) init:4 [receive do]
+    [10] (proc_0) init:5 [{:im_alive} -> IO.puts "Client is alive"]
+    [13] (proc_1) start_client:13 [{:binding} -> IO.puts "Client bound"]
+    [14] (proc_1) start_client:13 [{:binding} -> IO.puts "Client bound"]
+    [15] (proc_0) init:5 [{:im_alive} -> IO.puts "Client is alive"]
+\end{lstlisting}
+Running the verifier produces much more output. Let's break down step by step the output produced by Veriflixir. The first line of the output informs us that the verifier successfully terminated on the input, along with how many errors were found. If an error is found, Veriflixir will use heuristics to profile the type of error, in this case, it has determined the program likely deadlocked. Once determining the error type, an error trail is produced to debug the source of the error. The underlying model derived from the LTLixir specification does not have a one-to-one mapping to the original Elixir code, hence again heuristics are applied to determine where in the Elixir program the trail is produced from. In this case, we can see reference to \texttt{init}, the entry point to the system (annotated previously by \texttt{@vae\_init}). Alongside the process, we can see a line number referring to a line number in the Elixir file, as well as the line of code the line refers to. With the exception of the system entry point, all other function names are labeled as in the original program, for example, $start\_client$. The remaining information on a trail line is less relevant to most users. The first number on a line is the step number (some of these may be omitted for simplicity). The \texttt{proc\_n} refers both to process numbers and function call stack depth.
+\par
+Now we understand how to read a single line of the trail, we can read the trail in sequential order to learn the interleaving that resulted in the error. In this instance, we can see the server reaches line 5 where it waits for an \texttt{:im\_alive} message from the client and similarly, the client is waiting for a \texttt{:binding} message.
 \subsection{Linear Temporal Logic} 
 \subsection{Hoare-style Logic} 

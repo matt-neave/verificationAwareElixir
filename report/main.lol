@@ -8,3 +8,6 @@
 \contentsline {lstlisting}{\numberline {3.3}Elixir example of \texttt {quote/2} and \texttt {unquote/1}.}{19}{lstlisting.3.3}%
 \contentsline {lstlisting}{\numberline {3.4}{Elixir example of the \texttt {unless/2} macro as defined in the standard library \cite {defmacro}}.}{19}{lstlisting.3.4}%
 \contentsline {lstlisting}{\numberline {3.5}{Example use of attributes in Elixir}.}{19}{lstlisting.3.5}%
+\contentsline {lstlisting}{\numberline {4.1}{Elixir definition for a server and client module}.}{21}{lstlisting.4.1}%
+\contentsline {lstlisting}{\numberline {4.2}{Declaring an entry point to the system}.}{22}{lstlisting.4.2}%
+\contentsline {lstlisting}{\numberline {4.3}{A simple Elixir system with a deadlock}.}{22}{lstlisting.4.3}%
