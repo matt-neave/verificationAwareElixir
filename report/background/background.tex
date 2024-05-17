@@ -8,7 +8,7 @@ CSP defines processes and events. The alphabet of a process, $\alpha P$ is the s
 \]
 The process with the alphabet $A$ which never engages in the events of A is called $STOP_A$. $STOP$ can be considered a constant, and it is used to define a process that never engages in any available action. $STOP$ is used to describe behaviour of a broken object, such that the object terminates unsuccessfully. Similarly, $SKIP_A$ is defined as a process which does nothing but terminates successfully. We can now construct a sequence of events for a process that takes three actions and then breaks.
 \[
-(study \rightarrow (sleep \rightarrow (study \rightarrow STOP_{\alpha S})))
+(study \rightarrow sleep \rightarrow study \rightarrow STOP_{\alpha S})
 \]
 Similarly, a sequence of events for a process that takes an action and then terminates successfully.
 \[
@@ -23,7 +23,7 @@ Using the same alphabet, we now define two simple processes modeling a student $
 \]
 Note that both processes are recursively defined, hence a valid \texttt{trace} for $L$ could be $\langle study, sleep, study, sleep \rangle$.
 \par
-We can now introduce the process algebra for concurrency, using the parallel composition operator (`||'). To help reason about concurrent processes, we also introduce $\mu X \bullet F(X)$ to define anonymous recursive processes (this is named the fixed-point operator and it will become clear how this simplifies notation through examples). This now lets us denote a process that behaves like a system of composed processes, where both processes have the same algebra $\alpha S$.
+We can now introduce the process algebra for concurrency, using the parallel composition operator (`||'). To help reason about concurrent processes, we also introduce a fixed-point constructor, $\mu X \bullet F(X)$, to define anonymous recursive processes. This now lets us denote a process that behaves like a system of composed processes, where both processes have the same algebra $\alpha S$.
 \[
 (T \,||\, L)    
 \]
@@ -44,6 +44,16 @@ This is the composition of both processes. As both begin with a \texttt{study} e
 The composition can be described as a single process. Also, note the use of recursion with the fixed-point operator $\mu X \bullet F(X)$ \cite[p.74]{csp_paper}, where $X$ marks recursion under the composed process. Under this model, to compose two processes, we require simultaneous participation of the same event from both processes. Therefore, each event in the composed process can be attributed to events in both individual participants.
 \par
 We extend this notion to concurrency by considering separate alphabets for each process. Again, take our student $L$ and teacher $T$. If the alphabets of both processes differ, an event in the alphabet of $L$ that is not in the alphabet of $T$ is of no concern to $T$, thus becomes a valid event in the composition of the processes. Similarly to before, events that are in both alphabets can only be composed if they can be simultaneously taken by both processes individually.
+\[
+\begin{aligned}
+& \alpha L = \{study, exam\} \\
+& \alpha T = \{teach, exam\} \\
+& L = study \rightarrow exam \\
+& T = teach \rightarrow exam \\
+& \\ 
+& (T \,||\, L) = \mu X \bullet ((study \rightarrow teach | teach \rightarrow study) \rightarrow exam)
+\end{aligned}
+\]
 \par
 Finally, we will briefly look at how Hoare modelled communication between processes. Hoare designed communication over channels. A pair $c.v$ represents communication taking place over a channel $c$ and $v$ is the value of a message being passed. Hoare describes the set of all messages that a process $P$ can communicate on channel $c$ as $\{ v \,|\, c.v \in \alpha P \}.$
 \[
@@ -56,15 +66,21 @@ Functions to extract the channel and message components from the pair $c.v$ are 
 & message(c.v) = v
 \end{aligned}
 \]
-With this understanding, we can finally model sending and receiving messages to channels. Given a process $P$ and a value $v \in \alpha c(P)$, a process can output $v$ on the channel $c$.
+With this understanding, we can finally model sending and receiving messages to channels. Given a process $P$ and a value $v \in \alpha c(P)$, a process can output $v$ on the channel $c$ using the $!$ operator (similar to sending a message to a channel in GO \cite{go}).
 \[
 (c!v \rightarrow P)
 \]
-Similarly, we can read messages from channels. A process can input any value $x$ on the channel $c$, and then behave under $P(x)$.
+Similarly, we can read messages from channels (receive a message) using the $?$ operator. A process can input any value $x$ on the channel $c$, and then behave under $P(x)$.
 \[
 (c?x \rightarrow P(x))
 \]
 That concludes a brief overview of the process algebra proposed by Tony Hoare. We saw how event sequencing constructs processes, how processes can be composed and the special communication event $c.v$ which allows message-passing over channels. Tools have been built from similar syntax and concepts, for example, Promela \ref{sec:promela}, which models channels and messages with a similar approach.
+\section{Concurrency TODO}
+\subsection{Temporal Logic}
+\subsubsection{Predicate Logic}
+\subsubsection{Linear Temporal Logic}
+\subsubsection{Computation Tree Logic and Alternating-time Temporal Logic}
+\subsection{Safety and Liveness}
 \section{Model Checking}
 Model checking is the process of determining if a finite-state machine (FSM) is correct under a provided specification. It typically involves enumerating all possible states of an FSM and ensuring the correctness of each state. For example, given a model M and a property $\varphi$, if no state of M violates $\varphi$, then we can say M satisfies $\varphi$. In software development, model checkers are beneficial in providing guarantees for safety-critical systems as well as concurrent systems. Concurrent systems can often cause issues with uncommon instruction execution interleavings that are not easily identifiable until long into a runtime. For example, deadlocks can occur when instructions being run by two processes are dependent on one another making progress. A simple example of a deadlock that can occur is the following interleaving of instructions executed by two processes, $\tau_1$ and $\tau_2$. 
 \begin{multicols}{2}
@@ -169,11 +185,7 @@ To help understand, we show a concrete example of a Hoare Triple. In this exampl
 \{ x \rightarrow 1 \} \text{ x := x + 1 } \{ x \rightarrow 2 \}
 \]
 To formalise this notation, we should define rules for commands, but for brevity, these have been omitted.
-\section{Temporal Logics TODO}
 
-\subsection{Linear Time Temporal Logic TODO}
-\subsection{Computation Tree Logic TODO}
-\subsection{Alternating-time Temporal Logic TODO}
 \section{Existing Work}
 Much work has gone into model checking, theorem-proving and verifying the implementations of systems. For Elixir, there are tools such as dialyzer \cite{dialyzer}, which statically analyse Elixir programs for type errors or dead code. Whilst tools like such provide Elixir developers better guarantees their code is correct, it does not verify the correctness of a system as a whole. 
 \subsection{Lean}

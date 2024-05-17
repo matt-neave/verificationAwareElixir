@@ -1,0 +1,4 @@
+- How to show disparity between Elixir and my supported language. i.e. Elixir's match operator allows for dynamic typing however LTLixir uses static typing and inference
+- Options for managing fairness in Elixir
+	- Just applying the -f flag to the entire model
+	- Granular strong and weak fairness on actions

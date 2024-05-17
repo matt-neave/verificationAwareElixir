@@ -1,7 +1,11 @@
-\chapter{Verification-Aware Elixir}
-\section{The Verifiable Elixir Set}
-\section{Constructing a Verifiable Elixir Program}
-\subsection{Detecting a Deadlock}
-\subsection{Inspecting a Trace}
-\subsection{Linear Temporal Logic}
-\subsection{Hoare-style Logic}
+\chapter{Veriflixir}
+Veriflixir is the main project contribution. The Veriflixir toolchain supports the simulation and verification of a set of Elixir programs. This set is named LTLixir and is detailed in section \ref{sec:ltlixir}. This chapter aims to inform the reader of the constructs defined in LTLixir and how Veriflixir can be used to reason about them. \ref{sec:ltlixir} introduces the LTLixir language and its constructs. \ref{sec:verifiable} provides an example of specifying a verifiable system and how Veriflixir can be used to detect violations of a specification. The subsequent subsections provide further details of more interesting features of LTLixir, such as specifying temporal properties.
+\section{LTLixir} \label{sec:ltlixir}
+LTLixir is the multi-purpose specification language that compiles to BEAM byte-code and is supported for verification by Veriflixir. Primarily, LTLixir is a subset of Elixir supporting both sequential and concurrent execution. This subset is expressive enough to well-known distributed algorithms such as basic paxos \cite{basic-paxos} and the alternating-bit protocol \cite{ab-protocol}. LTLixir extends Elixir with constructs for specifying temporal properties, specifically LTL properties (where LTLixir derives its name) as well as Floyd-Hoare style logic for specifying pre- and post-conditions. Specifications can be parameterized to identify violations of properties on specific configurations. 
+\par
+
+\section{Constructing a Verifiable Elixir Program} \label{sec:verifiable}
+\subsection{Detecting a Deadlock} \label{sec:deadlock}
+\subsection{Inspecting a Trace} 
+\subsection{Linear Temporal Logic} 
+\subsection{Hoare-style Logic} 

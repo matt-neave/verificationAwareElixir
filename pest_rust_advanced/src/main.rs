@@ -45,7 +45,9 @@ fn main() {
     let gen_params = args.contains(&"--param".to_string()) || args.contains(&"-p".to_string());
     // Stops a process blocking on sending to a full, bounded channel
     let bounded_channels_skip = args.contains(&"--skip-bounded".to_string()) || args.contains(&"-b".to_string());
-    
+    let arg_binding = std::env::args().last().expect("Incorrect usage");
+    let elixir_dir = Path::new(&arg_binding);
+
     extract_elixir_ast(path, silent_flag);
     init_logger(silent_flag);
 
@@ -71,7 +73,7 @@ fn main() {
         model_runner::simulate_model(model_path);
     }
     else if model_check_flag {
-        model_runner::run_model(model_path);
+        model_runner::run_model(model_path, elixir_dir.to_str().unwrap());
     }
     else if gen_params {
         model_generator::generate_models(model_path);
@@ -96,9 +98,7 @@ end", dir.to_str().unwrap(), out_file);
     let lib = format!("{}/lib", source);
     let extractor = &*format!("{}/ast_extactor.ex", lib);
     
-    std::fs::create_dir(lib.clone())
-        .expect("Failed to create lib directory at source");
-    
+    let _ = std::fs::create_dir(lib.clone());    
     let ast_extractor = File::create(extractor);
 
     ast_extractor

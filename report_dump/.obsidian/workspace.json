@@ -61,14 +61,38 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Potential todos.md",
+                "file": "Verification of Elixir paper.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "299a27cf3ffde7da",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Question for Naranker.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "f97781e752f1e016",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Question for Naranker.md",
                 "mode": "source",
                 "source": false
               }
             }
           }
         ],
-        "currentTab": 4
+        "currentTab": 6
       }
     ],
     "direction": "vertical"
@@ -134,7 +158,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Potential todos.md",
+                "file": "Question for Naranker.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -151,7 +175,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Potential todos.md",
+                "file": "Question for Naranker.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -174,7 +198,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Potential todos.md"
+                "file": "Question for Naranker.md"
               }
             }
           }
@@ -195,13 +219,15 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "f35f24a371c32a80",
+  "active": "f97781e752f1e016",
   "lastOpenFiles": [
+    "Report plan.md",
+    "Question for Naranker.md",
+    "Verification of Elixir paper.md",
+    "Potential todos.md",
     "Pasted image 20240515174608.png",
     "Limitations.md",
-    "Potential todos.md",
     "Gomela analysis, comparison and inspiration.md",
-    "Verification of Elixir paper.md",
     "Pasted image 20240514102955.png",
     "Random notes.md",
     "Pasted image 20240514115017.png",
