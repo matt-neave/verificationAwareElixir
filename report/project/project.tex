@@ -86,11 +86,14 @@ The simulator terminates, reporting a timeout. Already, running our specificatio
     [9] (proc_0) init:4 [receive do]
     [10] (proc_0) init:5 [{:im_alive} -> IO.puts "Client is alive"]
     [13] (proc_1) start_client:13 [{:binding} -> IO.puts "Client bound"]
+    <<< END OF TRAIL, FINAL STATES: >>>
     [14] (proc_1) start_client:13 [{:binding} -> IO.puts "Client bound"]
     [15] (proc_0) init:5 [{:im_alive} -> IO.puts "Client is alive"]
 \end{lstlisting}
 Running the verifier produces much more output. Let's break down step by step the output produced by Veriflixir. The first line of the output informs us that the verifier successfully terminated on the input, along with how many errors were found. If an error is found, Veriflixir will use heuristics to profile the type of error, in this case, it has determined the program likely deadlocked. Once determining the error type, an error trail is produced to debug the source of the error. The underlying model derived from the LTLixir specification does not have a one-to-one mapping to the original Elixir code, hence again heuristics are applied to determine where in the Elixir program the trail is produced from. In this case, we can see reference to \texttt{init}, the entry point to the system (annotated previously by \texttt{@vae\_init}). Alongside the process, we can see a line number referring to a line number in the Elixir file, as well as the line of code the line refers to. With the exception of the system entry point, all other function names are labeled as in the original program, for example, $start\_client$. The remaining information on a trail line is less relevant to most users. The first number on a line is the step number (some of these may be omitted for simplicity). The \texttt{proc\_n} refers both to process numbers and function call stack depth.
 \par
 Now we understand how to read a single line of the trail, we can read the trail in sequential order to learn the interleaving that resulted in the error. In this instance, we can see the server reaches line 5 where it waits for an \texttt{:im\_alive} message from the client and similarly, the client is waiting for a \texttt{:binding} message.
-\subsection{Linear Temporal Logic} 
-\subsection{Hoare-style Logic} 
+\subsection{Linear Temporal Logic}
+
+\subsection{Pre and Post Conditions}
+\subsection{parameterized Systems} 

@@ -25,4 +25,6 @@ SF_v(A) ==
 - Implement range ..
 - Investigate more flags for Elixir implementation
 - Predicate definitions and labels using [definitions](https://spinroot.com/spin/Man/ltl.html). 
-- 
+- Bugfix:
+	- LTL header duplicates
+	- For loop ranges can't be assigned to

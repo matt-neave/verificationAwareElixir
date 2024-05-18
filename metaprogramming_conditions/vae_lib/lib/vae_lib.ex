@@ -62,4 +62,11 @@ defmodule VaeLib do
       end
     end
   end
+
+  # Macro for storing predicates, they take two arguments, an identifier and a predicate
+  defmacro predicate(var_name, condition) do
+    quote do
+      unquote(var_name) = unquote(condition)
+    end
+  end
 end

@@ -19,6 +19,7 @@ struct ErrorLine {
     function_name: String,
     start_of_cycle: bool,
     ltl_violation: bool,
+    trail_ended: bool,
 }
 
 pub fn run_model(model_path: &str, elixir_dir: &str) {
@@ -171,6 +172,7 @@ fn generate_trace(model_path: &str) -> Vec<ErrorLine> {
                 function_name,
                 start_of_cycle: false,
                 ltl_violation: false,
+                trail_ended: false,
             }; 
             trace.push(err);
         }
@@ -191,6 +193,9 @@ fn report_elixir_trace(model_path: &str, trace: Vec<ErrorLine>, elixir_dir: &str
             continue;
         } else if trace_line.ltl_violation {
             println!("LTL PROPERTY VIOLATED");
+            continue;
+        } else if trace_line.trail_ended {
+            println!("<<< END OF TRAIL, FINAL STATES: >>>");
             continue;
         }
 
@@ -218,7 +223,7 @@ fn report_elixir_trace(model_path: &str, trace: Vec<ErrorLine>, elixir_dir: &str
 fn generate_verbose_trace(output_str: &str) -> Vec<ErrorLine> {
     let re = Regex::new(r"\d+:\s*proc\s*(\d+)\s*\(([^)]+)\)\s*test_out\.pml:(\d+).*").unwrap();
     let mut trace: Vec<ErrorLine> = Vec::new();
-    let mut last_ltl = false;
+    let mut trail_ended = false;
     for line in output_str.lines() {
         if let Some(captures) = re.captures(line) {
             let proc_number: u32 = captures[1].parse().unwrap_or(0);
@@ -234,6 +239,7 @@ fn generate_verbose_trace(output_str: &str) -> Vec<ErrorLine> {
                 function_name,
                 start_of_cycle: false,
                 ltl_violation: false,
+                trail_ended: false,
             }; 
             trace.push(err);
         } else if line.contains("START OF CYCLE") { 
@@ -244,6 +250,18 @@ fn generate_verbose_trace(output_str: &str) -> Vec<ErrorLine> {
                 function_name: String::from(""),
                 start_of_cycle: true,
                 ltl_violation: false,
+                trail_ended: false,
+            };
+            trace.push(err);
+        } else if line.contains("trail ends after") {
+            let err = ErrorLine {
+                process_num: 0,
+                line_num: 0,
+                valid_end_state: false,
+                function_name: String::from(""),
+                start_of_cycle: false,
+                ltl_violation: false,
+                trail_ended: true,
             };
             trace.push(err);
         }

@@ -151,6 +151,8 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
             od\n\
         }\n\
     }\n\
+    \n\
+    int __dummy_iterator;\n\
     ");
     model
 }

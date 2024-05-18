@@ -701,7 +701,10 @@ impl FileWriter {
                     :: LIST_ALLOCATED({}, __list_ptr) ->\n\
         ", iterable));
         if iterator != "_" {
-            self.function_body.last_mut().unwrap().push_str(&format!("int {};\n", iterator));
+            if !self.function_sym_table.contains(iterator) {
+                self.function_body.last_mut().unwrap().push_str(&format!("int {};\n", iterator));
+                self.function_sym_table.add_entry(iterator.to_string(), sym_table::SymbolType::Integer);
+            }
             self.function_body.last_mut().unwrap().push_str(&format!("{} = LIST_VAL({}, __list_ptr);\n", iterator, iterable));
         };
         if !self.array_var_stack.is_empty() {
@@ -719,6 +722,30 @@ impl FileWriter {
             fi\n\
         od\n\
         }\n");
+    }
+
+    pub fn write_range_for_loop(
+        &mut self,
+        mut iterator: &str,
+        n1: &str,
+        n2: &str,
+        line_number: u32,
+    ) {
+        if iterator != "_" {
+            if !self.function_sym_table.contains(iterator) {
+                self.function_body.last_mut().unwrap().push_str(&format!("int {};\n", iterator));
+                self.function_sym_table.add_entry(iterator.to_string(), sym_table::SymbolType::Integer);
+            }
+        } else {
+            iterator = "__dummy_iterator";
+        }
+        self.function_body.last_mut().unwrap().push_str(&format!("for({} : {} .. {}) {{ /*{}*/\n", iterator, n1, n2, line_number));
+    }
+
+    pub fn commit_range_for_loop(
+        &mut self,
+    ) {
+        self.function_body.last_mut().unwrap().push_str("}\n");
     }
 
     pub fn write_enum_random(
@@ -811,5 +838,49 @@ impl FileWriter {
     pub fn mark_paramaterized(&mut self, vars: Vec<String>) {
         self.parameterized_function = true;
         self.parameterized_vars = vars;
+    }
+
+    fn get_vars_from_condition(condition: &formatted_condition::FormattedCondition) -> Vec<String> {
+        let mut vars = Vec::new();
+        match condition {
+            formatted_condition::FormattedCondition::Variable(v) => vars.push(v.clone().as_str().to_string()),
+            formatted_condition::FormattedCondition::BinaryOperation(_, left, right) => {
+                vars.extend(Self::get_vars_from_condition(left));
+                vars.extend(Self::get_vars_from_condition(right));
+            },
+            formatted_condition::FormattedCondition::Not(inner) => {
+                vars.extend(Self::get_vars_from_condition(inner));
+            },
+            _ => (),
+        };
+        vars
+    }
+
+    fn move_var_to_global(&mut self, var: String) {
+        // Find the variable in the local symbol table
+        let typ = self.function_sym_table.lookup(&var);
+        match typ {
+            sym_table::SymbolType::Integer => {
+                let str = &format!("int {};\n", var);
+                self.ltl_header.push_str(str);
+                let last_body = self.function_body.pop().unwrap();
+                self.function_body.push(last_body.replace(str, ""));
+            },
+            sym_table::SymbolType::Boolean => {
+                let str = &format!("bool {};\n", var);
+                self.ltl_header.push_str(str);
+                let last_body = self.function_body.pop().unwrap();
+                self.function_body.push(last_body.replace(str, ""));
+            },
+            _ => (),
+        }
+    }
+
+    pub fn write_predicate(&mut self, predicate_name: String, condition: &formatted_condition::FormattedCondition) {
+        let vars = Self::get_vars_from_condition(condition);
+        for var in vars {
+            self.move_var_to_global(var);
+        }
+        self.ltl_header.push_str(&format!("#define {} ({})", predicate_name, Self::condition_to_string(condition)));
     }
 }

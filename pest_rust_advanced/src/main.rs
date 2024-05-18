@@ -251,6 +251,7 @@ pub fn parse_block_statement(
             Rule::r#if                    => parse_if(pair, file_writer, ret, func_def),
             Rule::bool                    => parse_boolean(pair, file_writer, ret),
             Rule::case                    => parse_case(pair, file_writer, ret, func_def),
+            Rule::predicate               => parse_predicate(pair, file_writer, ret, func_def),
             _                             => parse_warn!("block statement", pair.as_rule()),
         }
     }
@@ -1855,10 +1856,12 @@ fn parse_for(
     _ret: bool,
     _func_def: bool,
 ) {
+    let line_number = get_line_number(ast_node.clone());
     let mut iterator = None;
     let mut do_block = None;
     let mut iterable = None;
     let mut iterable_as_array = None;
+    let mut range = None;
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::assigned_variable => {
@@ -1870,6 +1873,7 @@ fn parse_for(
             },
             Rule::r#do   => do_block = Some(pair),
             Rule::array  => iterable_as_array = Some(pair),
+            Rule::range  => range = Some(pair),
             _            => parse_warn!("for", pair.as_rule()),
         }
     }
@@ -1885,6 +1889,26 @@ fn parse_for(
             file_writer.commit_for_loop();
         } else if let Some(_y) = iterable_as_array {
             todo!()
+        } else if let Some(y) = range {
+            let iterator_name = get_variable_name(x);
+            let v1 = y.clone().into_inner().nth(1).unwrap();
+            let v2 = y.into_inner().nth(2).unwrap();
+            let n1 = if v1.as_rule() == Rule::assigned_variable {
+                get_variable_name(v1)
+            } else {
+                v1.as_str().to_string()
+            };
+            let n2 = if v2.as_rule() == Rule::assigned_variable {
+                get_variable_name(v2)
+            } else {
+                v2.as_str().to_string()
+            };
+
+            file_writer.write_range_for_loop(&iterator_name, &n1, &n2, line_number);
+            if let Some(z) = do_block {
+                parse_do(z, file_writer, false, false);
+            }
+            file_writer.commit_range_for_loop();
         } else {
             panic!("No iterable in for loop");
         }
@@ -1914,4 +1938,17 @@ fn get_line_number(ast_node: Pair<Rule>) -> u32 {
         if pair.as_rule() == Rule::metadata { metadata = Some(pair) }
     }
     get_line_number_from_metadata(metadata)
+}
+
+fn parse_predicate(
+    ast_node: Pair<Rule>, 
+    file_writer: &mut internal_representation::file_writer::FileWriter, 
+    _ret: bool,
+    _func_def: bool
+) {
+    let var = ast_node.clone().into_inner().nth(1).unwrap();
+    let condition = ast_node.into_inner().nth(2).unwrap();
+    let var_name = get_variable_name(var);
+    let formatted_condition = create_condition(condition);
+    file_writer.write_predicate(var_name, &formatted_condition);
 }
