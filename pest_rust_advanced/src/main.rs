@@ -901,6 +901,7 @@ fn get_symbol_type(
         ":string"     => internal_representation::sym_table::SymbolType::String,
         ":boolean"    => internal_representation::sym_table::SymbolType::Boolean,
         ":atom"       => internal_representation::sym_table::SymbolType::Atom,
+        ":pid"        => internal_representation::sym_table::SymbolType::Integer,
         ":ok"         => internal_representation::sym_table::SymbolType::NoRet,
         _             => internal_representation::sym_table::SymbolType::Integer,
     }
@@ -1886,7 +1887,7 @@ fn parse_for(
             if let Some(z) = do_block {
                 parse_do(z, file_writer, false, false);
             }
-            file_writer.commit_for_loop();
+            file_writer.commit_for_loop(iterator_name);
         } else if let Some(_y) = iterable_as_array {
             todo!()
         } else if let Some(y) = range {

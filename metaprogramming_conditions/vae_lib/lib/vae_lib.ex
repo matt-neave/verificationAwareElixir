@@ -69,4 +69,38 @@ defmodule VaeLib do
       unquote(var_name) = unquote(condition)
     end
   end
+
+  def unquote(:"eventually")(value) do
+    value
+  end
+
+  def unquote(:"always")(value) do
+    value
+  end
+
+  def unquote(:"until")(value) do
+    value
+  end
+
+  def unquote(:"waek_until")(value) do
+    value
+  end
+
+  defmacro left ~> right do
+    quote do
+      not unquote(left) or unquote(right)
+    end
+  end
+
+  defmacro left <~> right do
+    quote do
+      unqoute(left) ~> unquote(right) and unquote(right) ~> unquote(left)
+    end
+  end
+
+  defmacro ltl(condition) do
+    quote do
+      :ok
+    end
+  end
 end

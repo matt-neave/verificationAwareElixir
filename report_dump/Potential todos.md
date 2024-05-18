@@ -27,4 +27,6 @@ SF_v(A) ==
 - Predicate definitions and labels using [definitions](https://spinroot.com/spin/Man/ltl.html). 
 - Bugfix:
 	- LTL header duplicates
+	- Parse inline LTL ❌
 	- For loop ranges can't be assigned to
+	- Multiple LTL formulas

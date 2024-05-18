@@ -11,3 +11,5 @@
 \contentsline {lstlisting}{\numberline {4.1}{Elixir definition for a server and client module}.}{21}{lstlisting.4.1}%
 \contentsline {lstlisting}{\numberline {4.2}{Declaring an entry point to the system}.}{22}{lstlisting.4.2}%
 \contentsline {lstlisting}{\numberline {4.3}{A simple Elixir system with a deadlock}.}{22}{lstlisting.4.3}%
+\contentsline {lstlisting}{\numberline {4.4}{Valid type specification examples}.}{24}{lstlisting.4.4}%
+\contentsline {lstlisting}{\numberline {4.5}{Example LTL property}.}{25}{lstlisting.4.5}%

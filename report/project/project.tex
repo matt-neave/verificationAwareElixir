@@ -94,6 +94,64 @@ Running the verifier produces much more output. Let's break down step by step th
 \par
 Now we understand how to read a single line of the trail, we can read the trail in sequential order to learn the interleaving that resulted in the error. In this instance, we can see the server reaches line 5 where it waits for an \texttt{:im\_alive} message from the client and similarly, the client is waiting for a \texttt{:binding} message.
 \subsection{Linear Temporal Logic}
+We now introduce Linear-time Temporal Logic to our systems to allow us to write more interesting LTLixir specifications. Before doing so, we must detour to type specifications. Type specifications had been previously omitted from examples, but they are imperative for the correctness of LTLixir specifications. LTLixir supports some basic types such as \texttt{integer()}, \texttt{boolean()}, \texttt{atom()} and \texttt{pid()}. Internally, Veriflixir treats process identifiers as integers, so \texttt{integer()} and \texttt{pid()} can be used interchangeably in specifications, for the following examples, we refer to process identifiers as integers. Message passing in specifications should be typed using atoms. To ensure this, any instance of a message should begin with an atom (which we will refer to as the message type). For example, \texttt{{:bind}} and \texttt{{:calculate, 10, 20}} are valid specification messages, \texttt{{false}} would be ignored by Veriflixir. In type specifications, message types are typed as \texttt{atom()}. The atom \texttt{:ok} is reserved to identify non-returning functions. In Elixir, all functions return a value, so in this context, a 'non-returning function' is a function that's value is never matched. We briefly demonstrate the type specifications for two functions, the first is a non-returning function with no arguments and the second function takes two arguments and returns an integer.
+\begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={Valid type specification examples}.]
+    @spec start_server() :: :ok
+    def start_server do
+        ...
+    end
 
+    @spec add(integer(), integer()) :: integer()
+    def add a, b do
+        ...
+    end
+\end{lstlisting}
+Notice $::$ marks the return type of the function. If these values are matched in the function body, they should not be matched to a different type.
+\par
+Let's now re-design the server and client processes so we can introduce temporal properties to reason about. The server will now spawn $n$ clients, bind the clients to itself and then await a response from all three clients. To achieve this, we introduce two variables \texttt{client\_n} and \texttt{alive\_clients} that will later be used in our temporal specification.
+\begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth]
+    def start_server do
+        client_n = 3
+        alive_clients = 0
+        for _ <- 1..client_n do
+            client = spawn(Client, :start_client, [])
+            send(client, {:bind, self()})
+        end
+        alive_clients = check_clients(client_n, alive_clients)
+    end
+\end{lstlisting}
+The implementation of the client process and the \texttt{check\_clients/2} function have been redacted, without understanding their implementation, we can still use our specification to verify the system acts as intended. We introduce our first LTL formula, which verifies that eventually, the number of alive clients is equal to $n$. To introduce an LTL formula, we can use the \texttt{@ltl} attribute. The attribute assigns an LTL formula, as a string, to function. The LTL grammar is defined as the following.
+\begin{bnf*}
+    \bnfprod{ltl}
+      {\bnfpn{operand} \bnfor ( \bnfpn{ltl} ) \bnfor \bnfpn{ltl} \bnfpn{binop} \bnfpn{ltl} \bnfor \bnfpn{unop} \bnfpn{ltl}}\\
+    \bnfprod{operand}
+      {true \bnfor false \bnfor var \bnfor int}\\
+    \bnfprod{unop}
+      {[ ] \bnfor \langle \rangle \bnfor !}\\
+    \bnfprod{binop}
+      {U \bnfor W \bnfor V \bnfor \&\& \bnfor || \bnfor \rightarrow \bnfor \leftrightarrow }\\
+\end{bnf*}
+We want to verify that eventually, the number of alive clients equals the number the server created, we can write this using the formula $<>(alive\_clients==client\_n)$. Using the LTL attribute, we can update our server process.
+\begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={Example LTL property}.]
+    @vae_init true
+    @spec start_server() :: :ok
+    @ltl "<>(alive_clients==client_n)"
+    def start_server do
+        ...
+    end
+\end{lstlisting}
+The entire program can be found in appendix \ref{appendix:ex4}. Let us run Veriflixir on the system.
+\begin{lstlisting}[language=bash, xleftmargin=.3\linewidth]
+    $ ./veriflixir -v basic_example.ex
+    Model checking ran successfully. 0 error(s) found.
+    The verifier terminated with no errors.
+\end{lstlisting}
+Let's update the LTL formula, by replacing \texttt{clients\_n} with the number 1 ($<>(alive\_clients==1)$). We run the verifier again.
+\begin{lstlisting}[language=bash, xleftmargin=.1\linewidth]
+    $ ./veriflixir -v basic_example.ex
+    Model checking ran successfully. 1 error(s) found.
+    The program is livelocked, or an ltl property was violated. Generating trace.
+\end{lstlisting}
+The examples show how LTL properties can be specified and used to verify the system. Given the first LTL property was accepted, we know the formula holds. This is likely because the implementations of the client and \texttt{check\_clients/2} are correct, but we should also specify properties to check the validity of these functions instead of making this assumption.
 \subsection{Pre and Post Conditions}
 \subsection{parameterized Systems} 

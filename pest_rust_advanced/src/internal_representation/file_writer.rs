@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::io::{self, Write};
 
 use log::warn;
+use regex::Regex;
 
 use crate::formatted_condition;
 use crate::internal_representation::sym_table::{self};
@@ -392,8 +393,15 @@ impl FileWriter {
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! {}; /*{}*/\n", number, 0));
         } else if !self.var_stack.is_empty() {
             let var = self.get_next_var();
+            if !self.ltl_vars.contains(&var) {
+                self.function_sym_table.add_entry(var.clone(), sym_table::SymbolType::Integer);
+                let last_body = self.function_body.pop().unwrap();
+                self.function_body.push(last_body.replace(&format!("int {};\n", var), ""));
+            }
             if self.parameterized_function && self.parameterized_model && self.parameterized_vars.contains(&var.to_string()) {
-                self.function_body.last_mut().unwrap().push_str(&format!("{} = {};\n", var, PARAM_STR));
+                self.function_body.last_mut().unwrap().push_str(&format!("int {} = {};\n", var, PARAM_STR));
+            } else if !self.ltl_vars.contains(&var) {
+                self.function_body.last_mut().unwrap().push_str(&format!("int {} = {};\n", var, number));
             } else {
                 self.function_body.last_mut().unwrap().push_str(&format!("{} = {};\n", var, number));
             }
@@ -452,9 +460,11 @@ impl FileWriter {
             // self.function_body.last_mut().unwrap().push_str(&format!("atomic {{\n"));
         }
 
-        // Push the variable name to the stack to be applied by spawn
+        // Push the variable name to the stack to be applied
         self.var_stack.push(vec![String::from(var)]);
-        self.function_sym_table.add_entry(String::from(var), typ);
+        if !self.function_sym_table.contains(var) {
+            self.function_sym_table.add_entry(String::from(var), typ);
+        }
     }
 
     pub fn write_assignment_tuple(&mut self, vars: Vec<String>, typ: sym_table::SymbolType) {
@@ -715,6 +725,7 @@ impl FileWriter {
 
     pub fn commit_for_loop(
         &mut self,
+        iterator: String,
     ) {
         self.function_body.last_mut().unwrap().push_str("__list_ptr_new++;\n\
             __list_ptr++;\n\
@@ -722,6 +733,7 @@ impl FileWriter {
             fi\n\
         od\n\
         }\n");
+        self.function_sym_table.remove_entry(&iterator);
     }
 
     pub fn write_range_for_loop(
@@ -768,7 +780,7 @@ impl FileWriter {
         if let Some(x) = self.get_next_var_safe() {
             self.function_body.last_mut().unwrap().push_str(&format!("{} = ", x));
         }
-        self.function_body.last_mut().unwrap().push_str(&format!("__list_at({}, {})", list, index));
+        self.function_body.last_mut().unwrap().push_str(&format!("__list_at({}, {})\n", list, index));
     }
     
     pub fn write_enum_map(
@@ -858,13 +870,20 @@ impl FileWriter {
 
     fn move_var_to_global(&mut self, var: String) {
         // Find the variable in the local symbol table
-        let typ = self.function_sym_table.lookup(&var);
+        let typ = self.function_sym_table.safe_lookup(&var);
+        if typ.is_none() {
+            return;
+        }
+        let typ = typ.unwrap();
         match typ {
             sym_table::SymbolType::Integer => {
-                let str = &format!("int {};\n", var);
-                self.ltl_header.push_str(str);
-                let last_body = self.function_body.pop().unwrap();
-                self.function_body.push(last_body.replace(str, ""));
+                // let str = &format!("int {};\n", var);
+                // self.ltl_header.push_str(str);
+                // self.function_body.push(last_body.replace(str, ""));
+                // Find the line with the variable declaration, format: int var...
+                // Format is something like int var; or int var = 0;
+                let search_term = &format!("int {}", var);
+                self.move_int_to_global(search_term);
             },
             sym_table::SymbolType::Boolean => {
                 let str = &format!("bool {};\n", var);
@@ -872,7 +891,30 @@ impl FileWriter {
                 let last_body = self.function_body.pop().unwrap();
                 self.function_body.push(last_body.replace(str, ""));
             },
-            _ => (),
+            _ => warn!("Variable {} type was {:?}", var, typ),
+        }
+    }
+
+    fn move_int_to_global(&mut self, search_term: &str) {
+        // Create a regex pattern to match "int var = number;" or "int var;"
+        let pattern = format!(r"(?m)^\s*{}(?: = (\d+))?;\s*$\n?", search_term);
+        let re = Regex::new(&pattern).unwrap();
+        let last_body = self.function_body.pop().unwrap();
+
+        // Find and extract the number from the string
+        if let Some(captures) = re.captures(&last_body) {
+            let number = if let Some(matched_number) = captures.get(1) {
+                matched_number.as_str().parse().unwrap()
+            } else {
+                0
+            };
+
+            // Remove the entire line containing the pattern
+            let result_string = re.replace_all(&last_body, "").to_string();
+            self.function_body.push(result_string);
+            self.ltl_header.push_str(&format!("{} = {};\n", search_term, number));
+        } else {
+            panic!("Tried to move variable to global context that does not exist locally");
         }
     }
 
@@ -881,6 +923,6 @@ impl FileWriter {
         for var in vars {
             self.move_var_to_global(var);
         }
-        self.ltl_header.push_str(&format!("#define {} ({})", predicate_name, Self::condition_to_string(condition)));
+        self.ltl_header.push_str(&format!("#define {} ({})\n", predicate_name, Self::condition_to_string(condition)));
     }
 }

@@ -136,7 +136,9 @@ boolean_type = { ":boolean" }
 
 atom_type = { ":atom" }
 
-type = { integer_type | boolean_type | atom_type }
+pid_type = { ":pid" }
+
+type = { integer_type | boolean_type | atom_type | pid_type }
 
 argument_type = { ("{" ~ type ~ ", " ~ metadata ~ ", []}") | atom }
 
@@ -178,7 +180,7 @@ true = { "true" }
 
 false = { "false" }
 
-not = { "{:not, " ~ metadata ~ ", " ~ "[" ~ boolean_operand ~ "]}" }
+not = { ("{:not, " | "{:!, ") ~ metadata ~ ", " ~ "[" ~ boolean_operand ~ "]}" }
 
 conditions = { "[" ~ boolean_operand ~ ", " ~ (do | do_else) ~ "]"}
 
