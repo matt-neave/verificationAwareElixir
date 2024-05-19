@@ -30,3 +30,6 @@ SF_v(A) ==
 	- Parse inline LTL ❌
 	- For loop ranges can't be assigned to
 	- Multiple LTL formulas
+	- Ignore whitespace in ltl WHITESPACE = \_{ " " }
+	- Output global values to trail
+	- import models boilerplate

@@ -1,0 +1,10 @@
+- Write section on predicate logic and temporal logic
+- Elixir section
+	- Actors, genservers, other concurrency primitives... spawning on specific IPs
+	- Types
+- Background
+	- TODO DIAGRAM OF GLOBALLY, EVENTUALLY, UNTIL
+	- Potentially add formal kripke sementics for LTL?
+	- Explain kripke to buchi https://www.cs.cmu.edu/~emc/15-398/lectures/spin-3.pdf
+- Model checkers
+	- Limitations of each

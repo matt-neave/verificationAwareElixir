@@ -9,7 +9,7 @@ defmodule OneShotAlternatingBit do
   @vae_init true
   @spec start() :: :ok
   @ltl "<>[](finished==limit)"
-  @param {:limit, :test}
+  @params {:limit, :test}
   def start do
     finished = 0
     limit = 2

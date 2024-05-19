@@ -55,7 +55,7 @@ We extend this notion to concurrency by considering separate alphabets for each 
 \end{aligned}
 \]
 \par
-Finally, we will briefly look at how Hoare modelled communication between processes. Hoare designed communication over channels. A pair $c.v$ represents communication taking place over a channel $c$ and $v$ is the value of a message being passed. Hoare describes the set of all messages that a process $P$ can communicate on channel $c$ as $\{ v \,|\, c.v \in \alpha P \}.$
+Finally, we will briefly look at how Hoare modeled communication between processes. Hoare designed communication over channels. A pair $c.v$ represents communication taking place over a channel $c$ and $v$ is the value of a message being passed. Hoare describes the set of all messages that a process $P$ can communicate on channel $c$ as $\{ v \,|\, c.v \in \alpha P \}.$
 \[
 \alpha c(P) = \{ v \,|\, c.v \in \alpha P \}
 \]
@@ -75,13 +75,84 @@ Similarly, we can read messages from channels (receive a message) using the $?$ 
 (c?x \rightarrow P(x))
 \]
 That concludes a brief overview of the process algebra proposed by Tony Hoare. We saw how event sequencing constructs processes, how processes can be composed and the special communication event $c.v$ which allows message-passing over channels. Tools have been built from similar syntax and concepts, for example, Promela \ref{sec:promela}, which models channels and messages with a similar approach.
-\section{Concurrency TODO}
+\section{Concurrency}
+Concurrency introduces the ability for multiple components of a program to execute out-of-order. We saw in the previous section how multiple processes can be composed and treated as a single execution. For example, when two events unique to the alphabet of two independent processes are enabled at the same time, the composition can result in any interleaving. This section aims to explore further in-depth the principles of concurrency, moving away from a mathematical representation and looking and higher-level concepts such as consistency models and temporal logic. 
+\par
+Concurrency is a core concept in classical distributed algorithms, such as the Paxos algorithm \cite{paxos}, Raft \cite{Raft} and Dining Philosophers \cite{dining_philosophers}. The need for concurrency has grown with better hardware. Concurrency introduces the idea of consistency models \cite{art_of_multiprocessor_programming} to help reason about executions of multi-threaded systems. Lamport introduced sequential consistency \cite{sc} as a strong safety property for concurrent systems. Sequential consistency can be informally reasoned about by considering a single-core processor: if multiple threads are executed in parallel on a single-core processor, only one instruction can be executed at a time. This means that the result of any execution forms a total order, consistent with the order of operations on each individual process. For example, consider a new composition where a sequence of events has been executed by a teacher, \((teach \rightarrow teach \rightarrow)\), and a student is scheduled to execute next. Under the sequential consistency model, even if the student is behind in the number of instructions it has executed, it must observe the same order of events as the teacher.
+\par
+Weaker memory models exist, which allow us to model systems that do not guarantee sequential consistency (for example, systems running on multi-core processors). Under these models, the instructions of a thread may be reordered (i.e. execute out-of-order) which introduces weak behaviors that we would not observe under sequential consistency. For example, total store ordering is a weaker memory model that allows the reordering of write-read operations on different memory locations within a single thread. For the examples discussed in this report, we will assume a sequentially consistent model.
 \subsection{Temporal Logic}
-\subsubsection{Predicate Logic}
-\subsubsection{Linear Temporal Logic}
-\subsubsection{Computation Tree Logic and Alternating-time Temporal Logic}
+First-order logic, or predicate logic uses quantifiers to reason about the truth of statements. For example, the statement $(\forall x \in \mathbb{N} \,.\, x > 0)$ is true for all natural numbers, $\mathbb{N}$ and uses the universal quantifier $\forall$ to quantify over all x. We can also use the existential quantifier $\exists$ to reason about the existence of an element in a set. First-order logic is a powerful tool for reasoning about the truth of statements, but it cannot reason about time and change. We introduce modal logic for this purpose.
+\begin{bnf*}
+    \bnfprod{A}
+      {p \bnfor \top \bnfor \neg \bnfpn{A} \bnfor \bnfpn{A} \land \bnfpn{A} \bnfor \square \bnfpn{A}}\\
+\end{bnf*}
+Where A is a modal formula, $p$ is an atomic proposition, $\top$ represents `truth' and $\square A$ reads box A. Using rules from first-order logic we can introduce disjunct, implication and if-and-only-if. We can also introduce the second modal operator, $\lozenge A$ which reads diamond A.
+\[
+\lozenge \langle A \rangle \models \neg \square \neg \langle A \rangle
+\]
+Depending on the circumstances that box and diamond are applied, they have different readings. For example, in temporal logic, $\square A$ can read as `always A' and $\lozenge A$ can read as `sometimes A', informally, it can be useful to think of $\square$ similarly to $\forall$ and $\lozenge$ to $\exists$.
+\par
+Saul Kripke introduced Kripke semantics \cite{kripke} for reasoning about temporal logic. For example, consider modeling a system based on our student and teacher processes. We let $M$ be the model of the system and $s$ represent a singular state the system can be in. Typically, $s$ is the initial state of the system. If we are given a temporal formula $A$, we can now define the syntax for the trust of $A$ in state $s$ of the model $M$.
+\[
+(M, w) \models A
+\]
+To reason formally about what it means for $A$ to hold in state $s$ Kripke provided formal definitions for the base and inductive definitions of $A$.
+\par
+We finally extend this understanding of temporal logic to linear temporal logic (LTL), or sometimes written as linear-time temporal logic. LTL allows us to reason about the time and change of a model. Before we provide some examples, we introduce a final temporal operator, $U$, which reads until. The formula $\phi U \psi$ defines the truth of $\phi$ until $\psi$ holds. We call this strong until as there must exist a state where $\psi$ becomes true, weak until $W$ can also be defined, which loosens the restrictions such that $\phi$ could hold for the entire execution.
+\par
+TODO DIAGRAM OF GLOBALLY, EVENTUALLY, UNTIL
+\par
+We can now explore a few basic examples of LTL formulas as well as provide some intuition behind them. We define a set of atomic propositions, $AP = \{study, sleep, tired, exam\}$.
+\begin{multicols}{2}
+    \[
+    \begin{aligned}
+    &\square \text{sleep} \\
+    &\text{tired} \, U \, \text{sleep} \\
+    &\square (\text{study} \Rightarrow \text{tired}) \\
+    &\square \text{study} \Rightarrow \lozenge \text{exam}
+    \end{aligned}
+    \]
+    \vline
+    \[
+    \begin{aligned}
+    \text{Always sleeping} \\
+    \text{Tired until sleeping} \\
+    \text{Studying implies always tired} \\
+    \text{Studying implies eventually an exam}
+    \end{aligned}
+    \]
+    \end{multicols}
+\par
+We can also explore what it means for the formula to hold in a given state of a model.
+\par
+TODO DIAGRAM OF MODEL, WITH SOME FORMULA FROM ABOVE, COMPARING THE TRUTH IN A STATE AND VALIDITY IN A MODEL
+\par
+Alongside LTL, other forms of temporal logic exist, such as Computation Tree Logic (CTL) \cite{temporal_and_modal_logic} and Alternating-time Temporal Logic (ATL) \cite{atl}. With LTL, these are all important concepts in the model checking of systems \cite{principles_of_model_checking}, see \ref{sec:model_checking}. CTL introduces path quantifiers to reason about specific traces through a model, and ATL introduces the idea of agents, where agents can work in coalitions to achieve a goal in the system.
 \subsection{Safety and Liveness}
-\section{Model Checking}
+Safety and liveness are properties that can be specified about systems. A safety property can be intuitively thought of as a property such that nothing bad happens, and a liveness property is where something good will happen. For example, something bad could be a deadlock in a system, and something good could be that the system will eventually reach a consensus. We define safety informally as: given a finite execution $E$ and a state $s$ such that $s$ is the final state in the execution, we can say that a safety property $P$ holds if $P$ is true in $s$ and all previous states in $E$. Hence, the state $s$ could be a violating state for $E$. Unlike with safety, we cannot determine the truth of a liveness property at $s$, we must instead inspect an infinite execution $E'$. We express these properties as temporal formulas. For example, we can specify a simple liveness property to ensure our student will always study again.
+\[
+\square \lozenge \text{study}
+\]
+To help understand why this is a liveness property, consider two states, $s_1$ and $s_2$. Take the assignment of $study$ to be $\{s_1\}$ i.e., $study$ is true only in $s_1$. Regardless of if we want to reason about the truth of the formula at $s_1$ or $s_2$, we cannot as the box operator requires the formula to hold in all states. Hence we would have to inspect the current state as well as an infinite future execution from the state to determine the truth of the formula. Because no single state exists where we can evaluate the truth of the formula, we can convince ourselves it is a liveness property.
+\par
+We use the same assignment of study to reason about a new property.
+\[
+\square \text{study}
+\]
+We can understand intuitively why this property is a safety property by considering $s_2$. As $s_2$ is not in the assignment of study (i.e. $study$ is false in $s_2$), any execution that passes through $s_2$ will violate the property. As we can determine the truth of the property with a finite execution, we can deem the property a safety property.
+\par
+By using both safety and liveness properties, we can construct what it means for a system to be correct, through the evaluation of these temporal formulae.
+\subsection{Fairness}
+Fairness introduces more properties that can be defined using temporal formulae. Fairness properties do not target the specification of the system in the same way that other properties we have looked at do. Instead, fairness properties are constraints on the scheduling of the system. They aim to fairly select which process to execute next. Without fairness, a system could favor the scheduling of process A while never progressing with process B. We will discuss two flavors of fairness, weak fairness and strong fairness. Properties that hold under weak fairness also hold under strong fairness, hence strong implies weak. To define the fairness properties, we must first define what it means for an event to be enabled. An event (or action) $A$ of a process algebra is enabled if it can be executed in the current state. We will use the notation $A_E$ to denote an enabled event, for example, $study_E$ denotes the study event is executable in the current state. We now define weak fairness (WF) and strong fairness (SF).
+\[
+\begin{aligned}
+&WF \, A \equiv \lozenge \square A_E \Rightarrow \square \lozenge A \\
+&SF \, A \equiv \square \lozenge A_E \Rightarrow \square \lozenge A \\
+\end{aligned}
+\]
+We can intuitively understand weak fairness as the property that if an event is continuously enabled, it is executed infinitely often. Similarly, strong fairness reads if an event is repeatedly enabled, it is executed infinitely often.
+\section{Model Checking} \label{sec:model_checking}
 Model checking is the process of determining if a finite-state machine (FSM) is correct under a provided specification. It typically involves enumerating all possible states of an FSM and ensuring the correctness of each state. For example, given a model M and a property $\varphi$, if no state of M violates $\varphi$, then we can say M satisfies $\varphi$. In software development, model checkers are beneficial in providing guarantees for safety-critical systems as well as concurrent systems. Concurrent systems can often cause issues with uncommon instruction execution interleavings that are not easily identifiable until long into a runtime. For example, deadlocks can occur when instructions being run by two processes are dependent on one another making progress. A simple example of a deadlock that can occur is the following interleaving of instructions executed by two processes, $\tau_1$ and $\tau_2$. 
 \begin{multicols}{2}
     \[

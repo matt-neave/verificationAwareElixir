@@ -82,7 +82,7 @@ block = { "{:__block__" ~ ", " ~ metadata ~ ", " ~ block_statements ~  "}" }
 block_statements = { "[" ~ (block_statement ~ ", ")* ~ block_statement* ~ "]" }
 
 // TODO merge with tuple
-block_statement = { string | bool | assigned_variable | attribute | vae_function_definition | function_definition | macro | enum_call | io | inspect | for | if | case | pre | predicate | directive | array_read | array_assignment  | assignment | statement_assignment | tupled_elements | spawn_process | send | receive | defmodule | tuple }
+block_statement = { ok | string | bool | assigned_variable | attribute | vae_function_definition | function_definition | macro | enum_call | io | inspect | for | if | case | pre | predicate | directive | array_read | array_assignment  | assignment | statement_assignment | tupled_elements | spawn_process | send | receive | defmodule | tuple }
 
 tuple = { function_definition | unless | or | and | assigned_variable | binary_operation | expression_tuple }
 
@@ -108,13 +108,17 @@ tupled_elements = {
 
 array_assigned_variable = { "[" ~ (assigned_variable ~ ", ")* ~ assigned_variable ~ "]" }
 
-function_definition = { (ltl_spec ~ ", ")? ~ (parameterization ~ ", ")? ~ (vae_init ~ ", ")? ~ (type_spec ~ ", ")? ~ (ltl_spec ~ ", ")? ~ (vae_init ~ ", ")? ~ (parameterization ~ ", ")? ~ (( "{:defp" | "{:def") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}") }
+function_definition = {  function_annotation* ~ (( "{:defp" | "{:def") ~ ", " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ do ~ "]}") }
 
-vae_function_definition = { (ltl_spec ~ ", ")? ~ (parameterization ~ ", ")? ~ (vae_init ~ ", ")? ~ (type_spec ~ ", ")? ~ (ltl_spec ~ ", ")? ~ (vae_init ~ ", ")? ~ (parameterization ~ ", ")? ~ ( "{:defv, " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", [" ~ pre* ~ ", "* ~ post* ~ ", "* ~ pre*  ~ "], " ~ do ~ "]}") }
+vae_function_definition = {  function_annotation* ~ ( "{:defv, " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", [" ~ pre* ~ ", "* ~ post* ~ ", "* ~ pre*  ~ "], " ~ do ~ "]}") }
+
+function_annotation = { (ltl_spec | parameterization | vae_init | type_spec | ltl_spec) ~ ", " }
 
 pre = { "pre: " ~ boolean_operand }
 
 post = { "post: " ~ boolean_operand }
+
+ok = { ":ok" }
 
 type_spec = { "{:@, " ~ metadata ~ ", [{:spec, " ~ metadata ~ ", [{:\"::\", " ~ metadata ~ ", [" ~ function_arguments_type ~ ", " ~ argument_type ~"]}]}]}" } 
 
@@ -124,7 +128,7 @@ ltl_spec = { "{:@, " ~ metadata ~ ", [{:ltl, " ~ metadata ~ ", [\"" ~ ltl ~ "\"]
 
 predicate = { "{:predicate, " ~ metadata ~ ", [" ~ assigned_variable ~ ", " ~ boolean_operand ~ "]}" }
 
-parameterization = { "{:@, " ~ metadata ~ ", [{:param, " ~ metadata ~ (", [{:{}, " ~ metadata ~ ", [" ~ (atom ~ ", ")* ~ atom ~ "]}]}]}" | ", [" ~ alpha_letters ~ ": " ~ atom ~ "]}]}") }
+parameterization = { "{:@, " ~ metadata ~ ", [{:params, " ~ metadata ~ (", [{:{}, " ~ metadata ~ ", [" ~ (atom ~ ", ")* ~ atom ~ "]}]}]}" | ", [" ~ alpha_letters ~ ": " ~ atom ~ "]}]}") }
 
 function_arguments_type = { "{" ~ atom ~ ", " ~ metadata ~ ", " ~ argument_types ~ "}" }
 

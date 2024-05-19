@@ -1,3 +1,5 @@
+import VaeLib
+
 defmodule Server6 do
   @vae_init true
   @spec start_server() :: :ok

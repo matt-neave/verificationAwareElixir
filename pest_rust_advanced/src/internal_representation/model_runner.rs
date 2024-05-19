@@ -66,8 +66,7 @@ fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str) {
         
         if let Ok(error_count) = u32::from_str(number_str) {
             println!("Model checking ran successfully. {} error(s) found.", error_count);
-            // println!("{}", model_output);
-
+            
             if error_count > 0 {
                 let mut trace_lines = Vec::new();
                 let invalid_end_state_lines = check_invalid_end_state(model_path, model_output);
@@ -82,6 +81,11 @@ fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str) {
 
                 let too_many_queues = check_too_many_queues(model_path, model_output);
                 for trace in too_many_queues {
+                    trace_lines.push(trace);
+                }
+
+                let assertion_violation = check_assertion_violation(model_path, model_output);
+                for trace in assertion_violation {
                     trace_lines.push(trace);
                 }
 
@@ -118,6 +122,24 @@ fn check_non_accept_cycles(model_path: &str, model_output: &str) -> Vec<ErrorLin
 
     if model_output.contains(match_str) {
         println!("The program is livelocked, or an ltl property was violated. Generating trace.");
+        trace = generate_trace(model_path);
+    }
+    trace
+}
+
+fn check_assertion_violation(model_path: &str, model_output: &str) -> Vec<ErrorLine> {
+    // Check for assertion violations
+    let match_str = "assertion violated";
+    let mut trace = Vec::new();
+
+    if model_output.contains(match_str) {
+        println!("An LTL, pre- or post-condition was violated. Generating trace.");
+        let pattern = r"(?m)assertion violated.*$";
+        let re = Regex::new(pattern).unwrap();
+        if let Some(captures) = re.find(model_output) {
+            let matched_portion = captures.as_str();
+            println!("Violated: {}.", matched_portion);
+        }
         trace = generate_trace(model_path);
     }
     trace
@@ -186,7 +208,7 @@ fn report_elixir_trace(model_path: &str, trace: Vec<ErrorLine>, elixir_dir: &str
 
     let elixir_file = std::fs::read_to_string(elixir_dir).expect("Failed to read the elixir file.");
 
-
+    let mut eot = false;
     for (i, trace_line) in trace.iter().enumerate() {
         if trace_line.start_of_cycle {
             println!("<<< START OF CYCLE >>>");
@@ -196,6 +218,7 @@ fn report_elixir_trace(model_path: &str, trace: Vec<ErrorLine>, elixir_dir: &str
             continue;
         } else if trace_line.trail_ended {
             println!("<<< END OF TRAIL, FINAL STATES: >>>");
+            eot = true;
             continue;
         }
 
@@ -206,6 +229,19 @@ fn report_elixir_trace(model_path: &str, trace: Vec<ErrorLine>, elixir_dir: &str
                 let mut elixir_line = "";
                 if x > 0 {
                     elixir_line = elixir_file.lines().nth(x as usize).expect("Failed to get the line.");
+                }
+                if eot
+                {
+                    println!(
+                        "[{}] (proc_{}) {}:{} [{}] {}", 
+                        i+1,
+                        trace_line.process_num, 
+                        trace_line.function_name, 
+                        x, 
+                        elixir_line.trim(),
+                        if trace_line.valid_end_state { "<status: TEMINATED>" } else { "<status: ALIVE>" },
+                    );
+                    continue;
                 }
                 println!(
                     "[{}] (proc_{}) {}:{} [{}]", 

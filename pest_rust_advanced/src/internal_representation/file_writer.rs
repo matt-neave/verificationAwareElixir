@@ -399,7 +399,11 @@ impl FileWriter {
                 self.function_body.push(last_body.replace(&format!("int {};\n", var), ""));
             }
             if self.parameterized_function && self.parameterized_model && self.parameterized_vars.contains(&var.to_string()) {
-                self.function_body.last_mut().unwrap().push_str(&format!("int {} = {};\n", var, PARAM_STR));
+                if self.ltl_vars.contains(&var) {
+                    self.ltl_header.push_str(&format!("int {} = {};\n", var, number));
+                } else {
+                    self.function_body.last_mut().unwrap().push_str(&format!("int {} = {};\n", var, PARAM_STR));
+                }
             } else if !self.ltl_vars.contains(&var) {
                 self.function_body.last_mut().unwrap().push_str(&format!("int {} = {};\n", var, number));
             } else {
@@ -883,7 +887,7 @@ impl FileWriter {
                 // Find the line with the variable declaration, format: int var...
                 // Format is something like int var; or int var = 0;
                 let search_term = &format!("int {}", var);
-                self.move_int_to_global(search_term);
+                self.move_int_to_global(search_term, var);
             },
             sym_table::SymbolType::Boolean => {
                 let str = &format!("bool {};\n", var);
@@ -895,26 +899,31 @@ impl FileWriter {
         }
     }
 
-    fn move_int_to_global(&mut self, search_term: &str) {
+    fn move_int_to_global(&mut self, search_term: &str, var: String) {
         // Create a regex pattern to match "int var = number;" or "int var;"
-        let pattern = format!(r"(?m)^\s*{}(?: = (\d+))?;\s*$\n?", search_term);
+        let pattern = format!(r"(?m)^\s*{}(?: = (\d+|{}))?;\s*$\n?", search_term, PARAM_STR);
         let re = Regex::new(&pattern).unwrap();
         let last_body = self.function_body.pop().unwrap();
 
         // Find and extract the number from the string
         if let Some(captures) = re.captures(&last_body) {
-            let number = if let Some(matched_number) = captures.get(1) {
-                matched_number.as_str().parse().unwrap()
-            } else {
-                0
-            };
+            let mut number = 0;
+            if let Some(matched) = captures.get(1) {
+                if matched.as_str() == PARAM_STR {
+                    if !self.ltl_header.contains(&format!("int {}", var)) {
+                        self.ltl_header.push_str(&format!("int {} = {};\n", var, PARAM_STR));
+                    }
+                } else {
+                    number = matched.as_str().parse().unwrap();
+                    self.ltl_header.push_str(&format!("{} = {};\n", search_term, number));
+                }
+            } 
 
             // Remove the entire line containing the pattern
             let result_string = re.replace_all(&last_body, "").to_string();
             self.function_body.push(result_string);
-            self.ltl_header.push_str(&format!("{} = {};\n", search_term, number));
         } else {
-            panic!("Tried to move variable to global context that does not exist locally");
+            self.function_body.push(last_body);
         }
     }
 

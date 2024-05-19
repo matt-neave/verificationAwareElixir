@@ -30,6 +30,7 @@ mod parse_macros;
 #[grammar = "elixir_ast_v1.pest"]
 pub struct ASTParser;
 
+static mut PARAMS: Vec<String> = Vec::new();
 fn main() {
     let path = "./ast_output.txt";
     let model_path = "test_out.pml";
@@ -43,6 +44,18 @@ fn main() {
     let simulate_flag = args.contains(&"--sim".to_string()) || args.contains(&"-s".to_string());
     // Uses param annotations to generate multiple models
     let gen_params = args.contains(&"--param".to_string()) || args.contains(&"-p".to_string());
+    let mut param_n = 3;
+    if gen_params {
+        let index = args.iter().position(|x| x == "-p" || x == "--param").unwrap();
+        let next_arg = args.get(index + 1);
+        if let Some(arg) = next_arg {
+            let p_num = arg.parse::<u32>();
+            if let Ok(num) = p_num {
+                param_n = num
+            }
+        }
+    }
+
     // Stops a process blocking on sending to a full, bounded channel
     let bounded_channels_skip = args.contains(&"--skip-bounded".to_string()) || args.contains(&"-b".to_string());
     let arg_binding = std::env::args().last().expect("Incorrect usage");
@@ -69,6 +82,10 @@ fn main() {
 
     writer.commit().expect("Failed to commit to file");
 
+    let mut final_params = Vec::new();
+    unsafe {
+        final_params = PARAMS.clone();
+    }
     if simulate_flag {
         model_runner::simulate_model(model_path);
     }
@@ -76,7 +93,7 @@ fn main() {
         model_runner::run_model(model_path, elixir_dir.to_str().unwrap());
     }
     else if gen_params {
-        model_generator::generate_models(model_path);
+        model_generator::generate_models(model_path, final_params, param_n);
     }
 
 }
@@ -962,10 +979,16 @@ pub fn parse_function_definition(
             Rule::function_arguments => func_arg_node = Some(pair),
             Rule::r#do               => func_body_node = Some(pair),
             Rule::metadata           => _func_metadata_node = Some(pair),
-            Rule::type_spec          => func_type_spec = Some(pair),
-            Rule::vae_init           => vae_init = true,
-            Rule::ltl_spec           => ltl_spec = Some(pair),
-            Rule::parameterization   => extract_params(pair, file_writer),
+            Rule::function_annotation => {
+                let annotation = pair.into_inner().next().unwrap();
+                match annotation.as_rule() {
+                    Rule::type_spec          => func_type_spec = Some(annotation),
+                    Rule::vae_init           => vae_init = true,
+                    Rule::ltl_spec           => ltl_spec = Some(annotation),
+                    Rule::parameterization   => extract_params(annotation, file_writer),
+                    _ => ()
+                }
+            },
             _                        => parse_warn!("function definition", pair.as_rule()),
         }
     }
@@ -1025,12 +1048,18 @@ pub fn parse_vae_function_definition(
             Rule::function_arguments => func_arg_node = Some(pair),
             Rule::r#do               => func_body_node = Some(pair),
             Rule::metadata           => _func_metadata_node = Some(pair),
-            Rule::type_spec          => func_type_spec = Some(pair),
-            Rule::vae_init           => vae_init = true,
-            Rule::ltl_spec           => ltl_spec = Some(pair),
             Rule::pre                => pre = Some(pair),
             Rule::post               => post = Some(pair),
-            Rule::parameterization   => extract_params(pair, file_writer),
+            Rule::function_annotation => {
+                let annotation = pair.into_inner().next().unwrap();
+                match annotation.as_rule() {
+                    Rule::type_spec          => func_type_spec = Some(annotation),
+                    Rule::vae_init           => vae_init = true,
+                    Rule::ltl_spec           => ltl_spec = Some(annotation),
+                    Rule::parameterization   => extract_params(annotation, file_writer),
+                    _ => ()
+                }
+            },
             _                        => parse_warn!("function definition", pair.as_rule()),
         }
     }
@@ -1082,6 +1111,13 @@ fn extract_params(ast_node: Pair<Rule>, file_writer: &mut internal_representatio
             vars.push(pair.as_str().replace(':', ""))
         } else if let Rule::alpha_letters = pair.as_rule() {
             vars.push(pair.as_str().to_string())
+        }
+    }
+    unsafe {
+        for var in vars.clone() {
+            if !PARAMS.contains(&var) {
+                PARAMS.push(var);
+            }
         }
     }
     file_writer.mark_paramaterized(vars);

@@ -9,7 +9,7 @@ defmodule Parameterization do
     IO.puts "All messages received"
   end
 
-  @param {:count1, :count2, :count3}
+  @params {:count1, :count2, :count3}
   @spec run_program() :: integer()
   defv run_program(), post: total_message_count == count1 + count2 + count3 do
     count1 = 1
