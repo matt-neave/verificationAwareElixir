@@ -513,7 +513,6 @@ impl FileWriter {
             self.mailbox_id.insert(x.clone(), i);
             self.function_body.last_mut().unwrap().push_str(&format!("{} = ", x));
         }
-        // Create a mailbox for each process
         self.function_body.last_mut().unwrap().push_str(&format!("run {}({}); /*{}*/\n", proctype, formatted_args, line_number));
     }
 

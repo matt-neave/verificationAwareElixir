@@ -1,7 +1,7 @@
 defmodule Server5 do
   @vae_init true
   @spec start_server() :: :ok
-  @ltl "<>(alive_clients==1)"
+  @ltl "<>(alive_clients == 1)"
   def start_server do
     client_n = 3
     alive_clients = 0

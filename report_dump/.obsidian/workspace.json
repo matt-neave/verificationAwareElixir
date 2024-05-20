@@ -25,7 +25,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Limitations.md",
+                "file": "Potential todos.md",
                 "mode": "source",
                 "source": false
               }
@@ -97,14 +97,14 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Report Todos.md",
+                "file": "Potential todos.md",
                 "mode": "source",
                 "source": false
               }
             }
           }
         ],
-        "currentTab": 7
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -170,7 +170,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Report Todos.md",
+                "file": "Potential todos.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -187,7 +187,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Report Todos.md",
+                "file": "Potential todos.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -210,7 +210,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Report Todos.md"
+                "file": "Potential todos.md"
               }
             }
           }
@@ -231,17 +231,17 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "0a04873970cf7644",
+  "active": "9d71951a970fdd0f",
   "lastOpenFiles": [
+    "Random notes.md",
+    "Report plan.md",
+    "Limitations.md",
     "Potential todos.md",
+    "Question for Naranker.md",
+    "Gomela analysis, comparison and inspiration.md",
     "Report Todos.md",
     "Verification of Elixir paper.md",
-    "Report plan.md",
-    "Gomela analysis, comparison and inspiration.md",
-    "Limitations.md",
     "Pasted image 20240514102955.png",
-    "Question for Naranker.md",
-    "Random notes.md",
     "Pasted image 20240515174608.png",
     "Pasted image 20240514115017.png",
     "Pasted image 20240514112551.png",

@@ -8,3 +8,4 @@
 	- Explain kripke to buchi https://www.cs.cmu.edu/~emc/15-398/lectures/spin-3.pdf
 - Model checkers
 	- Limitations of each
+	

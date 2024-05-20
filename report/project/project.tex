@@ -127,15 +127,15 @@ The implementation of the client process and the \texttt{check\_clients/2} funct
     \bnfprod{operand}
       {true \bnfor false \bnfor var \bnfor int \bnfor elixir\_expr}\\
     \bnfprod{unop}
-      {\square \bnfor \diamond \bnfor !}\\
+      {\square \bnfor \lozenge \bnfor !}\\
     \bnfprod{binop}
       {U \bnfor W \bnfor V \bnfor \&\& \bnfor || \bnfor \rightarrow \bnfor \leftrightarrow }\\
 \end{bnf*}
-We want to verify that eventually, the number of alive clients equals the number the server created, we can write this using the formula $\diamond (alive\_clients \equiv client\_n)$. Using the LTL attribute, we can update our server process.
+We want to verify that eventually, the number of alive clients equals the number the server created, we can write this using the formula $\lozenge (alive\_clients \equiv client\_n)$. Using the LTL attribute, we can update our server process.
 \begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={Example LTL property}.]
     @vae_init true
     @spec start_server() :: :ok
-    @ltl "<>(alive_clients==client_n)"
+    @ltl "<>(alive_clients == client_n)"
     def start_server do
         ...
     end
@@ -146,7 +146,7 @@ The entire program can be found in appendix \ref{appendix:ex4}. Let us run Verif
     Model checking ran successfully. 0 error(s) found.
     The verifier terminated with no errors.
 \end{lstlisting}
-Let's update the LTL formula, by replacing \texttt{clients\_n} with the number 1 ($\diamond (alive\_clients \equiv 1)$). We run the verifier again.
+Let's update the LTL formula, by replacing \texttt{clients\_n} with the number 1 ($\lozenge (alive\_clients \equiv 1)$). We run the verifier again.
 \begin{lstlisting}[language=bash, xleftmargin=.1\linewidth]
     $ ./veriflixir -v basic_example.ex
     Model checking ran successfully. 1 error(s) found.
@@ -254,3 +254,5 @@ Model with params: {"number_of_rounds": '1'}
 Assign these parameters to the system and re-run the verifier in verification mode to gather a trace.
 \end{lstlisting}
 The system found a violation for the assignment of 1 to \texttt{number\_of\_rounds}. To investigate, we could run the verifier using the $-v$ flag on this configuration. We also now see our acceptance confidence has dropped below 1, due to an error produced by one of the configurations. It's also useful to note that Veriflixir was executed with $-p 3$, this sets the range of values for the parameter, large numbers are not recommended and most users will find 3 sufficient. 
+\section{Summary}
+We have now given a high-level overview of Veriflixir, the verification toolchain capable of verifying Elixir programs written using the LTLixir specification. We saw how to use Veriflixir to simulate executions of the system, verify our system's adherence to a specification and parameterize concurrency parameters for exploration. This chapter also exposed how to use LTLixir constructs to reason about temporal properties as well as how pre- and post-conditions can drive functional correctness. The next chapter will begin to explore the implementation behind Veriflixir.
