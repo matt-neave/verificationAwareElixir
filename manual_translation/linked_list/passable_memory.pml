@@ -7,17 +7,26 @@ typedef node {
 
 typedef linked_list {
     node vals[10];
+    bool allocated;
+}
+
+typedef memory {
+    linked_list lists[10];
 }
 
 #define LIST_LIMIT 10
+#define MEM_LIMIT 10
 
 #define LIST_ALLOCATED(ls, idx) ls.vals[(idx)].allocated
 #define LIST_VAL(ls, idx) ls.vals[(idx)].val
+#define MEMORY_ALLOCATED(mem, idx) mem.lists[(idx)].allocated
+#define LIST(idx) __mem.lists[(idx)]
 #define __list_at(ls, idx) ls.vals[(idx)].val
 
 int __list_ptr;
 int __list_last;
 int __list_ptr_new;
+int __mem_ptr;
 inline __list_append (ls, v)
 {
     atomic {
@@ -150,6 +159,50 @@ inline __list_append_list (ls_new, ls_old)
     }
 }
 
+inline __get_next_memory_allocation (idx)
+{
+    atomic {
+        __mem_ptr = 0;
+        do 
+        :: __mem_ptr >= MEM_LIMIT -> break;
+        :: else ->
+            if
+            :: ! MEMORY_ALLOCATED(__mem, __mem_ptr) ->
+            MEMORY_ALLOCATED(__mem, __mem_ptr) = true;
+            idx = __mem_ptr;
+            break;
+            :: else -> __mem_ptr++;
+            fi
+        od
+    }
+}
+
+inline __copy_memory_to_next (idx)
+{
+    atomic {
+        __mem_ptr = 0;
+        do 
+        :: __mem_ptr >= MEM_LIMIT -> break;
+        :: else ->
+            if
+            :: ! MEMORY_ALLOCATED(__mem, __mem_ptr) ->
+            MEMORY_ALLOCATED(__mem, __mem_ptr) = true;
+            __list_ptr = 0;
+            do
+            :: __list_ptr >= LIST_LIMIT -> break;
+            :: else ->
+                LIST_ALLOCATED(__mem.lists[__mem_ptr], __list_ptr) = LIST_ALLOCATED(__mem.lists[idx], __list_ptr);
+                LIST_VAL(__mem.lists[__mem_ptr], __list_ptr) = LIST_VAL(__mem.lists[idx], __list_ptr);
+                __list_ptr++;
+            od
+            :: else -> __mem_ptr++;
+            fi
+        od
+    }
+}
+
+memory __mem;
+
 proctype __anonymous_0 (int x; chan ret; int __pid) {
 ret ! x * x;
 }
@@ -172,4 +225,16 @@ init {
     c = __list_at(__test_ls_new, 2);
     d = __list_at(__test_ls_new, 3);
     printf("New list: [%d,%d,%d,%d]\n", a,b,c,d);
+
+    int arr;
+    __get_next_memory_allocation(arr);
+    __list_append(LIST(arr), 10);
+    int cp;
+    __copy_memory_to_next(cp);
+    run A(cp);
+}
+
+proctype A(int idx) {
+    int val = __list_at (LIST(idx), 0);
+    printf("Value is: %d\n", val);
 }
