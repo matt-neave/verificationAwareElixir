@@ -15,4 +15,5 @@
 \contentsline {lstlisting}{\numberline {4.5}{Example LTL property}.}{28}{lstlisting.4.5}%
 \contentsline {lstlisting}{\numberline {4.6}Example usage of pre- and post-conditions in LTLixir}{29}{lstlisting.4.6}%
 \contentsline {lstlisting}{\numberline {4.7}Example of declaring concurrency parameters in specification.}{30}{lstlisting.4.7}%
-\contentsline {lstlisting}{\numberline {5.1}{Representing variable declarations using the match operator}.}{33}{lstlisting.5.1}%
+\contentsline {lstlisting}{\numberline {5.1}{Example of the \texttt {defv} syntax}.}{33}{lstlisting.5.1}%
+\contentsline {lstlisting}{\numberline {5.2}{Representing variable declarations using the match operator}.}{35}{lstlisting.5.2}%
