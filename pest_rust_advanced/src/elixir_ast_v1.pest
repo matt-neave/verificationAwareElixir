@@ -142,7 +142,9 @@ atom_type = { ":atom" }
 
 pid_type = { ":pid" }
 
-type = { integer_type | boolean_type | atom_type | pid_type }
+list_type = { ":list" }
+
+type = { integer_type | boolean_type | atom_type | pid_type | list_type }
 
 argument_type = { ("{" ~ type ~ ", " ~ metadata ~ ", []}") | atom }
 

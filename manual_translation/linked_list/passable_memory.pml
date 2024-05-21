@@ -17,11 +17,11 @@ typedef memory {
 #define LIST_LIMIT 10
 #define MEM_LIMIT 10
 
-#define LIST_ALLOCATED(ls, idx) ls.vals[(idx)].allocated
-#define LIST_VAL(ls, idx) ls.vals[(idx)].val
-#define MEMORY_ALLOCATED(mem, idx) mem.lists[(idx)].allocated
 #define LIST(idx) __mem.lists[(idx)]
-#define __list_at(ls, idx) ls.vals[(idx)].val
+#define LIST_ALLOCATED(ls, idx) LIST(ls).vals[(idx)].allocated
+#define LIST_VAL(ls, idx) LIST(ls).vals[(idx)].val
+#define MEMORY_ALLOCATED(mem, idx) mem.lists[(idx)].allocated
+#define __list_at(ls, idx) LIST(ls).vals[(idx)].val
 
 int __list_ptr;
 int __list_last;
@@ -177,7 +177,7 @@ inline __get_next_memory_allocation (idx)
     }
 }
 
-inline __copy_memory_to_next (idx)
+inline __copy_memory_to_next (new_idx, old_idx)
 {
     atomic {
         __mem_ptr = 0;
@@ -188,11 +188,12 @@ inline __copy_memory_to_next (idx)
             :: ! MEMORY_ALLOCATED(__mem, __mem_ptr) ->
             MEMORY_ALLOCATED(__mem, __mem_ptr) = true;
             __list_ptr = 0;
+            new_idx = __mem_ptr;
             do
             :: __list_ptr >= LIST_LIMIT -> break;
             :: else ->
-                LIST_ALLOCATED(__mem.lists[__mem_ptr], __list_ptr) = LIST_ALLOCATED(__mem.lists[idx], __list_ptr);
-                LIST_VAL(__mem.lists[__mem_ptr], __list_ptr) = LIST_VAL(__mem.lists[idx], __list_ptr);
+                LIST_ALLOCATED(__mem_ptr, __list_ptr) = LIST_ALLOCATED(old_idx, __list_ptr);
+                LIST_VAL(__mem_ptr, __list_ptr) = LIST_VAL(old_idx, __list_ptr);
                 __list_ptr++;
             od
             :: else -> __mem_ptr++;
@@ -209,32 +210,28 @@ ret ! x * x;
 
 init {
     chan ret1 = [1] of { int };
-    linked_list __test_ls;
+    int __test_ls;
+    __get_next_memory_allocation(__test_ls);
     __list_append(__test_ls, 10);
     __list_append(__test_ls, 12);
     __list_append(__test_ls, 42);
     int x;
     x = __list_at(__test_ls, 1);
-    linked_list __test_ls_new;
+    int __test_ls_new;
+    __get_next_memory_allocation(__test_ls_new);
     __list_append(__test_ls_new, 420);
     __list_append_list(__test_ls_new, __test_ls);
 
-    int a,b,c,d;
-    a = __list_at(__test_ls_new, 0);
-    b = __list_at(__test_ls_new, 1);
-    c = __list_at(__test_ls_new, 2);
-    d = __list_at(__test_ls_new, 3);
-    printf("New list: [%d,%d,%d,%d]\n", a,b,c,d);
-
-    int arr;
-    __get_next_memory_allocation(arr);
-    __list_append(LIST(arr), 10);
-    int cp;
-    __copy_memory_to_next(cp);
-    run A(cp);
+    int __temp_cp_arr;
+    __copy_memory_to_next(__temp_cp_arr, __test_ls_new);
+    run A(__temp_cp_arr);
 }
 
-proctype A(int idx) {
-    int val = __list_at (LIST(idx), 0);
-    printf("Value is: %d\n", val);
+proctype A(int __passed_ls) {    
+    int a,b,c,d;
+    a = __list_at(__passed_ls, 0);
+    b = __list_at(__passed_ls, 1);
+    c = __list_at(__passed_ls, 2);
+    d = __list_at(__passed_ls, 3);
+    printf("New list: [%d,%d,%d,%d]\n", a,b,c,d);
 }

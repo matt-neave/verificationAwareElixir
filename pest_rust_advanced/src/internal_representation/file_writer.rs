@@ -12,6 +12,8 @@ use crate::internal_representation::sym_table::{self};
 use crate::internal_representation::boilerplate::add_linked_list_boiler_plate;
 use crate::internal_representation::model_generator::PARAM_STR;
 
+use super::sym_table::SymbolType;
+
 // Todo: bodies should be stack based to handle nesting
 pub struct FileWriter {
     _header: String,
@@ -34,6 +36,7 @@ pub struct FileWriter {
     function_messages: u32,
     receive_count: u32,
     ltl_count: u32,
+    arr_cp_count: u32,
     file: File,
     module: String,
     array_var_stack: Vec<String>,
@@ -78,6 +81,7 @@ impl FileWriter {
             function_messages: 0,
             receive_count: 0,
             ltl_count: 0,
+            arr_cp_count: 0,
             file,
             module: String::new(),
             array_var_stack: Vec::new(),
@@ -249,6 +253,17 @@ impl FileWriter {
         let call_arguments = call_arguments.replace('[', "(");
         let call_arguments = call_arguments.replace(']', "");
         let call_arguments = call_arguments.replace(':', "");
+
+        // Foreach call argument which is an array, we pass by value and copy a new array
+        let args_v: Vec<&str> = call_arguments.split(',').collect();
+        for arg in args_v {
+            if self.function_sym_table.contains(arg) {
+                if let sym_table::SymbolType::Array(_, _) = self.function_sym_table.lookup(arg) {
+                    self.function_body.last_mut().unwrap().push_str(&format!("int __temp_cp_arr_{};\n__copy_memory_to_next(__temp_cp_arr, {});\n", self.arr_cp_count, arg));
+                    self.arr_cp_count += 1;
+                }
+            }
+        }
 
         // TODO determine if the function is returning
         let mut return_variable = format!("ret{}", self.function_call_count);
@@ -660,8 +675,9 @@ impl FileWriter {
         var: &str,
         typ: sym_table::SymbolType,
     ) {
-        self.function_body.last_mut().unwrap().push_str(&format!("linked_list {};\n", var));
+        self.function_body.last_mut().unwrap().push_str(&format!("int {};\n__get_next_memory_allocation({});\n", var, var));
         self.array_var_stack.push(var.to_string());
+        println!("{:?}", typ);
         self.function_sym_table.add_entry(var.to_string(), typ);
     }
 

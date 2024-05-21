@@ -9,17 +9,26 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
     \n\
     typedef linked_list {\n\
         node vals[10];\n\
+        bool allocated;
     }\n\
     \n\
+    typedef memory {\n\
+        linked_list lists[10];\n\
+    }\n\
+    \n\
+    #define MEM_LIMIT 10\n\
     #define LIST_LIMIT 10\n\
     \n\
-    #define LIST_ALLOCATED(ls, idx) ls.vals[(idx)].allocated\n\
-    #define LIST_VAL(ls, idx) ls.vals[(idx)].val\n\
-    #define __list_at(ls, idx) ls.vals[(idx)].val\n\
+    #define LIST(idx) __mem.lists[(idx)]\n\
+    #define LIST_ALLOCATED(ls, idx) LIST(ls).vals[(idx)].allocated\n\
+    #define LIST_VAL(ls, idx) LIST(ls).vals[(idx)].val\n\
+    #define MEMORY_ALLOCATED(mem, idx) mem.lists[(idx)].allocated\n\
+    #define __list_at(ls, idx) LIST(ls).vals[(idx)].val\n\
     \n\
     int __list_ptr;\n\
     int __list_last;\n\
     int __list_ptr_new;\n\
+    int __mem_ptr;\n\
     inline __list_append (ls, v)\n\
     {\n\
         atomic {\n\
@@ -152,7 +161,51 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
         }\n\
     }\n\
     \n\
+    inline __get_next_memory_allocation (idx)\n\
+    {\n\
+        atomic {\n\
+            __mem_ptr = 0;\n\
+            do \n\
+            :: __mem_ptr >= MEM_LIMIT -> break;\n\
+            :: else ->\n\
+                if\n\
+                :: ! MEMORY_ALLOCATED(__mem, __mem_ptr) ->\n\
+                MEMORY_ALLOCATED(__mem, __mem_ptr) = true;\n\
+                idx = __mem_ptr;\n\
+                break;\n\
+                :: else -> __mem_ptr++;\n\
+                fi\n\
+            od\n\
+        }\n\
+    }\n\
+    \n\
+    inline __copy_memory_to_next (new_idx, old_idx)\n\
+    {\n\
+        atomic {\n\
+            __mem_ptr = 0;\n\
+            do \n\
+            :: __mem_ptr >= MEM_LIMIT -> break;\n\
+            :: else ->\n\
+                if\n\
+                :: ! MEMORY_ALLOCATED(__mem, __mem_ptr) ->\n\
+                MEMORY_ALLOCATED(__mem, __mem_ptr) = true;\n\
+                __list_ptr = 0;\n\
+                new_idx = __mem_ptr;\n\
+                do\n\
+                :: __list_ptr >= LIST_LIMIT -> break;\n\
+                :: else ->\n\
+                    LIST_ALLOCATED(__mem_ptr, __list_ptr) = LIST_ALLOCATED(old_idx, __list_ptr);\n\
+                    LIST_VAL(__mem_ptr, __list_ptr) = LIST_VAL(old_idx, __list_ptr);\n\
+                    __list_ptr++;\n\
+                od\n\
+                :: else -> __mem_ptr++;\n\
+                fi\n\
+            od\n\
+        }\n\
+    }\n\
+    \n\
     int __dummy_iterator;\n\
+    memory __mem;\n\
     ");
     model
 }
