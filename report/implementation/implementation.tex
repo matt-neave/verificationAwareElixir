@@ -20,7 +20,7 @@ Output
 \section{Specification Language} \label{sec:specification_language}
 LTLixir is a specification language that can be used to reason about the time and change of an Elixir system using LTL formulae. An LTLixir specification is the input to Veriflixir and is used to guide the model generation process. Primarily, LTLixir supports a restricted subset of Elixir, with additional constructs to support specification properties. This section will primarily discuss the design decisions behind the additional constructs. For information on how LTLixir is transformed in model generation, see section \ref{sec:supporting_ltl}.
 \par
-There is only one construct in LTLixir that is imperative to successfully interact with the simulator and verifier. \texttt{@vae\_init} is an attribute that is assigned a value, $v \in \{true, false\}$. The attribute is treated by the Elixir compiler as a regular attribute, so will not cause issues when running within the ERTS. Importantly, for Veriflixier, it is used to determine an entry point to the system.
+There is only one construct in LTLixir that is imperative to successfully interact with the simulator and verifier. \texttt{@vae\_init} is an attribute that is assigned a value, $v \in \{true, false\}$. The attribute is treated by the Elixir compiler as a regular attribute, so will not cause issues when running within the ERTS. Importantly, for Veriflixir, it is used to determine an entry point to the system.
 \par
 All the remaining constructs of the specification are optional to the verification of the system. Similarly to the \texttt{@vae\_init} attribute, \texttt{@spec}, \texttt{@ltl} and \texttt{@params} are all attributes that are assigned values. The \texttt{@spec} is already well-defined in the Elixir language, although it is noted that type specifications do not instrument Elixir programs in any way. Instead, \texttt{@spec} can be used by analysis tools that run on Elixir programs. In our case, we reduce the possible type specifications which can be defined. There are two key differences between an Elixir type specification and an LTLixir type specification. Firstly, LTLixir does not support the use of custom types introduced through the \texttt{@type} attribute. Only a set of primitive types are accepted within a specification: $\{integer(), boolean(), atom()\}$. The second restriction applied by LTLixir is the return type \texttt{:ok}. This atom is reserved in type specifications to mark functions whose return values are never matched on. The actual return type of the function is not relevant in this instance as an agreement is made with the developer that the function will never be matched. The \texttt{@ltl} attribute assigns a string value. This string value must follow the imposed rules on LTL formula by LTLixir. Namely, it must follow a formula of the form introduced in section \ref{sec:verifiable} with the additional allowance of the Elixir constructs identifiers, boolean operations and binary operations. All the identifiers must be well-defined within the scope of the function and should not be declared in a nested child scope within the function. The final attribute LTLixir supports is \texttt{@params}. \texttt{@params} is assigned a tuple of atoms. Similarly to the \texttt{@ltl} attribute, the tuple should consist of atom identifiers from the function scope.
 \par
@@ -117,38 +117,82 @@ TODO EXAMPLE OF SENDING A MESSAGE TO ONE OF THE PROCESS' MAILBOXES
 Receiving a message is a little more complex. We must now consider complex pattern matching in guard conditions. To begin pattern matching, we can again use the message type system to determine which mailbox to check. If more than just the message type is required in the pattern matching of a guard, we must preempt elements of the message body to determine which elements are important for pattern matching and which elements are identifiers that need assignments. In order to generate a model for the guards, we introduce a blocking statement consisting of multiple conditions. When one of the conditions is satisfied (i.e. a message has been pattern-matched) we stop blocking, execute the block relevant for the matched guard and then break out of the control structure. Before we can execute the block, we must assign all the remaining identifiers from the receive guard to the relevant values in the received message body. To do this, we first introduce a new dummy variable which is assigned the value of the entire message body. We can then access the dummy variable to assign the remaining identifiers from the guard. During the assignment, we have no indication of the type of the identifier. Hence, we can temporarily assign a message argument to the identifier, and extract the correct attribute from the message argument when we have more information about the type. A note on typing: the IR considers message types interchangeable with integers, hence comparisons can be made between the two which can be useful for matching. Sending messages is a non-blocking operation, unlike when we used rendezvous channels to model functions, if we send a message and do not care about receiving a returning message, we can continue executing the process body.
 \par
 Unlike Elixir actors, Veriflixir bounds multiple communication primitives. This is to ensure state explosion in the model checker is less likely to occur. As mentioned, we are strict in the bounding of byte arrays that can be passed as message arguments. We also only supply a small number of mailboxes per message type, furthermore, we bound the number of messages that can buffer in a per-process mailbox.
-\subsubsection{Dynamic Memory Allocation COME BACK TO}
-
-elixir lists grow dynamically
-promela does not support this
-fixed sized lists that dynamically hold more elements
-how arrays are implemented using dynamic memory
-reading and writing to arrays
-using higher order functions to interact with arrays (map ,random , for, )
-anonymous functions
-for comprehension (different types i.e. range, list)
+\subsubsection{Dynamic Memory Allocation}
+Although not a direct fallout of the Elixir concurrency prinicples, Promela does not support dynamic memory allocation such as memory allocations (malloc) or memory de-allocations (free). This lack of support has lead to design choices in the generation of Elixir lists that if mishandled could lead to a mis-representation of Elixir concurrency in the target specification language. Immutability is a core feature of the Elixir runtime, hence the Elixir list operations introduce behaviours that must be carefully handled. For example, the \texttt{++} operator can be used to append or prepend elements to a list. If this is used to prepend, the operation is constant time, however the IR will represent this (as well as most list operations) as an operation in linear time. Let's explore the memory model to understand why. 
+\par
+The IR introduces two structures to handle all list operations across the system. These structures are stored in the global scope context. The reason for this comes from Promela limitations. Promela supports statically sized arrays, and for good reasons regarding reducing state-space explosion, these arrays cannot be passed to other processes. Hence, an array's lifetime is limited to its scope. To get around this limitation, the two structures we introduce are called \texttt{memory} and \texttt{linked\_list}.
+\par
+First we describe the design of \texttt{linked\_list}. Firstly, it is in fact not a traditional linked list, but it behaves similar as we can perform many operations on this structure that we could not perform on a statically size array. For example, we support prepending and appending in order to dynamically resize the list. In actualallity, none of these operations resize the list. A list has an upper bound in it's size, which is statically set for all model generation. Let's name this limit L.
+\begin{lstlisting}[language=C, xleftmargin=.1\linewidth, caption={The structure of a list}.]
+typedef linked_list {
+    node vals[L];
+}
+\end{lstlisting}
+For example for a limit, $10$, means the maximum number of elements that can be appended to the list is 10. The list starts as empty, this is handed by the \texttt{node} nested structure.
+\begin{lstlisting}[language=C, xleftmargin=.1\linewidth, caption={Example of an int list node.}]
+typedef node {
+    int val;
+    bool allocated;
+}
+\end{lstlisting}
+A \texttt{node} stores a single value in a list, as well as a flag to indicate if the value has been allocated. Now, given a sequence of nodes, the order of the nodes represents the order of the Elixir list for all $true$ allocated nodes. For example, for a list, ls, $ls[0]$ and $ls[9]$ can be contiguous list elements if they are both allocated and there are no allocations inbetween.
+\par
+Given this representation, we now see why all operations are in linear time. For example, for insertion (prepend or append), we must assign a pointer to a node and iterate through all nodes to find an unallocated node to insert into.
+\par
+We now extend this implementation of a dynamically sized list to introduce dynamic memory. The implementation is very similar to how lists are implemented, we now introduce a new field to \texttt{linked\_list} called \texttt{allocated}. This represents the allocation of a list in memory. We now similarly introduce memory.
+\begin{lstlisting}[language=C, xleftmargin=.1\linewidth, caption={Memory intermediate representation.}]
+typedef memory {
+    linked_list lists[10];
+}
+\end{lstlisting}
+With this structure, we introduce a single globally defined instance of this structure named \texttt{\_\_memory}. All processes share this singular memory for their list allocations. All list operations are treated as a single, indivisible step so this does not introduce concurrent execution concerns. If an Elixir process declares a new list, the IR will represent this as a memory allocation. The model runtime will iterate through all the lists in memory to find an unallocated list, as return this as a pointer to the process. Of course, as dynamic memory allocations is not supported in Promela, this $pointer$ is generated as an \texttt{int}, which indexes into memory. 
+\par
+Finally, with all these definitions in place we can finally support the passing of Elixir lists as function arguments. When we detect a function call, or \texttt{send} expression passing a list, we first allocate a pointer to a new location in memory, we then copy all the values from the list into the new allocated list and then pass the pointer as an argument. With this mocked memory in place, we can now support Elixir lists and operations on lists, we will discuss a few of these operations next.
+\par
+Promela supports for loops, but for our custom dynamic memory these do not suffice to represent Elixir for comprehensions. Using a similar approach we used to append list elements, a for comprehension can be represnted as a linear scan through all \texttt{linked\_list} elements to find the allocated elements, and then only applying the comprehension body to these. We can introduce temporary dummy variables to represent Elixir's \texttt{<-} operation. If we want to match on a for comprehension, we must also introduce a pointer into a second \texttt{linked\_list} which tracks new allocations into the matched block independently of the scan through an existing list. A for comprehension over an Elixir range construct, \texttt{n..m}, can be represented with a for loop.
+\par
+A map operation (such as from the \texttt{Enum} Elixir library) are represented similarly to for comprehensions in the IR. Instead of inlining the body, in order to hold a more fair representation of the Elixir program, dummy anonymous processes are stored to represent higher-order functions.
+\par
+As a closing note on memory, we describe the representation of randomness. Again, Promela does not inherently support randomness which has influenced the IR design. To represent a function such as \texttt{random} from the \texttt{Enum} library, we represent this using multiple truth conditions that can be selected from non-deterministically. One of these conditions will return an allocated list element and one will increment the current list pointer. To ensure termination, if we point to the end of the list before returning a value, we simply return the last allocated value we saw. This is not true randomness, and is not fair to all elements in the list hence random operations are strongly discouraged in LTLixir, but are theoretically supported.
+\par
+Note that as Promela does not support functions, when we generate a model, all of these Elixir functions are in-lined into the process body. Any reference to a function $return$ is actually simply generated as an assignment.
 
 \subsection{Supporting LTLixir} \label{sec:supporting_ltl}
 In section \ref{sec:specification_language} we discussed how Elixir was extended to support inline specifications. We now describe how these are modeled in the IR and generated in Promela.
-
-extracting ltl expressions
-extracting vae\_init
-parameterization
-defv
-pre- and post-conditions (attachment in correct place, must ensure no operations take place after the post condition, guarntee its the last thing)
-predicates
-
+\par
+\subsubsection{System Entry}
+The \texttt{@vae\_init} LTLixir attribute represents an entry point to the system. We represent this using a flag in the IR for each process, controlling if the process should be running in the first state of the model or not.
+\par
+\subsubsection{Type Specifications}
+A \texttt{@spec} attribute is parsed when parsing a function definition. For each argument being parsed when creating a new function in the IR, we insert a new symbol table entry using the type provided in the type specification. The return type is a special case of this as it could be the non-returning \texttt{:ok} type. If this is received, we insert a reserved non-returning type into the symbol table, and interface with this by supporting a \texttt{table.returning\_function() $\rightarrow$ boolean} call to determine if a function if returning or not. If a function is non-returning, it would be an error to attempt to look up the type of the function in any context. If a function is returning, we must ensure all expressions which are returning (i.e. last in a block) write to the rendezvous channel, as discussed in section \ref{sec:sequential_execution}.
+\par
+\subsubsection{Concurrency Parameters}
+A \texttt{@params} attribute also instruments the IR of a function. For all of the parameters in the tuple of identifiers, we mark these before continuing with storing the remainder of the function. When a declaration of one of these identifers is found in an expression, we avoid the usual handling of this and instead assign a dummy value \texttt{\_\_PARAM} to the identifer. This dummy value is used by the model generator to create multiple configurations of a single model, which will be discussed more in section \ref{sec:simulation_verification}.
+\par
+\subsubsection{Linear Temporal Time Formulae}
+The final attribute is \texttt{@ltl}. When an LTL formula is parsed, we create a set of all identifers (or predicates) present in the formula. We first instrument the function body by marking all these identifers as LTL identifers. When we detect the declaration of an LTL identifer to an expression, we extract this declaration out of the function and move it to the global context. Internally, we now consider this a system property as opposed to a property of a single process. When we have extracted all LTL identifer declarations, we can handle the conditions of the LTL formula, such as the temporal properties. We construct formulae from the system properties using the same operators the user defined in the attribute. We finally mark these formulae as LTL formulae in the IR, which means the Promela model generator can create LTL properties from them to be constructed with the rest of the state-space during verification.
+\par
+\subsubsection{Predicates}
+Similarly to LTL properties, any predicates are tracked in a similar way. Any identifers that construct a predicate must be extracted to the global context and flagged as system properties. We also globally define the predicates using the system properties in order to ensure they are valid within an LTL formuae.
+\par
+\subsubsection{Verifiable Functions}
+The \texttt{defv} construct is handled as the the other function definitions are as described in section \ref{sec:sequential_execution}. Verifiable functions are still internally represented as processes, however we now also extract the pre- and post-conditions from the definition. A pre-condition instruments a function-body by inserting an additional condition that's truth is evaluated before the rest of the function body. A post-condition flag is set in the functions definition in the event one is parsed. When a post-condition flag is set, we ensure to instrument all returning expressions of a function to assert the truth of the post-condition. As in the IR, functions actually write to a rendezvous channel instead actually returning, we perform this violation check after the return point of a function. When the verifier is ran on a model, every state in the state-space is exhausitvely checked, hence any possible evaluation of a pre- or post-condition will be exhaustively checked in the verification process. This provides better assurance than relying on the condition checks during the Elixir runtime.
 
 \section{Simulation and Verification} \label{sec:simulation_verification}
+We have now explored the intermediate representation constructed by Veriflixir, alongside some implementation details specific to using Promela as a target language. This section will describe the remainder of the Veriflixir design, which touches on simulation, verification, generating multiple models and using Spin as a target model checker. The vanilla execution of the Veriflixir executable will produce a single Promela model for a given input LTLixir specification. For Veriflixir to produce outputs, it should be executed with a flag to set the mode: $\{-s, -v, -p\}$ for simulation, verification or parameter exploration. The flags determine how the Spin model checker is ran.
+\par
+If $-s$ is passed, spin is ran in vanilla simulation mode: \texttt{./spin model.pml}. If $-v$ is passed, Veriflixir will first determine the existence of LTL properies within the model. For each LTL property, we run an instance of spin specifying the LTL property we want to evaluate. We do this using Spin's $-search$ parameter, which will generate and run the verifier from the model. In the case we do not detect an LTL property, we use $-search$ to check for the existence of deadlocks or non-progress cycles (livelocks). If $-p$ is passed, multiple models are generated instead of one, and all of these are checked as if $-v$ was passed for each.
+\subsection{Simulation}
+Simulation mode will use the Spin scheduler to execute a single execution through the generated state-space. A simulation can timeout in the case of a deadlock. If a timeout is produced, we inform the user of the timeout but do not provide further information as that is left for verification mode. Elixir calls to the \texttt{IO} library can be re-produced in simulation mode as we display them to the user if they are executed. These are not as proficient as using \texttt{IO} in the Elixir runtime. Simulation mode can be more beneficial than examining the output of running and Elixir program, as the scheduler takes enabled transitions based on the current state whereas the Elixir scheduler run in real-time which can result in some concurrent interleavings never being observed.
+\subsection{Verification}
+Verification mode will run the Spin verifier. If an error is detected, the output is captured by the Veriflixir error profiler, which triages the issue to generate relevant outputs for the user to digest. For example, if a non-acceptance cycle is produced by Spin, Veriflixir captures this and reports to the user that either an LTL property was violated (liveness property) or the system is potentially livelocked. Veriflixir will report the entire trace that lead to this cycle, showing which process was responsible for a transition between states as well as reading from the Elixir module the line of Elixir code that lead to that transition. The mapping between Elixir expressions and how they are modelled is not a one-to-one mapping of line-numbers. Instead a single Elixir expression can result in multiple Promela expressions and multiple states in the state-space Spin traverses. Still, all the relevant Elixir expressions are captured and reported in the trace produced. For this error, Veriflixir will also report the cycle that lead to non-terminating processes. It will report where the cycle begins, then give a trace of executed Elixir lines and which function exectued them. The error profiler also captures and reports the processes which have terminated, or a blocking expression (such as a receive with no accepting guards).
+\subsection{Parameterization}
+The Veriflixir IR passes all detected parameters to the Veriflixir model runner. The model runner is reponsible for generating multiple models depending of the number of paramters provided, $N$ and the range of search values, $M$, which can be parsed as a command line argument using $-p\text{ }M$. The model runner generates a total of $M^N$ Promela models. All of these models are ran in $-search$ mode and violations are reported. Veriflixir reports an acceptance score, $\alpha$, determing how many of the model were accepted by the verifier: $\alpha \
 
 all passable parameters to exe
 passing line numbers
 reading elixir files, matching promela to elixir
 extracting traces
-
-\subsection{Simulation}
-\subsection{Verification}
-\subsection{Parameterization}
 
 model generation
 

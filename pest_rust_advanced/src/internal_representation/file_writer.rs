@@ -119,8 +119,8 @@ impl FileWriter {
 
     pub fn write_operation(&mut self, operand: &str, left_e: &str, right_e: &str, ret: bool) {
         let formatted_string = if ret && self.returning_function {
-            self.post_condition_check(0);
             format!("ret ! {} {} {};\n", left_e, operand, right_e)
+            self.post_condition_check(0);
         } else if let Some(x) = self.get_next_var_safe() {
             format!("{} = {} {} {}; \n", x, left_e, operand, right_e)            
         } else {
@@ -282,10 +282,10 @@ impl FileWriter {
             self.function_body.last_mut().unwrap().push_str(&format!("ret{} ? {}; /*{}*/\n", self.function_call_count, return_variable, line_number));
         }
         if ret && self.returning_function {
-            self.post_condition_check(0);
             self.function_body.last_mut().unwrap().push_str(&format!("int __ret_placeholder_{}; /*{}*/\n", self.function_call_count, line_number));
             self.function_body.last_mut().unwrap().push_str(&format!("{} ? __ret_placeholder_{}; /*{}*/\n", return_variable, self.function_call_count, line_number));
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! __ret_placeholder_{}; /*{}*/\n", self.function_call_count, line_number));
+            self.post_condition_check(0);
         } 
     }
 
@@ -404,8 +404,8 @@ impl FileWriter {
 
     pub fn write_number(&mut self, number: &str, ret: bool) {
         if ret && self.returning_function {
-            self.post_condition_check(0);
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! {}; /*{}*/\n", number, 0));
+            self.post_condition_check(0);
         } else if !self.var_stack.is_empty() {
             let var = self.get_next_var();
             if !self.ltl_vars.contains(&var) {
@@ -431,8 +431,8 @@ impl FileWriter {
 
     pub fn write_boolean(&mut self, val: &str, ret: bool) {
         if ret && self.returning_function {
-            self.post_condition_check(0);
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! {}; /*{}*/\n", val, 0));
+            self.post_condition_check(0);
         } else if self.block_assignment || !self.var_stack.is_empty() {
             let assignee = self.get_next_var();
             if self.parameterized_function && self.parameterized_model && self.parameterized_vars.contains(&assignee.to_string()) {
@@ -447,8 +447,8 @@ impl FileWriter {
 
     pub fn write_primitive(&mut self, primitive: &str, ret: bool, line_number: u32) {
         let formatted_string = if ret && self.returning_function {
-            self.post_condition_check(0);
             format!("ret ! {}; /*{}*/\n", primitive, line_number)
+            self.post_condition_check(0);
         } else if self.block_assignment || !self.var_stack.is_empty() {
             let assignee = self.get_next_var();
             if self.parameterized_function && self.parameterized_model && self.parameterized_vars.contains(&assignee.to_string()) {
@@ -642,8 +642,8 @@ impl FileWriter {
         line_number: u32
     ) {
         if ret && self.returning_function {
-            self.post_condition_check(0);
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! {}; /*{}*/\n", var, line_number));
+            self.post_condition_check(0);
         } else if self.block_assignment {
             let assignee = self.get_next_var();
             self.function_body.last_mut().unwrap().push_str(&format!("{} = {}; /*{}*/\n", assignee, var, line_number));

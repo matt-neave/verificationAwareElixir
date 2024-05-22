@@ -9,7 +9,7 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
     \n\
     typedef linked_list {\n\
         node vals[10];\n\
-        bool allocated;
+        bool allocated;\n\
     }\n\
     \n\
     typedef memory {\n\
