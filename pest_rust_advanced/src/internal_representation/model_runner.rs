@@ -22,20 +22,33 @@ struct ErrorLine {
     trail_ended: bool,
 }
 
-pub fn run_model(model_path: &str, elixir_dir: &str) {
-    let output = Command::new(SPIN_CMD)
+pub fn run_model(model_path: &str, elixir_dir: &str, fair: bool, reduce: bool) {
+    let mut cmd = Command::new(SPIN_CMD);
+    cmd
         .arg("-search")
-        .arg(&format!("-m{}", DEPTH_LIMIT))
+        .arg(&format!("-m{}", DEPTH_LIMIT));
+    if fair {
+        cmd.arg("-l")
+            .arg("-f")
+            .arg("-DNOREDUCE")
+            .arg(&format!("-DNFAIR={}", FAIRNESS_LIMIT));
+    }
+    if reduce {
+        cmd.arg("-DBITSTATE");
+    }
+    let cmd = cmd
         .arg(&format!("-DVECTORSZ={}", STATE_VEC_SIZE))
-        .arg(&format!("-DNFAIR{}", FAIRNESS_LIMIT))
-        .arg(&format!("-DVMAX{}", QUEUE_MEMORY))
-        .arg(&format!("-DPMAX{}", PROESS_MEMORY))
-        .arg(&format!("-DQMAX{}", CHAN_MEMORY))
         .arg(model_path)
-        .stdout(Stdio::piped())
-        .output()
-        .expect("Failed to run model");
+        .stdout(Stdio::piped());
 
+    // Potential args
+    // if fair {
+    //     cmd.arg(&format!("-DVMAX={}", QUEUE_MEMORY));
+    //     cmd.arg(&format!("-DPMAX={}", PROESS_MEMORY));
+    //     cmd.arg(&format!("-DQMAX={}", CHAN_MEMORY));
+    // }
+
+    let output = cmd.output().expect("Failed to run model");
 
     // Capture the output and print the result
     let stdout = String::from_utf8(output.stdout);
@@ -97,7 +110,7 @@ fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str) {
             panic!("The model checker returned an unexpected output.");
         }
     } else {
-        panic!("The model checker returned an unexpected output.");
+        panic!("The model checker returned an unexpected output. \n{}", model_output);
     }
 } 
 

@@ -24,7 +24,8 @@ SF_v(A) ==
 - Attempt to use @type annotation to create LTL instead of strings
 - Implement range ..
 - Investigate more flags for Elixir implementation
-- Predicate definitions and labels using [definitions](https://spinroot.com/spin/Man/ltl.html). 
+- Predicate definitions and labels using [definitions](https://spinroot.com/spin/Man/ltl.html).
+- Read this:https://spinroot.com/spin/Man/4_SpinVerification.html
 - Bugfix:
 	- LTL header duplicates
 	- Whitespace in LTL ✅
@@ -34,7 +35,7 @@ SF_v(A) ==
 	- Output global values to trail
 	- import models boilerplate
 	- Prefix functions, and variables with the current module and function scope to remove ambiguity
-	- Pass arrays as parameters by nesting them with in another array and passing the index around
+	- Pass arrays as parameters by nesting them with in another array and passing the index around ✅
 		- memory[10] = 10 arrays
 		- copy the contents of the array to the next available space in memory
 		- pass the index of the copied array
@@ -44,3 +45,5 @@ SF_v(A) ==
 	- Store declarations until first usage to determine type
 	- Receive should receive a message_argument (not an int) and only determine which element to extract when inferred upon
 	- Need more goddamn type inference everywhere!!!!!
+	- Fairness
+	- Non-exhaustive searching with DBITSTATE

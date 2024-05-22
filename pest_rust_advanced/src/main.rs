@@ -44,6 +44,11 @@ fn main() {
     let simulate_flag = args.contains(&"--sim".to_string()) || args.contains(&"-s".to_string());
     // Uses param annotations to generate multiple models
     let gen_params = args.contains(&"--param".to_string()) || args.contains(&"-p".to_string());
+    // Apply weak fairness
+    let weak_fairness = args.contains(&"--fair".to_string()) || args.contains(&"-f".to_string());
+    // Reduce the state-space exploration
+    let reduce_state_space = args.contains(&"--reduce".to_string()) || args.contains(&"-r".to_string());
+
     let mut param_n = 3;
     if gen_params {
         let index = args.iter().position(|x| x == "-p" || x == "--param").unwrap();
@@ -90,7 +95,7 @@ fn main() {
         model_runner::simulate_model(model_path);
     }
     else if model_check_flag {
-        model_runner::run_model(model_path, elixir_dir.to_str().unwrap());
+        model_runner::run_model(model_path, elixir_dir.to_str().unwrap(), weak_fairness, reduce_state_space);
     }
     else if gen_params {
         model_generator::generate_models(model_path, final_params, param_n);

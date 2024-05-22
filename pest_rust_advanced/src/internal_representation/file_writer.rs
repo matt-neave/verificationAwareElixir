@@ -119,8 +119,8 @@ impl FileWriter {
 
     pub fn write_operation(&mut self, operand: &str, left_e: &str, right_e: &str, ret: bool) {
         let formatted_string = if ret && self.returning_function {
-            format!("ret ! {} {} {};\n", left_e, operand, right_e)
             self.post_condition_check(0);
+            format!("ret ! {} {} {};\n", left_e, operand, right_e)
         } else if let Some(x) = self.get_next_var_safe() {
             format!("{} = {} {} {}; \n", x, left_e, operand, right_e)            
         } else {
@@ -447,8 +447,8 @@ impl FileWriter {
 
     pub fn write_primitive(&mut self, primitive: &str, ret: bool, line_number: u32) {
         let formatted_string = if ret && self.returning_function {
-            format!("ret ! {}; /*{}*/\n", primitive, line_number)
             self.post_condition_check(0);
+            format!("ret ! {}; /*{}*/\n", primitive, line_number)
         } else if self.block_assignment || !self.var_stack.is_empty() {
             let assignee = self.get_next_var();
             if self.parameterized_function && self.parameterized_model && self.parameterized_vars.contains(&assignee.to_string()) {
