@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use std::io::{self, Write};
 
-use log::warn;
+use log::{error, warn};
 use regex::Regex;
 
 use crate::formatted_condition;
@@ -216,6 +216,7 @@ impl FileWriter {
             self.random_count = 0;
             self.ltl_func = false;
             self.var_stack = Vec::new();
+            self.array_var_stack = Vec::new();
             self.post_condition = String::new();
             self.init = false;
             self.parameterized_function = false;
@@ -252,14 +253,16 @@ impl FileWriter {
         // TODO make a mapping of variable name
         let call_arguments = call_arguments.replace('[', "(");
         let call_arguments = call_arguments.replace(']', "");
-        let call_arguments = call_arguments.replace(':', "");
+        let mut call_arguments = call_arguments.replace(':', "");
 
         // Foreach call argument which is an array, we pass by value and copy a new array
-        let args_v: Vec<&str> = call_arguments.split(',').collect();
+        let args_v: String = call_arguments.replace('(', "");
+        let args_v: Vec<&str> = args_v.split(',').collect();
         for arg in args_v {
             if self.function_sym_table.contains(arg) {
                 if let sym_table::SymbolType::Array(_, _) = self.function_sym_table.lookup(arg) {
-                    self.function_body.last_mut().unwrap().push_str(&format!("int __temp_cp_arr_{};\n__copy_memory_to_next(__temp_cp_arr, {});\n", self.arr_cp_count, arg));
+                    self.function_body.last_mut().unwrap().push_str(&format!("int __temp_cp_arr_{};\n__copy_memory_to_next(__temp_cp_arr_{}, {});\n", self.arr_cp_count, self.arr_cp_count, arg));
+                    call_arguments = call_arguments.replace(arg, &format!("__temp_cp_arr_{}", self.arr_cp_count));
                     self.arr_cp_count += 1;
                 }
             }
@@ -433,14 +436,18 @@ impl FileWriter {
         if ret && self.returning_function {
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! {}; /*{}*/\n", val, 0));
             self.post_condition_check(0);
-        } else if self.block_assignment || !self.var_stack.is_empty() {
+        } else if !self.var_stack.is_empty() {
             let assignee = self.get_next_var();
             if self.parameterized_function && self.parameterized_model && self.parameterized_vars.contains(&assignee.to_string()) {
                 self.function_body.last_mut().unwrap().push_str(&format!("{} = {};\n", assignee, PARAM_STR));
             } else {
                 self.function_body.last_mut().unwrap().push_str(&format!("{} = {}; /*{}*/\n", assignee, val, 0));
             }
-        } else {
+        } else if !self.array_var_stack.is_empty() {
+            // TODO
+            error!("Cannot write booleans to arrays.")
+        } 
+        else {
             self.function_body.last_mut().unwrap().push_str(&format!("{} /*{}*/\n", val, 0));
         }
     }
@@ -449,7 +456,7 @@ impl FileWriter {
         let formatted_string = if ret && self.returning_function {
             self.post_condition_check(0);
             format!("ret ! {}; /*{}*/\n", primitive, line_number)
-        } else if self.block_assignment || !self.var_stack.is_empty() {
+        } else if !self.var_stack.is_empty() {
             let assignee = self.get_next_var();
             if self.parameterized_function && self.parameterized_model && self.parameterized_vars.contains(&assignee.to_string()) {
                 format!("{} = {};\n", assignee, PARAM_STR)
@@ -644,7 +651,7 @@ impl FileWriter {
         if ret && self.returning_function {
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! {}; /*{}*/\n", var, line_number));
             self.post_condition_check(0);
-        } else if self.block_assignment {
+        } else if self.block_assignment && !self.var_stack.is_empty() {
             let assignee = self.get_next_var();
             self.function_body.last_mut().unwrap().push_str(&format!("{} = {}; /*{}*/\n", assignee, var, line_number));
         } else if let Some(x) = self.get_next_var_safe() {
@@ -674,11 +681,12 @@ impl FileWriter {
         &mut self,
         var: &str,
         typ: sym_table::SymbolType,
+        block_assignment: bool
     ) {
+        self.block_assignment = block_assignment;
         self.function_body.last_mut().unwrap().push_str(&format!("int {};\n__get_next_memory_allocation({});\n", var, var));
         self.array_var_stack.push(var.to_string());
-        println!("{:?}", typ);
-        self.function_sym_table.add_entry(var.to_string(), typ);
+        self.function_sym_table.add_entry(var.to_string(), SymbolType::Array(Box::from(SymbolType::Integer), 0));
     }
 
     pub fn write_array(
@@ -738,6 +746,7 @@ impl FileWriter {
         };
         if !self.array_var_stack.is_empty() {
             let var = self.array_var_stack.pop().unwrap();
+            self.function_sym_table.add_entry(var.clone(), SymbolType::Array(Box::from(SymbolType::Integer), 0));
             self.function_body.last_mut().unwrap().push_str(&format!("LIST_ALLOCATED({}, __list_ptr_new) = true;\nLIST_VAL({}, __list_ptr_new) = ", var, var));
         };
     }
@@ -746,7 +755,8 @@ impl FileWriter {
         &mut self,
         iterator: String,
     ) {
-        self.function_body.last_mut().unwrap().push_str("__list_ptr_new++;\n\
+        self.function_body.last_mut().unwrap().push_str(";\n\
+            __list_ptr_new++;\n\
             __list_ptr++;\n\
             :: else -> __list_ptr++;\n\
             fi\n\
@@ -771,6 +781,13 @@ impl FileWriter {
             iterator = "__dummy_iterator";
         }
         self.function_body.last_mut().unwrap().push_str(&format!("for({} : {} .. {}) {{ /*{}*/\n", iterator, n1, n2, line_number));
+        if (self.block_assignment) {
+            let var = self.array_var_stack.last().unwrap();
+            self.function_sym_table.add_entry(var.clone(), SymbolType::Array(Box::from(SymbolType::Integer), 0));
+            self.function_body.last_mut().unwrap().push_str(&format!("LIST_ALLOCATED({}, {}) = true;\nLIST_VAL({}, {}) = ", var, iterator, var, iterator));
+        } else {
+            panic!();
+        }
     }
 
     pub fn commit_range_for_loop(

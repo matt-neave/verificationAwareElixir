@@ -1,5 +1,5 @@
 ------ Results of paxos
-spin -search -m100000 -DVECTORSZ=409600 -DNFAIR=100 -DVMAX=5000 -DPMAX=500 -DQMAX=500 -DBITSTATE -DSPACE test_out.pml
+spin -search -m100000 -DVECTORSZ=409600 -DNFAIR=100 -DVMAX=5000 -DPMAX=500 -DQMAX=500 -DBITSTATE test_out.pml
 Depth=     243 States=    1e+06 Transitions= 1.28e+06 Memory=   117.188 t=      636 R=   2e+03
 Depth=     243 States=    2e+06 Transitions= 2.57e+06 Memory=   117.188 t= 1.25e+03 R=   2e+03
 Depth=     243 States=    3e+06 Transitions= 3.86e+06 Memory=   156.250 t= 1.88e+03 R=   2e+03

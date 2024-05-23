@@ -1,12 +1,20 @@
 \chapter{Evaluation}
-\section{Manual Verification}
-\subsection{Manual Deadlock Model}
-\subsection{Verification-aware Elixir Deadlock}
-\subsection{Comparison}
-\section{Alternating-bit Protocol}
-\subsection{Informal Specification}
-\subsection{Experimental Analysis}
-\subsection{Limitations}
-\section{Basic Paxos}
-\subsection{Informal Specification}
-\subsection{Comparison with 'Model Checking Paxos in Spin' Paper}
+In this chapter, we aim to evaluate the expressiveness of Veriflixir's design. First, we perform a quantitive analysis of modeling classical distributed algorithms such as basic paxos in section \ref{sec:paxos} and the alternating-bit protocol in section \ref{sec:ab}. Section \ref{sec:vs} will delve into a comparison against current state-of-the art model checking techniques for modern day programming languages. Finally, we will explore the performance of Veriflixir in a growing sytem in section \ref{sec:perf}.
+\section{Analysing Distributed Systems}
+Verifying the correctness of real-world distributed systems is a major motivation for this project. Critical real-time systems (such as in air-traffic control or healthcare  \cite{airlines,healthcare}) should not fail and should rely on rigerous verification techniques to guarantee production code is correct.  
+\subsection{Basic Paxos} \label{sec:paxos}
+Paxos is an example of a distributed algorithm \cite{paxos_simple}. It is a consensus algorithm, where many processes are tasked to agree on a value. Processes may propose what this value should be, but only one value should be agreed upon. The safety requirements for consensus are:
+\begin{lstlisting}
+    \item Only a value that has been proposed may be chosen.
+    \item Only a single value is chosen.
+    \item A process never learns that a value has been chosen unless it actually has.
+\end{lstlisting}
+The system's liveness requirement is that a proposed value is eventually chosen and if a value if chosen then a process can learn the chosen value.
+\subsubsection{Informal Specification}
+There are many flavors to the paxos algorithm. We will informally present a basic, one-shot paxos. 
+\subsubsection{Comparison with 'Model Checking Paxos in Spin' Paper}
+\subsection{Alternating-bit Protocol} \label{sec:ab}
+\subsubsection{Informal Specification}
+\subsubsection{Experimental Analysis}
+\section{Veriflixir vs } \label{sec:vs}
+\section{Performance} \label{sec:perf}

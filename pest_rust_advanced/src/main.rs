@@ -722,7 +722,7 @@ fn parse_statement_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_r
             // TODO only support integer for now
             let typ = sym_table::SymbolType::Integer;
             if x.clone().into_inner().next().unwrap().as_rule() == Rule::r#for {
-                file_writer.write_array_assignment(&variable_name, typ);
+                file_writer.write_array_assignment(&variable_name, typ, true);
             } else {
                 file_writer.write_assignment_variable(&variable_name, typ, true);
             }
@@ -774,7 +774,7 @@ fn parse_array_assignment(
     if let Some(x) = assigned_variable {
         variable_name = get_variable_name(x);
         // TODO type the array
-        file_writer.write_array_assignment(&variable_name, typ);
+        file_writer.write_array_assignment(&variable_name, typ, false);
     } else {
         panic!("No variable name in array assignment expression");
     }

@@ -26,6 +26,7 @@ SF_v(A) ==
 - Investigate more flags for Elixir implementation
 - Predicate definitions and labels using [definitions](https://spinroot.com/spin/Man/ltl.html).
 - Read this:https://spinroot.com/spin/Man/4_SpinVerification.html
+- 30 days of elixir https://github.com/seven1m/30-days-of-elixir/tree/master
 - Bugfix:
 	- LTL header duplicates
 	- Whitespace in LTL ✅
@@ -36,14 +37,14 @@ SF_v(A) ==
 	- import models boilerplate
 	- Prefix functions, and variables with the current module and function scope to remove ambiguity
 	- Pass arrays as parameters by nesting them with in another array and passing the index around ✅
-		- memory[10] = 10 arrays
-		- copy the contents of the array to the next available space in memory
-		- pass the index of the copied array
+		- memory[10] = 10 arrays ✅
+		- copy the contents of the array to the next available space in memory ✅
+		- pass the index of the copied array ✅
 	- Wrap \_\_block\_\_ in { } in promela generators for scope control
 	- Generate a variable for every type (to handle dynamic typing)
 		- sum_i, sum_b, sum_s for int, bool and string ect.
 	- Store declarations until first usage to determine type
 	- Receive should receive a message_argument (not an int) and only determine which element to extract when inferred upon
 	- Need more goddamn type inference everywhere!!!!!
-	- Fairness
-	- Non-exhaustive searching with DBITSTATE
+	- Fairness✅
+	- Non-exhaustive searching with DBITSTATE ✅

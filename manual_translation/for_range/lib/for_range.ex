@@ -1,4 +1,5 @@
 defmodule ForRange do
+  @vae_init true
   def hello do
     for i <- 1..3 do
       IO.puts "Hello!"
@@ -8,6 +9,7 @@ defmodule ForRange do
       i
     end
 
-    IO.inspect ls
-  end
+    new_ls = [1,2,3]
+
+    for _ <- new_ls, do: 1 end
 end
