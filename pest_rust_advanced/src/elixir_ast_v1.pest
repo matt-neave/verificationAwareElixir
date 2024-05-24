@@ -32,7 +32,7 @@ float = { ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ }
 binary_operator = { "+" | "-" | "/" | "*" }
 
 // TODO: non-exhaustive
-boolean_operator = { "==" | "<=" | ">=" | "<" | ">" | "&&" | "||" }
+boolean_operator = { "==" | "!=" | "<=" | ">=" | "<" | ">" | "&&" | "||" }
 
 map_op = { "=>" }
 

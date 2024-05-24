@@ -549,6 +549,18 @@ impl FileWriter {
         // Create the message component
         let mut i = 1;
         let mut data = 2;
+
+        // Replace list args with dummy variable
+        for arg in args.iter_mut() {
+            if self.function_sym_table.contains(arg) {
+                if let sym_table::SymbolType::Array(_, _) = self.function_sym_table.lookup(arg) {
+                    let arg_old = arg.clone();
+                    *arg = format!("__temp_cp_arr_{}", self.arr_cp_count);
+                    self.function_body.last_mut().unwrap().push_str(&format!("int __temp_cp_arr_{};\n__copy_memory_to_next(__temp_cp_arr_{}, {});\n", self.arr_cp_count, self.arr_cp_count, arg_old));
+                    self.arr_cp_count += 1;
+                }
+            }
+        }
         self.function_body.last_mut().unwrap().push_str(&format!("MessageList msg_{}; /*{}*/\n", self.function_messages, line_number));
         for mut arg in args {
             // TODO: replace third argument with type
@@ -786,7 +798,7 @@ impl FileWriter {
             self.function_sym_table.add_entry(var.clone(), SymbolType::Array(Box::from(SymbolType::Integer), 0));
             self.function_body.last_mut().unwrap().push_str(&format!("LIST_ALLOCATED({}, {}) = true;\nLIST_VAL({}, {}) = ", var, iterator, var, iterator));
         } else {
-            panic!();
+            println!("Do something?");
         }
     }
 

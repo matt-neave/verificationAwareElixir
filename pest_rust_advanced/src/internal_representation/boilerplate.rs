@@ -198,6 +198,7 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
                     LIST_VAL(__mem_ptr, __list_ptr) = LIST_VAL(old_idx, __list_ptr);\n\
                     __list_ptr++;\n\
                 od\n\
+                break;\n\
                 :: else -> __mem_ptr++;\n\
                 fi\n\
             od\n\

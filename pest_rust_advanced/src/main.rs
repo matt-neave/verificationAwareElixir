@@ -887,6 +887,7 @@ fn get_primitive_as_str(primitive: Pair<Rule>) -> String {
     match rule.as_rule() {
         Rule::string => format!("\"{}\"", rule.as_str()),
         Rule::self_pid => String::from("__pid"), // TODO this exposes implementation of file_writer
+        Rule::negative_number => String::from(resolve_negative_number(rule)),
         _            => rule.as_str().to_string(),
     }
 }
@@ -1223,6 +1224,7 @@ fn parse_tuple(
             // TODO this case doesn't make sense, error in parsing somewhere
             Rule::tuple               => parse_tuple(pair, file_writer, ret, func_def),
             Rule::tupled_elements     => parse_tupled_elements(pair, file_writer, ret),
+            Rule::send                => parse_send(pair, file_writer, ret),
             _                         => parse_warn!("tuple", pair.as_rule()),
         }
     }
@@ -1300,6 +1302,7 @@ fn parse_expression_tuple(
             Rule::number               => parse_number(pair, file_writer, ret, func_def),
             Rule::assigned_variable    => parse_assigned_variable(pair, file_writer, ret),
             Rule::tupled_elements      => parse_tupled_elements(pair, file_writer, ret),
+            Rule::negative_number      => parse_number(pair, file_writer, ret, func_def),
             _                          => parse_warn!("expression tuple", pair.as_rule()),
         }
     }
@@ -1323,7 +1326,11 @@ fn parse_number(
     ret: bool,
     _func_def: bool,
 ) {
-    let number = ast_node.as_str();
+    let number = if ast_node.as_rule() == Rule::negative_number {
+        resolve_negative_number(ast_node)
+    } else {
+        ast_node.as_str()
+    };
     file_writer.write_number(number, ret);
 }
 
@@ -1620,9 +1627,10 @@ fn create_condition(
                 // Check if primitive is bool
                 let cond = pair.into_inner().next().unwrap();
                 match cond.as_rule() {
-                    Rule::bool   => return internal_representation::formatted_condition::FormattedCondition::Boolean(cond.as_str().parse().unwrap()),
-                    Rule::number => return internal_representation::formatted_condition::FormattedCondition::Number(cond.as_str().parse().unwrap()),
-                    _            => return internal_representation::formatted_condition::FormattedCondition::Primitive(cond.as_str().to_string()),       
+                    Rule::bool            => return internal_representation::formatted_condition::FormattedCondition::Boolean(cond.as_str().parse().unwrap()),
+                    Rule::number          => return internal_representation::formatted_condition::FormattedCondition::Number(cond.as_str().parse().unwrap()),
+                    Rule::negative_number => return internal_representation::formatted_condition::FormattedCondition::Number(resolve_negative_number(cond).parse().unwrap()),
+                    _                     => return internal_representation::formatted_condition::FormattedCondition::Primitive(cond.as_str().to_string()),       
                 }
             },
             Rule::assigned_variable => return internal_representation::formatted_condition::FormattedCondition::Variable(get_variable_name(pair)),
@@ -1836,7 +1844,8 @@ fn parse_primitive(
     file_writer: &mut internal_representation::file_writer::FileWriter, ret: bool
 ) {
     let line_number = get_line_number(ast_node.clone());
-    file_writer.write_primitive(ast_node.as_str(), ret, line_number);
+    let primitive = get_primitive_as_str(ast_node);
+    file_writer.write_primitive(&primitive, ret, line_number);
 }
 
 fn name_from_tuple_str(input: &str) -> &str {

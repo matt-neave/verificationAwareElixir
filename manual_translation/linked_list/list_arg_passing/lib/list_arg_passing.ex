@@ -8,7 +8,7 @@ defmodule ListArgPassing do
   end
 
   @spec attempt_pass(list()) :: :ok
-  def attempt_pass(ls) do
-    IO.inspect ls
+  def attempt_pass(ls_new) do
+    IO.inspect ls_new
   end
 end
