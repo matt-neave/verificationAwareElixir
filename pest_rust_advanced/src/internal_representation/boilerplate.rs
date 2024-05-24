@@ -25,6 +25,8 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
     #define MEMORY_ALLOCATED(mem, idx) mem.lists[(idx)].allocated\n\
     #define __list_at(ls, idx) LIST(ls).vals[(idx)].val\n\
     \n\
+    #define __MAILBOX(__pid) (__mailboxes[(__pid)])\n\
+    \n\
     int __list_ptr;\n\
     int __list_last;\n\
     int __list_ptr_new;\n\
@@ -205,8 +207,17 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
         }\n\
     }\n\
     \n\
+    inline __new_mailbox(idx) {\n\
+        d_step {\n\
+            __mailboxes[idx] = __next_mailbox;\n\
+            __next_mailbox++;\n\
+        }\n\
+    }\n\
+    \n\
     int __dummy_iterator;\n\
     memory __mem;\n\
+    int __mailboxes[100];\n\
+    int __next_mailbox = 0;
     ");
     model
 }

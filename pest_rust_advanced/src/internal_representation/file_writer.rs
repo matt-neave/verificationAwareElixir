@@ -1,4 +1,5 @@
 use std::borrow::Borrow;
+use std::ffi::IntoStringError;
 use std::fs::File;
 use std::collections::HashMap;
 
@@ -185,7 +186,7 @@ impl FileWriter {
             self.init = true;
             // TODO: for now, function name is pushed to the channels as this is the first commit to the file
             self.function_channels.last_mut().unwrap().push_str("init {\n");
-            self.function_body.last_mut().unwrap().push_str("int __pid = 0;\n");
+            self.function_body.last_mut().unwrap().push_str("int __pid = 0;\n__new_mailbox(__pid);\n");
         } else if string_args .is_empty() {
             self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} (chan ret; int __pid) {{\n", func_name));
         } else {
@@ -527,15 +528,20 @@ impl FileWriter {
         let formatted_args = format!("{}{}ret{},-1", args, if args.is_empty() {""} else {","}, self.function_call_count);
 
         // TODO verify logic, is a stack appropriate
+        self.function_body.last_mut().unwrap().push_str("atomic {\n");
         let var_name = self.get_next_var_safe();
         let i = self.process_count;
-        if let Some(x) = var_name {
+        let assignee = if let Some(x) = var_name {
             // Add to the lookup tables
             self.process_name.insert(i, x.clone());
             self.mailbox_id.insert(x.clone(), i);
-            self.function_body.last_mut().unwrap().push_str(&format!("{} = ", x));
-        }
-        self.function_body.last_mut().unwrap().push_str(&format!("run {}({}); /*{}*/\n", proctype, formatted_args, line_number));
+            x
+        } else {
+            self.function_body.last_mut().unwrap().push_str("int __tmp_pid;\n");
+            String::from("__tmp_pid")
+        };
+        self.function_body.last_mut().unwrap().push_str(&format!("{} = run {}({}); /*{}*/\n", assignee, proctype, formatted_args, line_number));
+        self.function_body.last_mut().unwrap().push_str(&format!("__new_mailbox({}); /*{}*/\n}}\n", assignee, line_number));
     }
 
     pub fn write_send(&mut self, mut target: &str, mut args: Vec<String>, line_number: u32) {
@@ -581,14 +587,14 @@ impl FileWriter {
         }
         if mailbox == -1 {
             if self.skip_bounded {
-                self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}[{}]) -> __{}[{}] ! {}, msg_{}; /*{}*/\n:: full(__{}[{}]) -> skip; /*{}*/\nfi /*{}*/\n", line_number, mtype, target, mtype, target, mtype, self.function_messages, line_number, mtype, target, line_number, line_number));
+                self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}[__MAILBOX({})]) -> __{}[{}] ! {}, msg_{}; /*{}*/\n:: full(__{}[{}]) -> skip; /*{}*/\nfi /*{}*/\n", line_number, mtype, target, mtype, target, mtype, self.function_messages, line_number, mtype, target, line_number, line_number));
             } else {
-                self.function_body.last_mut().unwrap().push_str(&format!("__{}[{}] ! {}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
+                self.function_body.last_mut().unwrap().push_str(&format!("__{}[__MAILBOX({})] ! {}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
             }
         } else if self.skip_bounded {
-            self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}[{}]) -> __{}[{}] ! {}, msg_{}; /*{}*/\n:: full(__{}[{}]) -> skip; /*{}*/\nfi /*{}*/\n", line_number, mtype, mailbox, mtype, mailbox, mtype, self.function_messages, line_number, mtype, mailbox, line_number, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}[__MAILBOX({})]) -> __{}[__MAILBOX({})] ! {}, msg_{}; /*{}*/\n:: full(__{}[{}]) -> skip; /*{}*/\nfi /*{}*/\n", line_number, mtype, mailbox, mtype, mailbox, mtype, self.function_messages, line_number, mtype, mailbox, line_number, line_number));
         } else {
-            self.function_body.last_mut().unwrap().push_str(&format!("__{}[{}] ! {}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("__{}[__MAILBOX({})] ! {}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
         }
         self.function_messages += 1;
     }
@@ -611,7 +617,7 @@ impl FileWriter {
                 let mtype = assignment.replace(':', "").to_uppercase();
                 self.mtype.push(mtype.clone());
                 // self.function_body.last_mut().unwrap().push_str(&format!(":: messageType == {} -> /*{}*/\n", assignment.to_uppercase(), line_number));
-                self.function_body.last_mut().unwrap().push_str(&format!(":: __{}[__pid] ? {}, rec_v_{} -> /*{}*/\n", mtype, mtype, self.receive_count-1, line_number));
+                self.function_body.last_mut().unwrap().push_str(&format!(":: __{}[__MAILBOX(__pid)] ? {}, rec_v_{} -> /*{}*/\n", mtype, mtype, self.receive_count-1, line_number));
                 
             } else if !assignment.starts_with(':') {
                 if !self.function_sym_table.contains(assignment) {
@@ -630,7 +636,7 @@ impl FileWriter {
     }
 
     pub fn write_receive_multi_atom(&mut self, mtype: String, atom: String, line_number: u32) {
-        self.function_body.last_mut().unwrap().push_str(&format!(":: __{}[__pid] ? {}, {} -> /*{}*/\n", mtype.to_uppercase(), mtype.to_uppercase(), atom, line_number));
+        self.function_body.last_mut().unwrap().push_str(&format!(":: __{}[__MAILBOX(__pid)] ? {}, {} -> /*{}*/\n", mtype.to_uppercase(), mtype.to_uppercase(), atom, line_number));
     }
     
     pub fn write_end_receive_statement(&mut self) {
@@ -759,7 +765,9 @@ impl FileWriter {
         if !self.array_var_stack.is_empty() {
             let var = self.array_var_stack.pop().unwrap();
             self.function_sym_table.add_entry(var.clone(), SymbolType::Array(Box::from(SymbolType::Integer), 0));
-            self.function_body.last_mut().unwrap().push_str(&format!("LIST_ALLOCATED({}, __list_ptr_new) = true;\nLIST_VAL({}, __list_ptr_new) = ", var, var));
+            self.function_body.last_mut().unwrap().push_str(&format!("LIST_ALLOCATED({}, __list_ptr_new) = true;\n", var));
+            let new_var = format!("LIST_VAL({}, __list_ptr_new)", var);
+            self.var_stack.push(vec![new_var]);
         };
     }
 
@@ -775,6 +783,9 @@ impl FileWriter {
         od\n\
         }\n");
         self.function_sym_table.remove_entry(&iterator);
+        if !self.array_var_stack.is_empty() {
+            self.var_stack.pop();
+        }
     }
 
     pub fn write_range_for_loop(
@@ -796,7 +807,9 @@ impl FileWriter {
         if (self.block_assignment) {
             let var = self.array_var_stack.last().unwrap();
             self.function_sym_table.add_entry(var.clone(), SymbolType::Array(Box::from(SymbolType::Integer), 0));
-            self.function_body.last_mut().unwrap().push_str(&format!("LIST_ALLOCATED({}, {}) = true;\nLIST_VAL({}, {}) = ", var, iterator, var, iterator));
+            self.function_body.last_mut().unwrap().push_str(&format!("LIST_ALLOCATED({}, {}) = true;\n", var, iterator));
+            let new_var = format!("LIST_VAL({}, {})", var, iterator);
+            self.var_stack.push(vec![new_var]);
         } else {
             println!("Do something?");
         }
@@ -805,7 +818,11 @@ impl FileWriter {
     pub fn commit_range_for_loop(
         &mut self,
     ) {
+        if self.block_assignment {
+            self.var_stack.pop();
+        }
         self.function_body.last_mut().unwrap().push_str("}\n");
+
     }
 
     pub fn write_enum_random(

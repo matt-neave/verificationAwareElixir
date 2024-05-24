@@ -1,0 +1,93 @@
+Depth=     416 States=    1e+06 Transitions= 1.28e+06 Memory=    76.294 t=     83.4 R=   1e+04
+Depth=     416 States=    2e+06 Transitions= 2.58e+06 Memory=    76.294 t=      167 R=   1e+04
+Depth=     416 States=    3e+06 Transitions= 3.86e+06 Memory=    76.294 t=      249 R=   1e+04
+Depth=     416 States=    4e+06 Transitions= 5.13e+06 Memory=    76.294 t=      332 R=   1e+04
+Depth=     416 States=    5e+06 Transitions= 6.39e+06 Memory=    76.294 t=      415 R=   1e+04
+Depth=     416 States=    6e+06 Transitions= 7.67e+06 Memory=    76.294 t=      499 R=   1e+04
+Depth=     416 States=    7e+06 Transitions= 8.94e+06 Memory=    76.294 t=      582 R=   1e+04
+Depth=     416 States=    8e+06 Transitions= 1.03e+07 Memory=    76.294 t=      670 R=   1e+04
+Depth=     416 States=    9e+06 Transitions= 1.16e+07 Memory=   114.441 t=      756 R=   1e+04
+Depth=     416 States=    1e+07 Transitions= 1.29e+07 Memory=   114.441 t=      844 R=   1e+04
+Depth=     416 States=  1.1e+07 Transitions= 1.41e+07 Memory=   114.441 t=      930 R=   1e+04
+Depth=     416 States=  1.2e+07 Transitions= 1.54e+07 Memory=   114.441 t= 1.02e+03 R=   1e+04
+Depth=     416 States=  1.3e+07 Transitions= 1.67e+07 Memory=   114.441 t= 1.11e+03 R=   1e+04
+Depth=     416 States=  1.4e+07 Transitions=  1.8e+07 Memory=   114.441 t=  1.2e+03 R=   1e+04
+Depth=     416 States=  1.5e+07 Transitions= 1.93e+07 Memory=   114.441 t=  1.3e+03 R=   1e+04
+Depth=     416 States=  1.6e+07 Transitions= 2.06e+07 Memory=   114.441 t=  1.4e+03 R=   1e+04
+Depth=     416 States=  1.7e+07 Transitions= 2.19e+07 Memory=   114.441 t=  1.5e+03 R=   1e+04
+Depth=     416 States=  1.8e+07 Transitions= 2.33e+07 Memory=   114.441 t=  1.6e+03 R=   1e+04
+Depth=     416 States=  1.9e+07 Transitions= 2.46e+07 Memory=   114.441 t= 1.71e+03 R=   1e+04
+Depth=     416 States=    2e+07 Transitions= 2.59e+07 Memory=   114.441 t= 1.81e+03 R=   1e+04
+Depth=     416 States=  2.1e+07 Transitions= 2.71e+07 Memory=   114.441 t=  1.9e+03 R=   1e+04
+Depth=     416 States=  2.2e+07 Transitions= 2.84e+07 Memory=   114.441 t=    2e+03 R=   1e+04
+Depth=     416 States=  2.3e+07 Transitions= 2.98e+07 Memory=   114.441 t=  2.1e+03 R=   1e+04
+Depth=     416 States=  2.4e+07 Transitions= 3.11e+07 Memory=   152.588 t= 2.21e+03 R=   1e+04
+Depth=     416 States=  2.5e+07 Transitions= 3.24e+07 Memory=   152.588 t= 2.31e+03 R=   1e+04
+Depth=     416 States=  2.6e+07 Transitions= 3.37e+07 Memory=   152.588 t=  2.4e+03 R=   1e+04
+Depth=     416 States=  2.7e+07 Transitions= 3.51e+07 Memory=   152.588 t= 2.49e+03 R=   1e+04
+Depth=     416 States=  2.8e+07 Transitions= 3.64e+07 Memory=   152.588 t= 2.59e+03 R=   1e+04
+Depth=     416 States=  2.9e+07 Transitions= 3.77e+07 Memory=   152.588 t=  2.7e+03 R=   1e+04
+Depth=     416 States=    3e+07 Transitions=  3.9e+07 Memory=   152.588 t=  2.8e+03 R=   1e+04
+Depth=     416 States=  3.1e+07 Transitions= 4.04e+07 Memory=   152.588 t= 2.91e+03 R=   1e+04
+Depth=     416 States=  3.2e+07 Transitions= 4.17e+07 Memory=   152.588 t= 3.02e+03 R=   1e+04
+Depth=     416 States=  3.3e+07 Transitions=  4.3e+07 Memory=   190.735 t= 3.12e+03 R=   1e+04
+Depth=     416 States=  3.4e+07 Transitions= 4.44e+07 Memory=   190.735 t= 3.23e+03 R=   1e+04
+
+(Spin Version 6.5.2 -- 6 December 2019)
+        + Partial Order Reduction
+
+Bit statespace search for:
+        never claim             - (none specified)
+        assertion violations    +
+        cycle checks            - (disabled by -DSAFETY)
+        invalid end states      +
+
+State-vector 36320 byte, depth reached 416, errors: 0
+ 34947063 states, stored
+ 10680724 states, matched
+ 45627787 transitions (= stored+matched)
+ 36715817 atomic steps
+
+hash factor: 3.8406 (best if > 100.)
+
+bits set per state: 3 (-k3)
+
+Stats on memory usage (in Megabytes):
+1211143.751     equivalent memory usage for states (stored*(State-vector + overhead))
+   16.000       memory used for hash array (-w27)
+    0.076       memory used for bit stack
+    0.534       memory used for DFS stack (-m10000)
+  212.185       other (proc and chan stacks)
+  228.882       total actual memory usage
+
+
+unreached in proctype start_acceptor
+        test_out.pml:279, state 4, "(1)"
+        (1 of 11 states)
+unreached in proctype accept_handler
+        test_out.pml:331, state 39
+        test_out.pml:332, state 41, "ACCEPTED[mailboxes[proposer]]!ACCEPTED,msg_3.m1.data1[0],msg_3.m1.data1[1],msg_3.m1.data2,msg_3.m1.data3[0],msg_3.m1.data3[1],msg_3.m1.data4,msg_3.m2.data1[0],msg_3.m2.data1[1],msg_3.m2.data2,msg_3.m2.data3[0],msg_3.m2.data3[1],msg_3.m2.data4,msg_3.m3.data1[0],msg_3.m3.data1[1],msg_3.m3.data2,msg_3.m3.data3[0],msg_3.m3.data3[1],msg_3.m3.data4,msg_3.m4.data1[0],msg_3.m4.data1[1],msg_3.m4.data2,msg_3.m4.data3[0],msg_3.m4.data3[1],msg_3.m4.data4,msg_3.m5.data1[0],msg_3.m5.data1[1],msg_3.m5.data2,msg_3.m5.data3[0],msg_3.m5.data3[1],msg_3.m5.data4,msg_3.m6.data1[0],msg_3.m6.data1[1],msg_3.m6.data2,msg_3.m6.data3[0],msg_3.m6.data3[1],msg_3.m6.data4"
+        test_out.pml:333, state 42, "(run accept_handler(acceptedProposal,acceptedValue,minProposal,ret4,pid))"
+        (3 of 52 states)
+unreached in proctype start_proposer
+        test_out.pml:346, state 4, "(1)"
+        (1 of 24 states)
+unreached in proctype proposer_handler
+        test_out.pml:440, state 75
+        test_out.pml:441, state 77, "LEARNED[mailboxes[learner]]!LEARNED,msg_3.m1.data1[0],msg_3.m1.data1[1],msg_3.m1.data2,msg_3.m1.data3[0],msg_3.m1.data3[1],msg_3.m1.data4,msg_3.m2.data1[0],msg_3.m2.data1[1],msg_3.m2.data2,msg_3.m2.data3[0],msg_3.m2.data3[1],msg_3.m2.data4,msg_3.m3.data1[0],msg_3.m3.data1[1],msg_3.m3.data2,msg_3.m3.data3[0],msg_3.m3.data3[1],msg_3.m3.data4,msg_3.m4.data1[0],msg_3.m4.data1[1],msg_3.m4.data2,msg_3.m4.data3[0],msg_3.m4.data3[1],msg_3.m4.data4,msg_3.m5.data1[0],msg_3.m5.data1[1],msg_3.m5.data2,msg_3.m5.data3[0],msg_3.m5.data3[1],msg_3.m5.data4,msg_3.m6.data1[0],msg_3.m6.data1[1],msg_3.m6.data2,msg_3.m6.data3[0],msg_3.m6.data3[1],msg_3.m6.data4"
+        (2 of 80 states)
+unreached in proctype receive_prepared
+        test_out.pml:468, state 20, "(run receive_prepared(acceptedProposal,acceptedValue,maj,(count+1),ret1,pid))"
+        (1 of 31 states)
+unreached in proctype receive_accepted
+        test_out.pml:494, state 15, "ret!-(1)"
+        (1 of 29 states)
+unreached in init
+        test_out.pml:231, state 55, "mem_ptr = (mem_ptr+1)"
+        test_out.pml:99, state 72, "list_ptr = (list_ptr+1)"
+        (2 of 214 states)
+unreached in proctype wait_learned
+        (0 of 41 states)
+
+pan: elapsed time 3.34e+03 seconds
+pan: rate 10450.489 states/second
