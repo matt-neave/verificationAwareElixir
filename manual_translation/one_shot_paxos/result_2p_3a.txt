@@ -1,4 +1,4 @@
-spin -search -DVECTORSZ=400000 -DBITSTATE test_out.pml
+spin -search -DVECTORSZ=400000 -DBITSTATE test_out.pml (no ltl, v3_working_correct)
 Depth=     660 States=    1e+06 Transitions= 1.31e+06 Memory=    76.294 t=     91.5 R=   1e+04
 Depth=     660 States=    2e+06 Transitions=  2.6e+06 Memory=    76.294 t=      184 R=   1e+04
 Depth=     660 States=    3e+06 Transitions= 3.89e+06 Memory=    76.294 t=      278 R=   1e+04

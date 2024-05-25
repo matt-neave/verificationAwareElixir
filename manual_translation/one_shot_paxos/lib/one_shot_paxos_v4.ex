@@ -1,7 +1,8 @@
-# This implementation will set the final value to either
-# 69, 420 or 420, 69. 420, 69 is incorrect.
+# Final corrected version of paxos implementation
+# Problem before was rejection was dependent on only 1
+# Acceptor not a majority
 
-defmodule Acceptor5 do
+defmodule Acceptor6 do
 
   @spec start_acceptor() :: :ok
   def start_acceptor do
@@ -36,7 +37,7 @@ defmodule Acceptor5 do
   end
 end
 
-defmodule Proposer5 do
+defmodule Proposer6 do
   @spec start_proposer() :: :ok
   def start_proposer do
     receive do
@@ -50,7 +51,7 @@ defmodule Proposer5 do
       send acceptor, {:prepare, proposal_n, self()}
     end
 
-    receive_prepared(proposal_n, value, maj, 0)
+    receive_prepared(proposal_n, value, maj, 0, 0)
     {prepared_n, prepared_value} = receive do
       {:majority_prepared, n, v} -> {n, v}
     end
@@ -59,48 +60,54 @@ defmodule Proposer5 do
       send acceptor, {:accept, prepared_n, prepared_value, self()}
     end
 
-    accepted_n = receive_accepted(maj, prepared_n, 0)
+    accepted_n = receive_accepted(maj, prepared_n, 0, 0)
     if accepted_n != -1 do
+      # Value chosen
       send learner, {:learned, prepared_value}
     else
+      # Value was rejected
       send learner, {:learned, 0}
     end
   end
 
-  @spec receive_prepared(integer(), integer(), integer(), integer()) :: :ok
-  def receive_prepared(proposal_n, value, maj, count) do
+  @spec receive_prepared(integer(), integer(), integer(), integer(), integer()) :: :ok
+  def receive_prepared(proposal_n, value, maj, highest_seen_proposal, count) do
     if count >= maj do
       send self(), {:majority_prepared, proposal_n, value}
     else
       receive do
         {:prepared, acceptedProposal, acceptedValue} ->
-          if acceptedProposal > proposal_n do
-            receive_prepared(acceptedProposal, acceptedValue, maj, count + 1)
+          if acceptedProposal > highest_seen_proposal do
+            receive_prepared(acceptedProposal, acceptedValue, maj, acceptedProposal, count + 1)
           else
-            receive_prepared(proposal_n, value, maj, count + 1)
+            receive_prepared(proposal_n, value, maj, highest_seen_proposal, count + 1)
           end
       end
     end
   end
 
-  @spec receive_accepted(integer(), integer(), integer()) :: integer()
-  def receive_accepted(maj, prepared_n, count) do
+  @spec receive_accepted(integer(), integer(), integer(), integer()) :: integer()
+  def receive_accepted(maj, prepared_n, rejections, count) do
     if count >= maj do
-      prepared_n
+      if rejections >= maj do
+        -1
+      else
+        prepared_n
+      end
     else
       receive do
         {:accepted, n} ->
           if n > prepared_n do
-            -1
+            receive_accepted(maj, prepared_n, rejections + 1, count + 1)
           else
-            receive_accepted(maj, prepared_n, count + 1)
+            receive_accepted(maj, prepared_n, rejections, count + 1)
           end
       end
     end
   end
 end
 
-defmodule Learner5 do
+defmodule Learner6 do
 
   @spec start() :: :ok
   @vae_init true
@@ -110,11 +117,11 @@ defmodule Learner5 do
     n_proposers = 2
     vals = [420, 69]
     acceptors = for _ <- 1..n_acceptors do
-      spawn(Acceptor5, :start_acceptor, [])
+      spawn(Acceptor6, :start_acceptor, [])
     end
 
     for i <- 1..n_proposers do
-      proposer = spawn(Proposer5, :start_proposer, [])
+      proposer = spawn(Proposer6, :start_proposer, [])
       val_i = i - 1
       val = Enum.at(vals, val_i)
       send proposer, {:bind, acceptors, i, val, quorum, self()}

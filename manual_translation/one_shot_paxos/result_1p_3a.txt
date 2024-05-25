@@ -1,3 +1,4 @@
+(no ltl, v3_working_correct)
 Depth=     416 States=    1e+06 Transitions= 1.28e+06 Memory=    76.294 t=     83.4 R=   1e+04
 Depth=     416 States=    2e+06 Transitions= 2.58e+06 Memory=    76.294 t=      167 R=   1e+04
 Depth=     416 States=    3e+06 Transitions= 3.86e+06 Memory=    76.294 t=      249 R=   1e+04
