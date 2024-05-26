@@ -1215,6 +1215,7 @@ fn parse_tuple(
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::expression_tuple    => parse_expression_tuple(pair, file_writer, ret, func_def),  
+            Rule::assigned_variable   => parse_assigned_variable(pair, file_writer, ret),
             Rule::binary_operation    => parse_binary_operation(pair, file_writer, ret),
             Rule::unless              => parse_unless(pair, file_writer, ret, func_def),
             Rule::function_definition => parse_function_definition(pair, file_writer, ret),

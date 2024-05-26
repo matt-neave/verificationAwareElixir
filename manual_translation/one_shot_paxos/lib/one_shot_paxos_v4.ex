@@ -1,6 +1,7 @@
 # Final corrected version of paxos implementation
 # Problem before was rejection was dependent on only 1
 # Acceptor not a majority
+import VaeLib
 
 defmodule Acceptor6 do
 
@@ -17,10 +18,10 @@ defmodule Acceptor6 do
     receive do
       {:prepare, n, proposer} ->
         if n > minProposal do
-          send proposer, {:prepared, acceptedProposal, acceptedValue}
+          send proposer, {:promise, acceptedProposal, acceptedValue}
           accept_handler(acceptedProposal, acceptedValue, n)
         else
-          send proposer, {:prepared, acceptedProposal, acceptedValue}
+          send proposer, {:promise, acceptedProposal, acceptedValue}
           accept_handler(acceptedProposal, acceptedValue, minProposal)
         end
       {:accept, n, value, proposer} ->
@@ -76,7 +77,7 @@ defmodule Proposer6 do
       send self(), {:majority_prepared, proposal_n, value}
     else
       receive do
-        {:prepared, acceptedProposal, acceptedValue} ->
+        {:promise, acceptedProposal, acceptedValue} ->
           if acceptedProposal > highest_seen_proposal do
             receive_prepared(acceptedProposal, acceptedValue, maj, acceptedProposal, count + 1)
           else
@@ -115,7 +116,7 @@ defmodule Learner6 do
     n_acceptors = 3
     quorum = 2
     n_proposers = 2
-    vals = [420, 69]
+    vals = [42, 31]
     acceptors = for _ <- 1..n_acceptors do
       spawn(Acceptor6, :start_acceptor, [])
     end
@@ -129,8 +130,9 @@ defmodule Learner6 do
     wait_learned(acceptors, n_proposers, 0)
   end
 
+  # @ltl "[](<>(final_value==31)->!<>(final_value==42) && <>(final_value==42)->!<>(final_value==31))&&<>(final_value!=0)"
   @spec wait_learned(list(), integer(), integer()) :: :ok
-  @ltl "[](<>(final_value==69)->!<>(final_value==420) && <>(final_value==420)->!<>(final_value==69))"
+  @ltl "[](<>(p)->!<>(q) && <>(q)->!<>(p))&&<>(r)&&[](s)"
   def wait_learned(acceptors, p_n, learned_n) do
     if p_n == learned_n do
       for acceptor <- acceptors do
@@ -139,6 +141,10 @@ defmodule Learner6 do
     else
       receive do
         {:learned, final_value} ->
+          predicate p, final_value == 31
+          predicate q, final_value == 42
+          predicate r, final_value != 0
+          predicate s, final_value == 0 || final_value == 31 || final_value == 42
           IO.puts("Learned final_value:")
           IO.puts(final_value)
       end

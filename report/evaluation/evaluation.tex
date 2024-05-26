@@ -1,18 +1,40 @@
 \chapter{Evaluation}
-In this chapter, we aim to evaluate the expressiveness of Veriflixir's design. First, we perform a quantitive analysis of modeling classical distributed algorithms such as basic paxos in section \ref{sec:paxos} and the alternating-bit protocol in section \ref{sec:ab}. Section \ref{sec:vs} will delve into a comparison against current state-of-the art model checking techniques for modern day programming languages. Finally, we will explore the performance of Veriflixir in a growing sytem in section \ref{sec:perf}.
+In this chapter, we aim to evaluate the expressiveness of Veriflixir's design. First, we perform a quantitive analysis of modeling classical distributed algorithms such as basic paxos in section \ref{sec:paxos} and the alternating-bit protocol in section \ref{sec:ab}. Section \ref{sec:vs} will delve into a comparison against current state-of-the-art model checking techniques for modern-day programming languages. Finally, we will explore the performance of Veriflixir in a growing sytem in section \ref{sec:perf}.
 \section{Analysing Distributed Systems}
 Verifying the correctness of real-world distributed systems is a major motivation for this project. Critical real-time systems (such as in air-traffic control or healthcare  \cite{airlines,healthcare}) should not fail and should rely on rigerous verification techniques to guarantee production code is correct.  
 \subsection{Basic Paxos} \label{sec:paxos}
-Paxos is an example of a distributed algorithm \cite{paxos_simple}. It is a consensus algorithm, where many processes are tasked to agree on a value. Processes may propose what this value should be, but only one value should be agreed upon. The safety requirements for consensus are:
+Paxos is an example of a distributed algorithm \cite{paxos_simple}. It is a consensus algorithm, where many processes are tasked to agree on a value. Processes may propose what this value should be, but only one value should be agreed upon. The safety requirements (SR)s for consensus are:
 \begin{itemize}
-    \item Only a value that has been proposed may be chosen.
-    \item Only a single value is chosen.
-    \item A process never learns that a value has been chosen unless it actually has.
+    \item \textbf{SR1}: Only a value that has been proposed may be chosen.
+    \item \textbf{SR2}: Only a single value is chosen.
+    \item \textbf{SR3}: A process never learns that a value has been chosen unless it actually has.
 \end{itemize}
 The system's liveness requirement is that a proposed value is eventually chosen and if a value if chosen then a process can learn the chosen value.
 \subsubsection{Informal Specification}
-There are many flavors to the paxos algorithm. We will informally present a basic, one-shot paxos. 
-\subsubsection{Comparison with 'Model Checking Paxos in Spin' Paper}
+There are many flavors to the paxos algorithm. We will informally present a basic, one-shot paxos. We introduce three roles in the system: proposer, acceptor and learner. The paxos algorithm performs two steps: prepare and accept. A proposer will broadcast a prepare message to all the acceptors, who will respond with a promise. When the proposer has received a promise from a quorum $q$ of acceptors, it will broadcast an accept message. If more than q acceptors accept, then the value is chosen, and the learners are informed.
+\par
+To evaluate the expressiveness of Veriflixir, we first must write the paxos specification in LTLixir. The specifications of proposer, acceptor and learner are similar to those presented in pseudocode by Marzullo, Mei and Meling \cite{paxos_pseudocode}. We now present the key differences in our Elixir specification to a traditional paxos design. For the remainder of the specification, we use the notations $A, \alpha, P, \pi, L, \lambda$ to respectively represent either a set or individual acceptor, proposer or learner.
+\par
+All processes contain two functions, a start function to introduce relevant initial configuration and a main loop to process messages. Every $\alpha$ initializes an accepted proposal, value and minimum proposal to $-1$ and then processes $prepare$ and $accept$ messages until receiving a $terminate$ message, signifying consensus has been reached. A termination clause is important to ensure the exit conditions of the system. A proposer receives its configuration in the form of a $bind$ message, before executing its protocol. If during phase two, when asking acceptors to accept a value, a quorum of acceptors rejects the proposal, the proposer will inform the system it has reached consensus on value $0$. Traditionally, the proposer would retry with a higher proposal number, but we aim to avoid infinite paths so instead introduce this terminating condition. The learner awaits a $learn$ message from all proposers. We only ever consider a single learner and the learner is also responsible for spawning the proposers and acceptors, choosing their values and assigning proposal numbers for the single round of paxos.
+\par
+With our implementation complete, we introduce the three safety requirements established. To achieve this, we introduce a value $final\_value$ which the learner receives from proposers. This value is initialized to $0$ and set to the agreed value of consensus. Let's specify the temporal formula required to express our safety requirements. We first introduce four predicates into our specification.
+\[
+\begin{array}{l}
+\text{predicate p: final\_value} == 31 \\
+\text{predicate q: final\_value} == 42 \\
+\text{predicate r: final\_value} \neq 0 \\
+\text{predicate s: final\_value} == 0 \ \lor \ \text{final\_value} == 31 \ \lor \ \text{final\_value} == 42 \\
+\end{array}
+\]
+We can now use the predicates to simplify the formulation of the safety requirements.
+\begin{itemize}
+    \item \textbf{SR1}: $\lozenge r$
+    \item \textbf{SR2}: $\lozenge p \rightarrow \neg \lozenge q \land \lozenge q \rightarrow \neg \lozenge p$ 
+    \item \textbf{SR3}: $\square s$
+\end{itemize}
+We now have a complete specification of the basic paxos algorithm in LTLixir. We can run Veriflixir on the model to verify the safety requirements.
+
+\subsubsection{Comparison with `Model Checking Paxos in Spin' Paper?}
 \subsection{Alternating-bit Protocol} \label{sec:ab}
 \subsubsection{Informal Specification}
 \subsubsection{Experimental Analysis}
