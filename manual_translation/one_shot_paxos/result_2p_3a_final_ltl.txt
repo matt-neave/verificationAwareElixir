@@ -1,0 +1,118 @@
+Final results ran on v4
+Depth=     892 States=    1e+06 Transitions= 1.79e+06 Memory=    76.294 t=      117 R=   9e+03
+Depth=     892 States=    2e+06 Transitions= 3.57e+06 Memory=    76.294 t=      236 R=   8e+03
+Depth=     892 States=    3e+06 Transitions=  5.4e+06 Memory=    76.294 t=      357 R=   8e+03
+Depth=     892 States=    4e+06 Transitions= 7.22e+06 Memory=    76.294 t=      474 R=   8e+03
+Depth=     892 States=    5e+06 Transitions=    9e+06 Memory=    76.294 t=      592 R=   8e+03
+Depth=     892 States=    6e+06 Transitions= 1.08e+07 Memory=    76.294 t=      710 R=   8e+03
+Depth=     892 States=    7e+06 Transitions= 1.26e+07 Memory=    76.294 t=      828 R=   8e+03
+Depth=     892 States=    8e+06 Transitions= 1.44e+07 Memory=    76.294 t=      945 R=   8e+03
+Depth=     892 States=    9e+06 Transitions= 1.62e+07 Memory=    76.294 t= 1.06e+03 R=   8e+03
+Depth=     892 States=    1e+07 Transitions= 1.78e+07 Memory=    76.294 t= 1.18e+03 R=   9e+03
+Depth=     892 States=  1.1e+07 Transitions= 1.97e+07 Memory=    76.294 t= 1.29e+03 R=   9e+03
+Depth=     892 States=  1.2e+07 Transitions= 2.15e+07 Memory=    76.294 t= 1.41e+03 R=   9e+03
+Depth=     892 States=  1.3e+07 Transitions= 2.32e+07 Memory=    76.294 t= 1.52e+03 R=   9e+03
+Depth=     892 States=  1.4e+07 Transitions= 2.49e+07 Memory=    76.294 t= 1.65e+03 R=   8e+03
+Depth=     892 States=  1.5e+07 Transitions= 2.67e+07 Memory=    76.294 t= 1.79e+03 R=   8e+03
+Depth=     892 States=  1.6e+07 Transitions= 2.86e+07 Memory=    76.294 t= 1.94e+03 R=   8e+03
+Depth=     892 States=  1.7e+07 Transitions= 3.04e+07 Memory=    76.294 t= 2.09e+03 R=   8e+03
+Depth=     892 States=  1.8e+07 Transitions= 3.22e+07 Memory=    76.294 t= 2.23e+03 R=   8e+03
+Depth=     892 States=  1.9e+07 Transitions= 3.41e+07 Memory=    76.294 t= 2.38e+03 R=   8e+03
+Depth=     892 States=    2e+07 Transitions= 3.58e+07 Memory=    76.294 t= 2.52e+03 R=   8e+03
+Depth=     892 States=  2.1e+07 Transitions= 3.75e+07 Memory=    76.294 t= 2.66e+03 R=   8e+03
+Depth=     892 States=  2.2e+07 Transitions= 3.93e+07 Memory=    76.294 t= 2.81e+03 R=   8e+03
+Depth=     892 States=  2.3e+07 Transitions=  4.1e+07 Memory=    76.294 t= 2.95e+03 R=   8e+03
+Depth=     892 States=  2.4e+07 Transitions= 4.28e+07 Memory=   114.441 t= 3.09e+03 R=   8e+03
+Depth=     892 States=  2.5e+07 Transitions= 4.44e+07 Memory=   114.441 t= 3.24e+03 R=   8e+03
+Depth=     892 States=  2.6e+07 Transitions= 4.62e+07 Memory=   114.441 t= 3.38e+03 R=   8e+03
+Depth=     892 States=  2.7e+07 Transitions=  4.8e+07 Memory=   114.441 t= 3.53e+03 R=   8e+03
+Depth=     892 States=  2.8e+07 Transitions= 4.97e+07 Memory=   114.441 t= 3.68e+03 R=   8e+03
+Depth=     892 States=  2.9e+07 Transitions= 5.13e+07 Memory=   114.441 t= 3.82e+03 R=   8e+03
+Depth=     892 States=    3e+07 Transitions= 5.28e+07 Memory=   114.441 t= 3.96e+03 R=   8e+03
+Depth=     892 States=  3.1e+07 Transitions= 5.42e+07 Memory=   114.441 t= 4.11e+03 R=   8e+03
+Depth=     892 States=  3.2e+07 Transitions= 5.58e+07 Memory=   114.441 t= 4.26e+03 R=   8e+03
+Depth=     892 States=  3.3e+07 Transitions= 5.75e+07 Memory=   114.441 t=  4.4e+03 R=   7e+03
+Depth=     892 States=  3.4e+07 Transitions= 5.93e+07 Memory=   114.441 t= 4.55e+03 R=   7e+03
+Depth=     896 States=  3.5e+07 Transitions= 6.08e+07 Memory=   114.441 t=  4.7e+03 R=   7e+03
+Depth=     896 States=  3.6e+07 Transitions= 6.23e+07 Memory=   114.441 t= 4.84e+03 R=   7e+03
+Depth=     896 States=  3.7e+07 Transitions= 6.38e+07 Memory=   152.588 t=    5e+03 R=   7e+03
+Depth=     896 States=  3.8e+07 Transitions= 6.54e+07 Memory=   152.588 t= 5.15e+03 R=   7e+03
+Depth=     896 States=  3.9e+07 Transitions= 6.69e+07 Memory=   152.588 t= 5.31e+03 R=   7e+03
+Depth=     896 States=    4e+07 Transitions= 6.85e+07 Memory=   152.588 t= 5.47e+03 R=   7e+03
+Depth=     896 States=  4.1e+07 Transitions=    7e+07 Memory=   190.735 t= 5.64e+03 R=   7e+03
+Depth=     898 States=  4.2e+07 Transitions= 7.15e+07 Memory=   190.735 t= 5.82e+03 R=   7e+03
+Depth=     908 States=  4.3e+07 Transitions=  7.3e+07 Memory=   190.735 t=    6e+03 R=   7e+03
+Depth=     908 States=  4.4e+07 Transitions= 7.45e+07 Memory=   190.735 t= 6.18e+03 R=   7e+03
+Depth=     908 States=  4.5e+07 Transitions=  7.6e+07 Memory=   190.735 t= 6.37e+03 R=   7e+03
+Depth=     908 States=  4.6e+07 Transitions= 7.76e+07 Memory=   190.735 t= 6.58e+03 R=   7e+03
+Depth=     908 States=  4.7e+07 Transitions= 7.92e+07 Memory=   228.882 t= 6.81e+03 R=   7e+03
+Depth=     908 States=  4.8e+07 Transitions= 8.09e+07 Memory=   228.882 t= 7.07e+03 R=   7e+03
+Depth=     908 States=  4.9e+07 Transitions= 8.26e+07 Memory=   267.029 t= 7.34e+03 R=   7e+03
+Depth=     908 States=    5e+07 Transitions= 8.43e+07 Memory=   305.176 t= 7.65e+03 R=   7e+03
+
+(Spin Version 6.5.2 -- 6 December 2019)
+        + Partial Order Reduction
+
+Bit statespace search for:
+        never claim             + (ltl_0)
+        assertion violations    + (if within scope of claim)
+        acceptance   cycles     + (fairness disabled)
+        invalid end states      - (disabled by never claim)
+
+State-vector 40584 byte, depth reached 908, errors: 0
+ 16078016 states, stored (5.0587e+07 visited)
+ 34720100 states, matched
+ 85307140 transitions (= visited+matched)
+ 18428705 atomic steps
+
+hash factor: 2.6532 (best if > 100.)
+
+bits set per state: 3 (-k3)
+
+Stats on memory usage (in Megabytes):
+622711.550      equivalent memory usage for states (stored*(State-vector + overhead))
+   16.000       memory used for hash array (-w27)
+    0.076       memory used for bit stack
+    0.534       memory used for DFS stack (-m10000)
+  326.551       other (proc and chan stacks)
+  343.323       total actual memory usage
+
+
+unreached in proctype start_acceptor
+        test_out.pml:283, state 4, "(1)"
+        (1 of 11 states)
+unreached in proctype accept_handler
+        test_out.pml:341, state 47, "printf('Terminating acceptor\n')"
+        (1 of 52 states)
+unreached in proctype start_proposer
+        test_out.pml:350, state 4, "(1)"
+        (1 of 24 states)
+unreached in proctype proposer_handler
+        (0 of 80 states)
+unreached in proctype receive_prepared
+        (0 of 31 states)
+unreached in proctype receive_accepted
+        (0 of 37 states)
+unreached in init
+        test_out.pml:231, state 55, "mem_ptr = (mem_ptr+1)"
+        test_out.pml:99, state 72, "list_ptr = (list_ptr+1)"
+        (2 of 214 states)
+unreached in proctype wait_learned
+        test_out.pml:619, state 15, "acceptor = mem.lists[acceptors].vals[list_ptr].val"
+        test_out.pml:621, state 16
+        test_out.pml:621, state 17, "TERMINATE[mailboxes[acceptor]]!TERMINATE,msg_0.m1.data1[0],msg_0.m1.data1[1],msg_0.m1.data2,msg_0.m1.data3[0],msg_0.m1.data3[1],msg_0.m1.data4,msg_0.m2.data1[0],msg_0.m2.data1[1],msg_0.m2.data2,msg_0.m2.data3[0],msg_0.m2.data3[1],msg_0.m2.data4,msg_0.m3.data1[0],msg_0.m3.data1[1],msg_0.m3.data2,msg_0.m3.data3[0],msg_0.m3.data3[1],msg_0.m3.data4,msg_0.m4.data1[0],msg_0.m4.data1[1],msg_0.m4.data2,msg_0.m4.data3[0],msg_0.m4.data3[1],msg_0.m4.data4,msg_0.m5.data1[0],msg_0.m5.data1[1],msg_0.m5.data2,msg_0.m5.data3[0],msg_0.m5.data3[1],msg_0.m5.data4,msg_0.m6.data1[0],msg_0.m6.data1[1],msg_0.m6.data2,msg_0.m6.data3[0],msg_0.m6.data3[1],msg_0.m6.data4"
+        test_out.pml:623, state 18, "list_ptr_new = (list_ptr_new+1)"
+        test_out.pml:625, state 21, "list_ptr = (list_ptr+1)"
+        test_out.pml:617, state 22, "(mem.lists[acceptors].vals[list_ptr].allocated)"
+        test_out.pml:617, state 22, "else"
+        test_out.pml:614, state 24, "(((list_ptr>=10)||(list_ptr_new>=10)))"
+        test_out.pml:614, state 24, "else"
+        test_out.pml:611, state 27, "list_ptr = 0"
+        (8 of 41 states)
+unreached in claim ltl_0
+        _spin_nvr.tmp:21, state 31, "(!((final_value==42)))"
+        _spin_nvr.tmp:42, state 61, "-end-"
+        (2 of 61 states)
+
+pan: elapsed time 7.9e+03 seconds
+pan: rate 6404.4118 states/second

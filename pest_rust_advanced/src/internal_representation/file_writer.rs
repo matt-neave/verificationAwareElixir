@@ -203,9 +203,9 @@ impl FileWriter {
 
     pub fn commit_function(&mut self) {
         // Commits the current function to the file
-        if self.init {
-            self.function_channels.last_mut().unwrap().push_str("__channel_hook\n");
-        }
+        // if self.init {
+            // self.function_channels.last_mut().unwrap().push_str("__channel_hook\n");
+        // }
         self.content.push_str(&self.function_channels.pop().unwrap());
         self.content.push_str(&self.function_metabody.pop().unwrap());
         self.content.push_str(&format!("{}}}\n\n", &*self.function_body.pop().unwrap()));
@@ -380,15 +380,15 @@ impl FileWriter {
         
         let mut mailbox_assignment = String::new();
         for mtype in unique_mtypes.iter() {
-            var_name.push_str(&format!("chan __{}[{}] = [3] of {{ mtype, MessageList }};\n", mtype, self.max_process_count));
-            for i in 0..self.process_count + 1 {
-                var_name.push_str(&format!("chan __p{}_{} = [3] of {{ mtype, MessageList }};\n", i, mtype));
-            }
+            var_name.push_str(&format!("chan __{} = [10] of {{ int, mtype, MessageList }};\n", mtype));
+            // for i in 0..self.process_count + 1 { TODO wrong to use process_count
+                // var_name.push_str(&format!("chan __p{}_{} = [3] of {{ int, mtype, MessageList }};\n", i, mtype));
+            // }
             for i in 0..self.process_count + 1 {
                 mailbox_assignment.push_str(&format!("__{}[{}] = __p{}_{};\n", mtype, i, i, mtype));
             }
         }
-        self.content = self.content.replace("__channel_hook\n", &mailbox_assignment);
+        // self.content = self.content.replace("__channel_hook\n", &mailbox_assignment);
 
         // TODO remove or refactor Elixir list c_decl
         // let typ = "int";
@@ -587,14 +587,14 @@ impl FileWriter {
         }
         if mailbox == -1 {
             if self.skip_bounded {
-                self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}[__MAILBOX({})]) -> __{}[{}] ! {}, msg_{}; /*{}*/\n:: full(__{}[{}]) -> skip; /*{}*/\nfi /*{}*/\n", line_number, mtype, target, mtype, target, mtype, self.function_messages, line_number, mtype, target, line_number, line_number));
+                self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}) -> __{} ! {},{}, msg_{}; /*{}*/\n:: full(__{}) -> skip; /*{}*/\nfi /*{}*/\n", line_number, target, target, mtype, target, self.function_messages, line_number, mtype, line_number, line_number));
             } else {
-                self.function_body.last_mut().unwrap().push_str(&format!("__{}[__MAILBOX({})] ! {}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
+                self.function_body.last_mut().unwrap().push_str(&format!("__{} ! {},{}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
             }
         } else if self.skip_bounded {
-            self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}[__MAILBOX({})]) -> __{}[__MAILBOX({})] ! {}, msg_{}; /*{}*/\n:: full(__{}[{}]) -> skip; /*{}*/\nfi /*{}*/\n", line_number, mtype, mailbox, mtype, mailbox, mtype, self.function_messages, line_number, mtype, mailbox, line_number, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}) -> __{} ! {},{}, msg_{}; /*{}*/\n:: full(__{}) -> skip; /*{}*/\nfi /*{}*/\n", line_number, mtype, mtype, mailbox, mtype, self.function_messages, line_number, mtype, line_number, line_number));
         } else {
-            self.function_body.last_mut().unwrap().push_str(&format!("__{}[__MAILBOX({})] ! {}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("__{} ! {},{}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
         }
         self.function_messages += 1;
     }
@@ -617,7 +617,7 @@ impl FileWriter {
                 let mtype = assignment.replace(':', "").to_uppercase();
                 self.mtype.push(mtype.clone());
                 // self.function_body.last_mut().unwrap().push_str(&format!(":: messageType == {} -> /*{}*/\n", assignment.to_uppercase(), line_number));
-                self.function_body.last_mut().unwrap().push_str(&format!(":: __{}[__MAILBOX(__pid)] ? {}, rec_v_{} -> /*{}*/\n", mtype, mtype, self.receive_count-1, line_number));
+                self.function_body.last_mut().unwrap().push_str(&format!(":: __{} ? __pid,{}, rec_v_{} -> /*{}*/\n", mtype, mtype, self.receive_count-1, line_number));
                 
             } else if !assignment.starts_with(':') {
                 if !self.function_sym_table.contains(assignment) {
@@ -636,7 +636,7 @@ impl FileWriter {
     }
 
     pub fn write_receive_multi_atom(&mut self, mtype: String, atom: String, line_number: u32) {
-        self.function_body.last_mut().unwrap().push_str(&format!(":: __{}[__MAILBOX(__pid)] ? {}, {} -> /*{}*/\n", mtype.to_uppercase(), mtype.to_uppercase(), atom, line_number));
+        self.function_body.last_mut().unwrap().push_str(&format!(":: __{} ? __pid,{}, {} -> /*{}*/\n", mtype.to_uppercase(), mtype.to_uppercase(), atom, line_number));
     }
     
     pub fn write_end_receive_statement(&mut self) {

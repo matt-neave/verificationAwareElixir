@@ -1,12 +1,22 @@
+mtype = { BIND }
+chan c = [10] of { byte, mtype }
+
 
 init {
-    int a = 1;
+    int a, b;
+    a = run A();
+    b = run B();
 
-    do
-    :: a <= 10000 -> a = a + 1;
-    :: a > 10000 -> break;
-    od;
-    printf("Hello World\n");
+    c ! b, BIND;
+    c ! a, BIND;
 }
 
-ltl ltl_0 { (false)&&(<>([]true)) }
+proctype A() {
+    c ? eval(_pid), BIND;
+    printf("%d bound\n", _pid);
+}
+
+proctype B() {
+    c ? eval(_pid), BIND;
+    printf("%d bound\n", _pid);
+}
