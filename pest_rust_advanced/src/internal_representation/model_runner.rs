@@ -22,44 +22,79 @@ struct ErrorLine {
     trail_ended: bool,
 }
 
-pub fn run_model(model_path: &str, elixir_dir: &str, fair: bool, reduce: bool) {
+// Potential args
+// if fair {
+//     cmd.arg(&format!("-DVMAX={}", QUEUE_MEMORY));
+//     cmd.arg(&format!("-DPMAX={}", PROESS_MEMORY));
+//     cmd.arg(&format!("-DQMAX={}", CHAN_MEMORY));
+// }
+
+pub fn run_model(model_path: &str, elixir_dir: &str, fair: bool, reduce: bool, ltl_count: i32) {
+    let mut cmds = Vec::new();
+    
+    if ltl_count > 0 {
+        for c in 1..=ltl_count {
+            let cmd = create_command(fair, reduce, Some(c), model_path);
+            cmds.push(cmd);
+        }
+    } else {
+        let cmd = create_command(fair, reduce, None, model_path);
+        cmds.push(cmd);
+    }
+
+    let mut error = false;
+    let mut remaining = cmds.len() as i32;
+    for mut cmd in cmds {
+        remaining -= 1;
+        let output = cmd.output().expect("Failed to run model");
+        
+        // Capture the output and print the result
+        let stdout = String::from_utf8(output.stdout);
+        error = match stdout {
+            Ok(s) => {
+                profile_errors(model_path,&s, elixir_dir, remaining)
+            }
+            Err(e) => {
+                panic!("Error: {}", e)
+            }
+        };
+        if error {
+            break;
+        };
+    }
+    if !error {
+        println!("The verifier terminated with no errors.")
+    }
+}
+
+fn create_command(fair: bool, reduce: bool, ltl_index: Option<i32>, model_path: &str) -> Command {
     let mut cmd = Command::new(SPIN_CMD);
-    cmd
-        .arg("-search")
+    cmd.arg("-search")
         .arg(&format!("-m{}", DEPTH_LIMIT));
+    
     if fair {
         cmd.arg("-l")
             .arg("-f")
             .arg("-DNOREDUCE")
             .arg(&format!("-DNFAIR={}", FAIRNESS_LIMIT));
     }
+    
     if reduce {
         cmd.arg("-DBITSTATE");
     }
-    let cmd = cmd
-        .arg(&format!("-DVECTORSZ={}", STATE_VEC_SIZE))
-        .arg(model_path)
-        .stdout(Stdio::piped());
-
-    // Potential args
-    // if fair {
-    //     cmd.arg(&format!("-DVMAX={}", QUEUE_MEMORY));
-    //     cmd.arg(&format!("-DPMAX={}", PROESS_MEMORY));
-    //     cmd.arg(&format!("-DQMAX={}", CHAN_MEMORY));
-    // }
-
-    let output = cmd.output().expect("Failed to run model");
-
-    // Capture the output and print the result
-    let stdout = String::from_utf8(output.stdout);
-    match stdout {
-        Ok(s) => {
-            profile_errors(model_path,&s, elixir_dir);
-        }
-        Err(e) => {
-            panic!("Error: {}", e);
-        }
+    
+    cmd.arg(&format!("-DVECTORSZ={}", STATE_VEC_SIZE));
+    
+    if let Some(index) = ltl_index {
+        cmd
+            .arg("-ltl")
+            .arg(&format!("ltl_{}", index));
     }
+    
+    cmd.arg(model_path)
+        .stdout(Stdio::piped());
+    
+    cmd
 }
 
 pub fn simulate_model(model_path: &str) {
@@ -70,7 +105,7 @@ pub fn simulate_model(model_path: &str) {
         .expect("Failed to run simulation");
 }
 
-fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str) {
+fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str, remaining: i32) -> bool {
     // Parse the output and determine errors    
     let re = Regex::new(r"errors: (\d+)").unwrap();
 
@@ -78,7 +113,7 @@ fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str) {
         let number_str = &captures[1];
         
         if let Ok(error_count) = u32::from_str(number_str) {
-            println!("Model checking ran successfully. {} error(s) found.", error_count);
+            println!("Model checking ran successfully. {} error(s) found. {} specification(s) remaining to check.", error_count, remaining);
             
             if error_count > 0 {
                 let mut trace_lines = Vec::new();
@@ -103,8 +138,9 @@ fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str) {
                 }
 
                 report_elixir_trace(model_path, trace_lines, elixir_dir);
+                true
             } else {
-                println!("The verifier terminated with no errors.")
+                false
             }
         } else {
             panic!("The model checker returned an unexpected output.");

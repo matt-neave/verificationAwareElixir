@@ -95,7 +95,7 @@ fn main() {
         model_runner::simulate_model(model_path);
     }
     else if model_check_flag {
-        model_runner::run_model(model_path, elixir_dir.to_str().unwrap(), weak_fairness, reduce_state_space);
+        model_runner::run_model(model_path, elixir_dir.to_str().unwrap(), weak_fairness, reduce_state_space, writer.ltl_count());
     }
     else if gen_params {
         model_generator::generate_models(model_path, final_params, param_n);
@@ -977,7 +977,7 @@ pub fn parse_function_definition(
     let mut func_arg_node: Option<Pair<Rule>> = None;
     let mut func_type_spec: Option<Pair<Rule>> = None;
     let mut vae_init = false;
-    let mut ltl_spec: Option<Pair<Rule>> = None;
+    let mut ltl_spec: Vec<Pair<Rule>> = Vec::new();
     let mut _func_metadata_node: Option<Pair<Rule>> = None;
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
@@ -990,7 +990,7 @@ pub fn parse_function_definition(
                 match annotation.as_rule() {
                     Rule::type_spec          => func_type_spec = Some(annotation),
                     Rule::vae_init           => vae_init = true,
-                    Rule::ltl_spec           => ltl_spec = Some(annotation),
+                    Rule::ltl_spec           => ltl_spec.push(annotation),
                     Rule::parameterization   => extract_params(annotation, file_writer),
                     _ => ()
                 }
@@ -1004,7 +1004,7 @@ pub fn parse_function_definition(
     let sym_table;
     let mut arg_var_intersect = Vec::new();
     let mut ltl_vars = Vec::new();
-    if let Some(x) = ltl_spec {
+    for x in ltl_spec {
         // ltl spec will be last element
         let ltl = x.into_inner().next_back().unwrap();
         ltl_vars = get_vars_from_ltl(ltl.clone());

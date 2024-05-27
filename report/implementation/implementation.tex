@@ -110,7 +110,7 @@ Once we have another process's identifier in our symbol table, we can begin comm
 \par
 We begin by describing the design of a message. A message is comprised of two components, the \texttt{message type} and the \texttt{message body}. In Elixir, the message type is denoted with an atom, which the IR simply treats as a distinct type within the system. When the message type is used in the context of a send or receive it is added to a global set of message types. Tracking this set globally is important to model the entirety of the system, even if in reality, the message type has different meanings in local contexts. The message body consists of multiple message arguments. At this point, the IR does not refer to the message argument by its type but purely treats it as an argument that is expected to be passed in communication. We can store any primitive type within a message argument by inferring the type from the send or receive expression. If a type cannot be inferred in the context, we reserve a byte array to store the message argument, but to avoid this causing memory issues, we limit the size of the byte array to a small fixed size.
 \par
-Now that we can construct a message, we can begin to model how messages can be sent and received. The IR keeps close to the mailbox system the actor-based implementation uses. Using the global message type set, we construct a per-process mailbox for each message type. The per-process mailboxes are packed into an arrays of mailboxes, where the index of the array aligns with the process identifiers we had previously been allocating. When a process sends a message, we triage which mailbox the message should be sent to using the message type and use the process identifier from the symbol table to index into the correct communication channel to attach the message.
+Now that we can construct a message, we can begin to model how messages can be sent and received. The IR keeps close to the mailbox system the actor-based implementation uses. Using the global message type set, we construct a per-process mailbox for each message type. The per-process mailboxes are constructed by passing a process identifier as an index on the channel, where the index aligns with the process identifiers we had previously been allocating. When a process sends a message, we triage which mailbox the message should be sent to using the message type and use the process identifier from the symbol table to index into the correct communication channel to attach the message.
 \par
 TODO EXAMPLE OF SENDING A MESSAGE TO ONE OF THE PROCESS' MAILBOXES
 \par
@@ -129,7 +129,7 @@ typedef linked_list {
 }
 \end{lstlisting}
 For example for a limit, $10$, means the maximum number of elements that can be appended to the list is 10. The list starts as empty, this is handed by the \texttt{node} nested structure.
-\begin{lstlisting}[language=C, xleftmargin=.1\linewidth, caption={Example of an int list node.}]
+\begin{lstlisting}[language=C, xleftmargin=.1\linewidth, caption={Example of a list node typed `int'.}]
 typedef node {
     int val;
     bool allocated;

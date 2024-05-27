@@ -36,7 +36,7 @@ pub struct FileWriter {
     _maximum_message_size: u32,
     function_messages: u32,
     receive_count: u32,
-    ltl_count: u32,
+    ltl_count: i32,
     arr_cp_count: u32,
     file: File,
     module: String,
@@ -186,7 +186,7 @@ impl FileWriter {
             self.init = true;
             // TODO: for now, function name is pushed to the channels as this is the first commit to the file
             self.function_channels.last_mut().unwrap().push_str("init {\n");
-            self.function_body.last_mut().unwrap().push_str("int __pid = 0;\n__new_mailbox(__pid);\n");
+            self.function_body.last_mut().unwrap().push_str("int __pid = 0;\n");
         } else if string_args .is_empty() {
             self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} (chan ret; int __pid) {{\n", func_name));
         } else {
@@ -540,8 +540,7 @@ impl FileWriter {
             self.function_body.last_mut().unwrap().push_str("int __tmp_pid;\n");
             String::from("__tmp_pid")
         };
-        self.function_body.last_mut().unwrap().push_str(&format!("{} = run {}({}); /*{}*/\n", assignee, proctype, formatted_args, line_number));
-        self.function_body.last_mut().unwrap().push_str(&format!("__new_mailbox({}); /*{}*/\n}}\n", assignee, line_number));
+        self.function_body.last_mut().unwrap().push_str(&format!("{} = run {}({}); /*{}*/\n}}\n", assignee, proctype, formatted_args, line_number));
     }
 
     pub fn write_send(&mut self, mut target: &str, mut args: Vec<String>, line_number: u32) {
@@ -685,7 +684,14 @@ impl FileWriter {
         spec: &str
     ) {
         self.ltl_func = true;
-        self.ltl_specs.push_str(&format!("ltl ltl_{} {{ {} }};", self.ltl_count, spec));
+        self.ltl_count += 1;
+        self.ltl_specs.push_str(&format!("ltl ltl_{} {{ {} }};\n", self.ltl_count, spec));
+    }
+
+    pub fn ltl_count(
+        self,
+    ) -> i32 {
+        self.ltl_count
     }
 
     pub fn write_defmodule(

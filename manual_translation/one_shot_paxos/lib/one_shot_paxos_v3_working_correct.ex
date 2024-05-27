@@ -1,5 +1,6 @@
 # This implementation will set the final value to either
 # 69, 420 or 420, 69. 420, 69 is incorrect.
+import VaeLib
 
 defmodule Acceptor5 do
 
@@ -108,7 +109,7 @@ defmodule Learner5 do
     n_acceptors = 3
     quorum = 2
     n_proposers = 2
-    vals = [420, 69]
+    vals = [42, 31]
     acceptors = for _ <- 1..n_acceptors do
       spawn(Acceptor5, :start_acceptor, [])
     end
@@ -123,7 +124,7 @@ defmodule Learner5 do
   end
 
   @spec wait_learned(list(), integer(), integer()) :: :ok
-  @ltl "[](<>(final_value==69)->!<>(final_value==420) && <>(final_value==420)->!<>(final_value==69))"
+  @ltl "[](p->!<>q && q->!<>p)"
   def wait_learned(acceptors, p_n, learned_n) do
     if p_n == learned_n do
       for acceptor <- acceptors do
@@ -132,6 +133,10 @@ defmodule Learner5 do
     else
       receive do
         {:learned, final_value} ->
+          predicate p, final_value == 31
+          predicate q, final_value == 42
+          predicate r, final_value != 0
+          predicate s, final_value == 0 || final_value == 31 || final_value == 42
           IO.puts("Learned final_value:")
           IO.puts(final_value)
       end

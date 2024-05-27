@@ -1,22 +1,9 @@
-mtype = { BIND }
-chan c = [10] of { byte, mtype }
 
+int value = 0;
 
 init {
-    int a, b;
-    a = run A();
-    b = run B();
-
-    c ! b, BIND;
-    c ! a, BIND;
+    value = 69;
+    value = 420;
 }
 
-proctype A() {
-    c ? eval(_pid), BIND;
-    printf("%d bound\n", _pid);
-}
-
-proctype B() {
-    c ? eval(_pid), BIND;
-    printf("%d bound\n", _pid);
-}
+ltl ltl_0 { [](value==69 -> !<>(value==420) && value==420 -> !<>(value==69)) }

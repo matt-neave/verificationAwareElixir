@@ -207,17 +207,8 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
         }\n\
     }\n\
     \n\
-    inline __new_mailbox(idx) {\n\
-        d_step {\n\
-            __mailboxes[idx] = __next_mailbox;\n\
-            __next_mailbox++;\n\
-        }\n\
-    }\n\
-    \n\
     int __dummy_iterator;\n\
     memory __mem;\n\
-    int __mailboxes[100];\n\
-    int __next_mailbox = 0;
     ");
     model
 }

@@ -29,10 +29,10 @@ With our implementation complete, we introduce the three safety requirements est
 We can now use the predicates to simplify the formulation of the safety requirements.
 \begin{itemize}
     \item \textbf{SR1}: $\lozenge r$
-    \item \textbf{SR2}: $\lozenge p \rightarrow \neg \lozenge q \land \lozenge q \rightarrow \neg \lozenge p$ 
+    \item \textbf{SR2}: $\square ( p \rightarrow \neg \lozenge q \land q \rightarrow \neg \lozenge p )$ 
     \item \textbf{SR3}: $\square s$
 \end{itemize}
-We now have a complete specification of the basic paxos algorithm in LTLixir. We can run Veriflixir on the model to verify the safety requirements.
+We now have a complete specification of the basic paxos algorithm in LTLixir. Note that SR1 and SR2 can be considered liveness requirements, this is a result of slight modifications on the original SRs to align with our specific implementation decisions. We can run Veriflixir on the model to verify the safety requirements. When we run the verification mode, we see that no SRs are violated. This justifies that both the informal paxos specification we defined is correct regarding our SRs and that the implementation of the specification is also correct.
 
 \subsubsection{Comparison with `Model Checking Paxos in Spin' Paper?}
 \subsection{Alternating-bit Protocol} \label{sec:ab}

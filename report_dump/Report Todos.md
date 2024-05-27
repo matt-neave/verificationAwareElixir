@@ -9,4 +9,7 @@
 - Model checkers
 	- Limitations of each
 - Write about sending arrays in messages
-	
+- Entire BNF of elixir subset?
+	![[Pasted image 20240527104042.png]]
+	![[Pasted image 20240527104552.png]]https://gerardtabone.com/publications/UoM%20-%20technical%20report%202022.pdf
+		- Read 'future work' we handle lots of their limitations such as they are limited to binary communication

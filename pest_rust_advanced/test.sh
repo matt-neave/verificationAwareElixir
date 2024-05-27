@@ -16,7 +16,7 @@ echo "Running the examples..."
 ### Example 1 ###
 echo "Example 1..."
 
-output=$(./target/release/vae -q -v ../manual_translation/majority_vote/lib/majority_vote.ex 2>&1)
+output=$(./target/release/veriflixir -q -v ../manual_translation/majority_vote/lib/majority_vote.ex 2>&1)
 
 if echo "$output" | grep -q "0 error(s)"; then
     echo "Test passed"
@@ -29,7 +29,7 @@ fi
 ### Example 2 ###
 echo "Example 2..."
 
-output=$(./target/release/vae -q -v ../manual_translation/distributed_calculator/calc.ex 2>&1)
+output=$(./target/release/veriflixir -q -v ../manual_translation/distributed_calculator/calc.ex 2>&1)
 
 if echo "$output" | grep -q "0 error(s)"; then
     echo "Test passed"
@@ -42,7 +42,7 @@ fi
 ### Example 3 ###
 echo "Example 3..."
 
-output=$(./target/release/vae -q -v ../manual_translation/basic_deadlock/basic_deadlock/lib/basic_deadlock.ex 2>&1)
+output=$(./target/release/veriflixir -q -v ../manual_translation/basic_deadlock/basic_deadlock/lib/basic_deadlock.ex 2>&1)
 
 if echo "$output" | grep -q "1 error(s)"; then
     echo "Test passed"
@@ -55,7 +55,7 @@ fi
 ### Example 4 ###
 echo "Example 4..."
 
-output=$(./target/release/vae -q -v ../manual_translation/basic_sequential/lib/basic_sequential.ex 2>&1)
+output=$(./target/release/veriflixir -q -v ../manual_translation/basic_sequential/lib/basic_sequential.ex 2>&1)
 
 if echo "$output" | grep -q "0 error(s)"; then
     echo "Test passed"
@@ -67,7 +67,7 @@ fi
 ### Example 5 ###
 echo "Example 5..."
 
-output=$(./target/release/vae -q -v ../manual_translation/wrong_message_order/lib/wrong_message_order.ex 2>&1)
+output=$(./target/release/veriflixir -q -v ../manual_translation/wrong_message_order/lib/wrong_message_order.ex 2>&1)
 
 if echo "$output" | grep -q "0 error(s)"; then
     echo "Test passed"
@@ -79,7 +79,7 @@ fi
 ### Example 6 ###
 echo "Example 6..."
 
-output=$(./target/release/vae -q -v ../manual_translation/basic_array/lib/basic_array.ex 2>&1)
+output=$(./target/release/veriflixir -q -v ../manual_translation/basic_array/lib/basic_array.ex 2>&1)
 
 if echo "$output" | grep -q "0 error(s)"; then
     echo "Test passed"

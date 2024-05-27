@@ -132,7 +132,7 @@ defmodule Learner6 do
 
   # @ltl "[](<>(final_value==31)->!<>(final_value==42) && <>(final_value==42)->!<>(final_value==31))&&<>(final_value!=0)"
   @spec wait_learned(list(), integer(), integer()) :: :ok
-  @ltl "[](<>(p)->!<>(q) && <>(q)->!<>(p))&&<>(r)&&[](s)"
+  @ltl "[]((p)->!<>(q) && (q)->!<>(p))&&<>(r)&&[](s)"
   def wait_learned(acceptors, p_n, learned_n) do
     if p_n == learned_n do
       for acceptor <- acceptors do

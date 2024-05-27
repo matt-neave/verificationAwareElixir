@@ -18,5 +18,5 @@
 \contentsline {lstlisting}{\numberline {5.1}{Example of the \texttt {defv} syntax}.}{33}{lstlisting.5.1}%
 \contentsline {lstlisting}{\numberline {5.2}{Representing variable declarations using the match operator}.}{35}{lstlisting.5.2}%
 \contentsline {lstlisting}{\numberline {5.3}{The structure of a list}.}{37}{lstlisting.5.3}%
-\contentsline {lstlisting}{\numberline {5.4}Example of an int list node.}{37}{lstlisting.5.4}%
+\contentsline {lstlisting}{\numberline {5.4}Example of a list node typed `int'.}{37}{lstlisting.5.4}%
 \contentsline {lstlisting}{\numberline {5.5}Memory intermediate representation.}{38}{lstlisting.5.5}%
