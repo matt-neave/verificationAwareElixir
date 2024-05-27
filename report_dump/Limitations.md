@@ -22,4 +22,5 @@ What tools? PropEr, ExUnit, Session types -- struggle with system wide property 
 # Research questions
 - Specify system - level properties to provably reason about the entirety of a system
 - Model and detect concurrency bugs between more than two processes
-- Property based testing too low level, 
+- Property based testing too low level (tests are random, can miss cases)
+- 

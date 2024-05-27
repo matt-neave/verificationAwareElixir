@@ -3,7 +3,7 @@
 # Acceptor not a majority
 import VaeLib
 
-defmodule Acceptor6 do
+defmodule Acceptor7 do
 
   @spec start_acceptor() :: :ok
   def start_acceptor do
@@ -38,7 +38,7 @@ defmodule Acceptor6 do
   end
 end
 
-defmodule Proposer6 do
+defmodule Proposer7 do
   @spec start_proposer() :: :ok
   def start_proposer do
     receive do
@@ -62,6 +62,7 @@ defmodule Proposer6 do
     end
 
     accepted_n = receive_accepted(maj, prepared_n, 0, 0)
+
     if accepted_n != -1 do
       # Value chosen
       send learner, {:learned, prepared_value}
@@ -78,8 +79,8 @@ defmodule Proposer6 do
     else
       receive do
         {:promise, acceptedProposal, acceptedValue} ->
-          if acceptedProposal > highest_seen_proposal do
-            receive_prepared(acceptedProposal, acceptedValue, maj, acceptedProposal, count + 1)
+          if acceptedValue != -1 && acceptedProposal > highest_seen_proposal do
+            receive_prepared(proposal_n, acceptedValue, maj, acceptedProposal, count + 1)
           else
             receive_prepared(proposal_n, value, maj, highest_seen_proposal, count + 1)
           end
@@ -108,7 +109,7 @@ defmodule Proposer6 do
   end
 end
 
-defmodule Learner6 do
+defmodule Learner7 do
 
   @spec start() :: :ok
   @vae_init true
@@ -118,11 +119,11 @@ defmodule Learner6 do
     n_proposers = 2
     vals = [42, 31]
     acceptors = for _ <- 1..n_acceptors do
-      spawn(Acceptor6, :start_acceptor, [])
+      spawn(Acceptor7, :start_acceptor, [])
     end
 
     for i <- 1..n_proposers do
-      proposer = spawn(Proposer6, :start_proposer, [])
+      proposer = spawn(Proposer7, :start_proposer, [])
       val_i = i - 1
       val = Enum.at(vals, val_i)
       send proposer, {:bind, acceptors, i, val, quorum, self()}
@@ -130,9 +131,10 @@ defmodule Learner6 do
     wait_learned(acceptors, n_proposers, 0)
   end
 
-  # @ltl "[](<>(final_value==31)->!<>(final_value==42) && <>(final_value==42)->!<>(final_value==31))&&<>(final_value!=0)"
   @spec wait_learned(list(), integer(), integer()) :: :ok
-  @ltl "[](((p)->!<>(q)) && ((q)->!<>(p)))&&<>(r)&&[](s)"
+  @ltl "[]((p->!<>q) && (q->!<>p))"
+  @ltl "<>(r)"
+  @ltl "[](s)"
   def wait_learned(acceptors, p_n, learned_n) do
     if p_n == learned_n do
       for acceptor <- acceptors do

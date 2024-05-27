@@ -61,7 +61,19 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Limitations.md",
+                "file": "Potential todos.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "48b160224e1e5768",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "error.md",
                 "mode": "source",
                 "source": false
               }
@@ -128,7 +140,7 @@
             }
           }
         ],
-        "currentTab": 3
+        "currentTab": 5
       }
     ],
     "direction": "vertical"
@@ -194,7 +206,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Limitations.md",
+                "file": "error.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -211,7 +223,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Limitations.md",
+                "file": "error.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -234,7 +246,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Limitations.md"
+                "file": "error.md"
               }
             }
           }
@@ -255,19 +267,20 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "6dc2e261e9139500",
+  "active": "48b160224e1e5768",
   "lastOpenFiles": [
+    "Limitations.md",
+    "error.md",
+    "Potential todos.md",
     "Report Todos.md",
+    "Report plan.md",
+    "Random notes.md",
+    "state space exploration.md",
+    "Question for Naranker.md",
+    "Verification of Elixir paper.md",
     "Pasted image 20240527104552.png",
     "Pasted image 20240527104042.png",
-    "Limitations.md",
     "message passing exploration.md",
-    "state space exploration.md",
-    "Potential todos.md",
-    "Report plan.md",
-    "Verification of Elixir paper.md",
-    "Random notes.md",
-    "Question for Naranker.md",
     "Gomela analysis, comparison and inspiration.md",
     "Pasted image 20240514102955.png",
     "Pasted image 20240515174608.png",

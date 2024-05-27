@@ -49,3 +49,6 @@ SF_v(A) ==
 	- Fairness✅
 	- Non-exhaustive searching with DBITSTATE ✅
 		- Refactor channels to use a mapping from \_\_pid -> arr_idx
+	- Multithread multiple LTL formula
+	- Extract MESSAGE ORDERING VERY IMORPTANT, DONE WITH -t -r -s -l -g?
+	- 

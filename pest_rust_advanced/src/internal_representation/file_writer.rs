@@ -586,14 +586,14 @@ impl FileWriter {
         }
         if mailbox == -1 {
             if self.skip_bounded {
-                self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}) -> __{} ! {},{}, msg_{}; /*{}*/\n:: full(__{}) -> skip; /*{}*/\nfi /*{}*/\n", line_number, target, target, mtype, target, self.function_messages, line_number, mtype, line_number, line_number));
+                self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}) -> __{} !! {},{}, msg_{}; /*{}*/\n:: full(__{}) -> skip; /*{}*/\nfi /*{}*/\n", line_number, target, target, mtype, target, self.function_messages, line_number, mtype, line_number, line_number));
             } else {
-                self.function_body.last_mut().unwrap().push_str(&format!("__{} ! {},{}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
+                self.function_body.last_mut().unwrap().push_str(&format!("__{} !! {},{}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
             }
         } else if self.skip_bounded {
-            self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}) -> __{} ! {},{}, msg_{}; /*{}*/\n:: full(__{}) -> skip; /*{}*/\nfi /*{}*/\n", line_number, mtype, mtype, mailbox, mtype, self.function_messages, line_number, mtype, line_number, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}) -> __{} !! {},{}, msg_{}; /*{}*/\n:: full(__{}) -> skip; /*{}*/\nfi /*{}*/\n", line_number, mtype, mtype, mailbox, mtype, self.function_messages, line_number, mtype, line_number, line_number));
         } else {
-            self.function_body.last_mut().unwrap().push_str(&format!("__{} ! {},{}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("__{} !! {},{}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
         }
         self.function_messages += 1;
     }
@@ -616,8 +616,15 @@ impl FileWriter {
                 let mtype = assignment.replace(':', "").to_uppercase();
                 self.mtype.push(mtype.clone());
                 // self.function_body.last_mut().unwrap().push_str(&format!(":: messageType == {} -> /*{}*/\n", assignment.to_uppercase(), line_number));
-                self.function_body.last_mut().unwrap().push_str(&format!(":: __{} ? __pid,{}, rec_v_{} -> /*{}*/\n", mtype, mtype, self.receive_count-1, line_number));
+                self.function_body.last_mut().unwrap().push_str(&format!(":: __{} ?? eval(__pid),{}, rec_v_{} -> /*{}*/\n", mtype, mtype, self.receive_count-1, line_number));
                 
+            } else if self.ltl_vars.contains(assignment) {
+                if !self.used_ltl_vars.contains(assignment) {
+                    self.ltl_header.push_str(&format!("int {}; /*{}*/\n", assignment, line_number));
+                    self.used_ltl_vars.push(assignment.clone());
+                }
+                self.function_sym_table.add_entry(String::from(assignment), sym_table::SymbolType::Atom);
+                self.function_body.last_mut().unwrap().push_str(&format!("{} = rec_v_{}.m{}.{}; /*{}*/\n", assignment, self.receive_count - 1, i, "data2", line_number)); 
             } else if !assignment.starts_with(':') {
                 if !self.function_sym_table.contains(assignment) {
                     self.function_body.last_mut().unwrap().push_str(&format!("int {}; /*{}*/\n", assignment, line_number));
@@ -635,7 +642,7 @@ impl FileWriter {
     }
 
     pub fn write_receive_multi_atom(&mut self, mtype: String, atom: String, line_number: u32) {
-        self.function_body.last_mut().unwrap().push_str(&format!(":: __{} ? __pid,{}, {} -> /*{}*/\n", mtype.to_uppercase(), mtype.to_uppercase(), atom, line_number));
+        self.function_body.last_mut().unwrap().push_str(&format!(":: __{} ?? eval(__pid),{}, {} -> /*{}*/\n", mtype.to_uppercase(), mtype.to_uppercase(), atom, line_number));
     }
     
     pub fn write_end_receive_statement(&mut self) {
@@ -941,28 +948,35 @@ impl FileWriter {
 
     fn move_var_to_global(&mut self, var: String) {
         // Find the variable in the local symbol table
+        if self.used_ltl_vars.contains(&var) {
+            return;
+        }
         let typ = self.function_sym_table.safe_lookup(&var);
         if typ.is_none() {
+            // Assumed to be an int
+            let str = &format!("int {};\n", var);
+            self.ltl_header.push_str(str);
+            self.function_sym_table.add_entry(var.clone(), sym_table::SymbolType::Integer);
+            self.used_ltl_vars.push(var);            
             return;
         }
         let typ = typ.unwrap();
         match typ {
             sym_table::SymbolType::Integer => {
-                // let str = &format!("int {};\n", var);
-                // self.ltl_header.push_str(str);
-                // self.function_body.push(last_body.replace(str, ""));
                 // Find the line with the variable declaration, format: int var...
                 // Format is something like int var; or int var = 0;
                 let search_term = &format!("int {}", var);
-                self.move_int_to_global(search_term, var);
+                self.move_int_to_global(search_term, var.clone());
+                self.used_ltl_vars.push(var);
             },
             sym_table::SymbolType::Boolean => {
                 let str = &format!("bool {};\n", var);
                 self.ltl_header.push_str(str);
                 let last_body = self.function_body.pop().unwrap();
                 self.function_body.push(last_body.replace(str, ""));
+                self.used_ltl_vars.push(var);
             },
-            _ => warn!("Variable {} type was {:?}", var, typ),
+            _ => (),
         }
     }
 
@@ -989,6 +1003,9 @@ impl FileWriter {
             // Remove the entire line containing the pattern
             let result_string = re.replace_all(&last_body, "").to_string();
             self.function_body.push(result_string);
+        } else if last_body.contains(search_term) {
+            self.ltl_header.push_str(&format!("int {};\n", var));
+            self.function_body.push(last_body.replace(search_term, ""));
         } else {
             self.function_body.push(last_body);
         }

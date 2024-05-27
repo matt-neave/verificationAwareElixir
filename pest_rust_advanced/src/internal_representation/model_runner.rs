@@ -3,6 +3,9 @@
 use std::process::{Command, Stdio};
 use std::str::FromStr;
 use regex::Regex;
+use std::thread;
+use std::sync::Arc;
+use std::collections::HashMap;
 
 pub const SPIN_CMD: &str = "spin";
 pub const STATE_VEC_SIZE: &str = "409600";
@@ -30,46 +33,71 @@ struct ErrorLine {
 // }
 
 pub fn run_model(model_path: &str, elixir_dir: &str, fair: bool, reduce: bool, ltl_count: i32) {
-    let mut cmds = Vec::new();
+    let mut cmds = HashMap::new();
     
     if ltl_count > 0 {
         for c in 1..=ltl_count {
-            let cmd = create_command(fair, reduce, Some(c), model_path);
-            cmds.push(cmd);
+            let dir = &format!("ltl_{}", c);
+            let new_model_path = format!("{}/{}", dir, model_path);
+            // Make a new directory for each model to copy the new model into
+            let _ = std::fs::create_dir(format!("ltl_{}", c));
+            std::fs::copy(model_path, &new_model_path).expect("Failed to copy model file.");
+            let cmd = create_command(fair, reduce, Some(c), &model_path, dir);
+            cmds.insert(new_model_path, cmd);
         }
     } else {
-        let cmd = create_command(fair, reduce, None, model_path);
-        cmds.push(cmd);
+        let cmd = create_command(fair, reduce, None, model_path, ".");
+        cmds.insert(String::from(model_path), cmd);
     }
 
+    let elixir_dir = Arc::new(elixir_dir.to_owned());
+    let total_runs = cmds.len() as i32;
     let mut error = false;
-    let mut remaining = cmds.len() as i32;
-    for mut cmd in cmds {
-        remaining -= 1;
-        let output = cmd.output().expect("Failed to run model");
-        
+    println!("Running {} model(s).", total_runs);
+    let start = std::time::Instant::now();
+    
+    let handles: Vec<_> = cmds.into_iter().map(|(path, mut cmd)| {
+        println!("Running cmd: {:?}", cmd);
+        let elixir_dir = Arc::clone(&elixir_dir);
+    
+        thread::spawn(move || {
+            let output = cmd.output().expect("Failed to run model");
+            (output, path, elixir_dir)
+        })
+    }).collect();
+    
+    // Process results sequentially
+    for (handle) in handles {
+        let (output, path, elixir_dir) = handle.join().expect("Failed to join thread");
         // Capture the output and print the result
         let stdout = String::from_utf8(output.stdout);
         error = match stdout {
             Ok(s) => {
-                profile_errors(model_path,&s, elixir_dir, remaining)
+                profile_errors(&path, &s, &elixir_dir)
             }
             Err(e) => {
                 panic!("Error: {}", e)
             }
         };
-        if error {
-            break;
-        };
     }
+    
     if !error {
         println!("The verifier terminated with no errors.")
     }
+    println!("Elapsed time: {:?}.", start.elapsed().as_secs_f64());
+
+    if ltl_count > 0 {
+        // for c in 1..=ltl_count {
+        //     std::fs::remove_dir_all(format!("ltl_{}", c)).expect("Failed to remove directory.");
+        // }
+    }
 }
 
-fn create_command(fair: bool, reduce: bool, ltl_index: Option<i32>, model_path: &str) -> Command {
+fn create_command(fair: bool, reduce: bool, ltl_index: Option<i32>, model_path: &str, dir: &str) -> Command {
     let mut cmd = Command::new(SPIN_CMD);
-    cmd.arg("-search")
+    cmd
+        .current_dir(dir)
+        .arg("-search")
         .arg(&format!("-m{}", DEPTH_LIMIT));
     
     if fair {
@@ -105,7 +133,7 @@ pub fn simulate_model(model_path: &str) {
         .expect("Failed to run simulation");
 }
 
-fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str, remaining: i32) -> bool {
+fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str) -> bool {
     // Parse the output and determine errors    
     let re = Regex::new(r"errors: (\d+)").unwrap();
 
@@ -113,7 +141,7 @@ fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str, remain
         let number_str = &captures[1];
         
         if let Ok(error_count) = u32::from_str(number_str) {
-            println!("Model checking ran successfully. {} error(s) found. {} specification(s) remaining to check.", error_count, remaining);
+            println!("Model ran successfully. {} error(s) found.", error_count);
             
             if error_count > 0 {
                 let mut trace_lines = Vec::new();
@@ -143,7 +171,7 @@ fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str, remain
                 false
             }
         } else {
-            panic!("The model checker returned an unexpected output.");
+            panic!("The model checker returned an unexpected output. \n{}", model_output);
         }
     } else {
         panic!("The model checker returned an unexpected output. \n{}", model_output);

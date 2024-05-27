@@ -235,7 +235,7 @@ receive_multi_atom = { "[" ~ alpha_letters ~ ": " ~ atom ~ "]" }
 single_assignment = { "[{" ~ atom ~ ", " ~ metadata ~ ", " ~ nil ~ "}]" }
 
 // Case where receive is a pair, format of [response: {:ans, [line: 6], nil}]
-pair_assignment = { "[" ~ alpha_letters ~ ": {" ~ (atom | assigned_variable) ~ ", " ~ metadata ~ ", nil}]" }
+pair_assignment = { "[" ~ alpha_letters ~ ": " ~ (atom | assigned_variable) ~ "]" }
 
 // Case where receive assings to multiple variables
 // TODO can be refactored such that the first element is always an mtype
