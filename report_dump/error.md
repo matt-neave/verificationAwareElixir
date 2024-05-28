@@ -628,3 +628,16 @@ Never claim moves to line 15    [assert(!((final_value==31)))]
 spin: trail ends after 826 steps
 
 ```
+---
+Changelog:
+problem was with line 94
+
+was:
+      if rejections >= maj do
+now:
+
+      if rejections >= 1 do
+as once we have a majority, we only care if we have a single rejection in the majority, not a majority of rejections!!
+Note: the previous change with conditions may still be an error! Double check that we need to ensure 
+
+result:

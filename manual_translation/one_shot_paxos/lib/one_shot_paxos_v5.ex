@@ -91,7 +91,7 @@ defmodule Proposer7 do
   @spec receive_accepted(integer(), integer(), integer(), integer()) :: integer()
   def receive_accepted(maj, prepared_n, rejections, count) do
     if count >= maj do
-      if rejections >= maj do
+      if rejections >= 1 do
         -1
       else
         prepared_n
