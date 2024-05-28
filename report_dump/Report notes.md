@@ -57,4 +57,4 @@ Mention it is useful for system evolution / maintence
 
 ## Evaluation
 Show how paxos can now be extended w total broadcast
-
+Show lots of examples, introduce artificial bugs
