@@ -185,7 +185,7 @@ impl FileWriter {
         if init {
             self.init = true;
             // TODO: for now, function name is pushed to the channels as this is the first commit to the file
-            self.function_channels.last_mut().unwrap().push_str("init {\n");
+            self.function_channels.last_mut().unwrap().push_str(&format!("active proctype {} () {{\n", func_name));
             self.function_body.last_mut().unwrap().push_str("int __pid = 0;\n");
         } else if string_args .is_empty() {
             self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} (chan ret; int __pid) {{\n", func_name));

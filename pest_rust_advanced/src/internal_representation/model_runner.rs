@@ -11,10 +11,10 @@ pub const SPIN_CMD: &str = "spin";
 pub const STATE_VEC_SIZE: &str = "409600";
 const DEPTH_LIMIT: &str = "100000";
 const FAIRNESS_LIMIT: &str = "100";
-const QUEUE_MEMORY: &str = "5000";
-const PROESS_MEMORY: &str = "500";
-const CHAN_MEMORY: &str = "500";
-const VERBOSE: bool = true;
+const _QUEUE_MEMORY: &str = "5000";
+const _PROESS_MEMORY: &str = "500";
+const _CHAN_MEMORY: &str = "500";
+const VERBOSE: bool = false;
 struct ErrorLine {
     process_num: u32,
     line_num: u32,
@@ -23,6 +23,14 @@ struct ErrorLine {
     start_of_cycle: bool,
     ltl_violation: bool,
     trail_ended: bool,
+}
+
+struct Message {
+    process_num: u32,
+    function_name: String,
+    direction: String,
+    data: String,
+    mtype: String,
 }
 
 // Potential args
@@ -67,7 +75,7 @@ pub fn run_model(model_path: &str, elixir_dir: &str, fair: bool, reduce: bool, l
     }).collect();
     
     // Process results sequentially
-    for (handle) in handles {
+    for handle in handles {
         let (output, path, elixir_dir) = handle.join().expect("Failed to join thread");
         // Capture the output and print the result
         let stdout = String::from_utf8(output.stdout);
@@ -144,28 +152,17 @@ fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str) -> boo
             println!("Model ran successfully. {} error(s) found.", error_count);
             
             if error_count > 0 {
-                let mut trace_lines = Vec::new();
-                let invalid_end_state_lines = check_invalid_end_state(model_path, model_output);
-                for trace in invalid_end_state_lines {
-                    trace_lines.push(trace);
-                }
+                check_invalid_end_state(model_path, model_output);
 
-                let non_accept_cycles = check_non_accept_cycles(model_path, model_output);
-                for trace in non_accept_cycles {
-                    trace_lines.push(trace);
-                }
+                check_non_accept_cycles(model_path, model_output);
 
-                let too_many_queues = check_too_many_queues(model_path, model_output);
-                for trace in too_many_queues {
-                    trace_lines.push(trace);
-                }
+                check_too_many_queues(model_path, model_output);
 
-                let assertion_violation = check_assertion_violation(model_path, model_output);
-                for trace in assertion_violation {
-                    trace_lines.push(trace);
-                }
+                check_assertion_violation(model_path, model_output);
 
-                report_elixir_trace(model_path, trace_lines, elixir_dir);
+                let (trace, messages) = generate_trace(model_path);
+
+                report_elixir_trace(model_path, trace, messages, elixir_dir);
                 true
             } else {
                 false
@@ -178,36 +175,29 @@ fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str) -> boo
     }
 } 
 
-fn check_invalid_end_state(model_path: &str, model_output: &str) -> Vec<ErrorLine> {
+fn check_invalid_end_state(model_path: &str, model_output: &str) {
     // Check if the model reached an invalid end state
     // If so, find the trace and report the errors to the user
 
     let match_str = "invalid end state (";
-    let mut trace = Vec::new();
 
     if model_output.contains(match_str) {
         println!("The program likely reached a deadlock. Generating trace.");
-        trace = generate_trace(model_path);
     }
-    trace
 }
 
-fn check_non_accept_cycles(model_path: &str, model_output: &str) -> Vec<ErrorLine> {
+fn check_non_accept_cycles(model_path: &str, model_output: &str) {
     // Check for non acceptance cycles (livelock or ltl property not satisfied)
     let match_str = "acceptance cycle";
-    let mut trace = Vec::new();
 
     if model_output.contains(match_str) {
         println!("The program is livelocked, or an ltl property was violated. Generating trace.");
-        trace = generate_trace(model_path);
     }
-    trace
 }
 
-fn check_assertion_violation(model_path: &str, model_output: &str) -> Vec<ErrorLine> {
+fn check_assertion_violation(model_path: &str, model_output: &str) {
     // Check for assertion violations
     let match_str = "assertion violated";
-    let mut trace = Vec::new();
 
     if model_output.contains(match_str) {
         println!("An LTL, pre- or post-condition was violated. Generating trace.");
@@ -217,28 +207,32 @@ fn check_assertion_violation(model_path: &str, model_output: &str) -> Vec<ErrorL
             let matched_portion = captures.as_str();
             println!("Violated: {}.", matched_portion);
         }
-        trace = generate_trace(model_path);
     }
-    trace
 }
 
-fn check_too_many_queues(model_path: &str, model_output: &str) -> Vec<ErrorLine> {
+fn check_too_many_queues(model_path: &str, model_output: &str) {
     // Check for too many queues
     let match_str = "too many queues";
-    let mut trace = Vec::new();
 
     if model_output.contains(match_str) {
         println!("The execution depth implies a non-terminating path (a process is likely iterating unconditionally). Generating trace.");
-        trace = generate_trace(model_path);
     }
-    trace
 }
 
-fn generate_trace(model_path: &str) -> Vec<ErrorLine> {
+fn generate_trace(model_path: &str) -> (Vec<ErrorLine>, Vec<Message>) {
     // Run the trace
-    let trace_output = Command::new("spin")
+    let mut trace_output = Command::new("spin");
+
+    trace_output
         .arg("-t") // View trace
-        .arg(if VERBOSE { "-v" } else { "" }) // Verbose trace if VERBOSE is true
+        .arg("-r")
+        .arg("-s");
+
+    if VERBOSE {
+        trace_output.arg("-v"); // Verbose trace if VERBOSE is true
+    }
+
+    let trace_output = trace_output
         .arg(model_path)
         .stdout(Stdio::piped())
         .output()
@@ -246,16 +240,17 @@ fn generate_trace(model_path: &str) -> Vec<ErrorLine> {
 
     let output_str = String::from_utf8(trace_output.stdout).expect("Failed to get the trace.");
 
-    if VERBOSE {
-        return generate_verbose_trace(&output_str);
-    }
-
     if output_str.contains("START OF CYCLE") {
         println!("Start of cycle:")
     }
 
-    let re = Regex::new(r"\d+:\s*proc\s*(\d+)\s*\(([^)]+)\)\s*test_out\.pml:(\d+).*").unwrap();
+    let re: Regex = Regex::new(r"\d+:\s*proc\s*(\d+)\s*\(([^)]+)\)\s*test_out\.pml:(\d+).*").unwrap();
+    let re_message = Regex::new(r"\d+:\s*proc\s*(\d+)\s*\(([^):]+:[^)]*?)\)\s*test_out\.pml:\d+\s*(Send|Recv)\s*([^ ]+)\s*(->|<-)\s*queue\s*\d+\s*\(([^)]+)\)"
+).unwrap();
+
     let mut trace = Vec::new();
+    let mut messages = Vec::new();
+
     for line in output_str.lines() {
         if let Some(captures) = re.captures(line) {
             let proc_number: u32 = captures[1].parse().unwrap_or(0);
@@ -275,16 +270,49 @@ fn generate_trace(model_path: &str) -> Vec<ErrorLine> {
             }; 
             trace.push(err);
         }
+
+        if let Some(captures) = re_message.captures(line) {
+            let process_number = captures.get(1).unwrap().as_str();
+            let function_name = captures.get(2).unwrap().as_str();
+            let message_data = captures.get(4).unwrap().as_str();
+            let arrow_direction = captures.get(5).unwrap().as_str();
+            let message_type = captures.get(6).unwrap().as_str();
+        
+            let message = Message {
+                process_num: process_number.parse().unwrap(),
+                function_name: function_name.to_string(),
+                direction: arrow_direction.to_string(),
+                data: message_data.to_string(),
+                mtype: message_type.to_string(),
+            };
+            messages.push(message);
+        }
     }
-    trace
+    (trace, messages)
 }
 
-fn report_elixir_trace(model_path: &str, trace: Vec<ErrorLine>, elixir_dir: &str) {
+fn report_elixir_trace(model_path: &str, trace: Vec<ErrorLine>, messages: Vec<Message>, elixir_dir: &str) {
     let model = std::fs::read_to_string(model_path).expect("Failed to read the model file.");
-    let re = Regex::new(r"/\*(\d+)\*/").expect("Failed to compile regex");
+    let re: Regex = Regex::new(r"/\*(\d+)\*/").expect("Failed to compile regex");
 
     let elixir_file = std::fs::read_to_string(elixir_dir).expect("Failed to read the elixir file.");
 
+    // First send all message events
+    println!("<<<Message Events>>>\n");
+    for (i, message) in messages.iter().enumerate() {
+        println!(
+            "[{}] ({} - {}) {} {} <{}>",
+            i+1,
+            message.function_name,
+            message.process_num,
+            message.mtype,
+            message.direction,
+            message.data,
+        );
+    }
+
+    println!("\n\n<<<Error Trace>>>\n");
+    // Then send the exact trace
     let mut eot = false;
     for (i, trace_line) in trace.iter().enumerate() {
         if trace_line.start_of_cycle {
@@ -331,53 +359,4 @@ fn report_elixir_trace(model_path: &str, trace: Vec<ErrorLine>, elixir_dir: &str
             }
         }
     }
-}
-
-fn generate_verbose_trace(output_str: &str) -> Vec<ErrorLine> {
-    let re = Regex::new(r"\d+:\s*proc\s*(\d+)\s*\(([^)]+)\)\s*test_out\.pml:(\d+).*").unwrap();
-    let mut trace: Vec<ErrorLine> = Vec::new();
-    let mut trail_ended = false;
-    for line in output_str.lines() {
-        if let Some(captures) = re.captures(line) {
-            let proc_number: u32 = captures[1].parse().unwrap_or(0);
-            let function_name = captures[2].to_string().chars()
-                .filter(|c| c.is_alphabetic() || *c == '_')
-                .collect();
-            let line_number: u32 = captures[3].parse().unwrap_or(0);
-            let valid = line.contains("valid end state");
-            let err = ErrorLine {
-                process_num: proc_number,
-                line_num: line_number,
-                valid_end_state: valid,
-                function_name,
-                start_of_cycle: false,
-                ltl_violation: false,
-                trail_ended: false,
-            }; 
-            trace.push(err);
-        } else if line.contains("START OF CYCLE") { 
-            let err = ErrorLine {
-                process_num: 0,
-                line_num: 0,
-                valid_end_state: false,
-                function_name: String::from(""),
-                start_of_cycle: true,
-                ltl_violation: false,
-                trail_ended: false,
-            };
-            trace.push(err);
-        } else if line.contains("trail ends after") {
-            let err = ErrorLine {
-                process_num: 0,
-                line_num: 0,
-                valid_end_state: false,
-                function_name: String::from(""),
-                start_of_cycle: false,
-                ltl_violation: false,
-                trail_ended: true,
-            };
-            trace.push(err);
-        }
-    }    
-    trace
 }

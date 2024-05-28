@@ -641,3 +641,44 @@ as once we have a majority, we only care if we have a single rejection in the ma
 Note: the previous change with conditions may still be an error! Double check that we need to ensure 
 
 result:
+
+
+Running 3 model(s).
+Running cmd: cd "ltl_3" && "spin" "-search" "-m100000" "-DBITSTATE" "-DVECTORSZ=409600" "-ltl" "ltl_3" "test_out.pml"
+Running cmd: cd "ltl_1" && "spin" "-search" "-m100000" "-DBITSTATE" "-DVECTORSZ=409600" "-ltl" "ltl_1" "test_out.pml"
+Running cmd: cd "ltl_2" && "spin" "-search" "-m100000" "-DBITSTATE" "-DVECTORSZ=409600" "-ltl" "ltl_2" "test_out.pml"
+Model ran successfully. 0 error(s) found.
+Model ran successfully. 0 error(s) found.
+Model ran successfully. 0 error(s) found.
+The verifier terminated with no errors.
+Elapsed time: 3413.647886964.
+
+(Spin Version 6.5.2 -- 6 December 2019)
+        + Partial Order Reduction
+
+Bit statespace search for:
+        never claim             + (ltl_1)
+        assertion violations    + (if within scope of claim)
+        acceptance   cycles     + (fairness disabled)
+        invalid end states      - (disabled by never claim)
+
+State-vector 17192 byte, depth reached 953, errors: 0
+ 49499409 states, stored
+ 38932992 states, matched
+ 88432401 transitions (= stored+matched)
+ 36651733 atomic steps
+
+hash factor: 2.7115 (best if > 100.)
+
+bits set per state: 3 (-k3)
+
+Stats on memory usage (in Megabytes):
+812892.745      equivalent memory usage for states (stored*(State-vector + overhead))
+   16.000       memory used for hash array (-w27)
+    0.076       memory used for bit stack
+    0.611       memory used for DFS stack (-m10000)
+  135.875       other (proc and chan stacks)
+  152.588       total actual memory usage
+
+
+---

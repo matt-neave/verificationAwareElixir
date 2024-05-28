@@ -51,4 +51,4 @@ SF_v(A) ==
 		- Refactor channels to use a mapping from \_\_pid -> arr_idx
 	- Multithread multiple LTL formula
 	- Extract MESSAGE ORDERING VERY IMORPTANT, DONE WITH -t -r -s -l -g?
-	- 
+	- Every message sends it's own pid -> better readability
