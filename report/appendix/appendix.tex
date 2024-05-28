@@ -1,2 +1,238 @@
 \appendix
 \chapter{First Appendix}
+
+\subsubsection{Paxos with a bug introduced to the proposer}
+\begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
+import VaeLib
+
+defmodule Acceptor do
+
+  @spec start_acceptor() :: :ok
+  def start_acceptor do
+    acceptedProposal = -1
+    acceptedValue = -1
+    minProposal = -1
+    accept_handler(acceptedProposal, acceptedValue, minProposal)
+  end
+
+  @spec accept_handler(integer(), integer(), integer()) :: :ok
+  def accept_handler(acceptedProposal, acceptedValue, minProposal) do
+    receive do
+      {:prepare, n, proposer} ->
+        if n > minProposal do
+          send proposer, {:promise, acceptedProposal, acceptedValue}
+          accept_handler(acceptedProposal, acceptedValue, n)
+        else
+          send proposer, {:promise, acceptedProposal, acceptedValue}
+          accept_handler(acceptedProposal, acceptedValue, minProposal)
+        end
+      {:accept, n, value, proposer} ->
+        if n >= minProposal do
+          send proposer, {:accepted, n}
+          accept_handler(n, value, n)
+        else
+          send proposer, {:accepted, minProposal}
+          accept_handler(acceptedProposal, acceptedValue, minProposal)
+        end
+      {:terminate} ->
+        IO.puts("Terminating acceptor")
+    end
+  end
+end
+
+defmodule Proposer do
+  @spec start_proposer() :: :ok
+  def start_proposer do
+    receive do
+      {:bind, acceptors, proposal_n, value, maj, learner} -> proposer_handler(acceptors, proposal_n, value, maj, learner)
+    end
+  end
+
+  @spec proposer_handler(list(), integer(), integer(), integer(), integer()) :: :ok
+  def proposer_handler(acceptors, proposal_n, value, maj, learner) do
+    for acceptor <- acceptors do
+      send acceptor, {:prepare, proposal_n, self()}
+    end
+
+    receive_prepared(proposal_n, value, maj, 0, 0)
+    {prepared_n, prepared_value} = receive do
+      {:majority_prepared, n, v} -> {n, v}
+    end
+
+    for acceptor <- acceptors do
+      send acceptor, {:accept, prepared_n, prepared_value, self()}
+    end
+
+    accepted_n = receive_accepted(maj, prepared_n, 0, 0)
+
+    if accepted_n != -1 do
+      # Value chosen
+      send learner, {:learned, prepared_value}
+    else
+      # Value was rejected
+      send learner, {:learned, 0}
+    end
+  end
+
+  @spec receive_prepared(integer(), integer(), integer(), integer(), integer()) :: :ok
+  def receive_prepared(proposal_n, value, maj, highest_seen_proposal, count) do
+    if count >= maj do
+      send self(), {:majority_prepared, proposal_n, value}
+    else
+      receive do
+        {:promise, acceptedProposal, acceptedValue} ->
+          if acceptedValue != -1 && acceptedProposal > highest_seen_proposal do
+            receive_prepared(proposal_n, acceptedValue, maj, acceptedProposal, count + 1)
+          else
+            receive_prepared(proposal_n, value, maj, highest_seen_proposal, count + 1)
+          end
+      end
+    end
+  end
+
+  @spec receive_accepted(integer(), integer(), integer(), integer()) :: integer()
+  def receive_accepted(maj, prepared_n, rejections, count) do
+    if count >= maj do
+      if rejections >= maj do  # BUG IS HERE
+        -1
+      else
+        prepared_n
+      end
+    else
+      receive do
+        {:accepted, n} ->
+          if n > prepared_n do
+            receive_accepted(maj, prepared_n, rejections + 1, count + 1)
+          else
+            receive_accepted(maj, prepared_n, rejections, count + 1)
+          end
+      end
+    end
+  end
+end
+
+defmodule Learner do
+
+  @spec start() :: :ok
+  @vae_init true
+  def start do
+    n_acceptors = 3
+    quorum = 2
+    n_proposers = 2
+    vals = [42, 31]
+    acceptors = for _ <- 1..n_acceptors do
+      spawn(Acceptor, :start_acceptor, [])
+    end
+
+    for i <- 1..n_proposers do
+      proposer = spawn(Proposer, :start_proposer, [])
+      val_i = i - 1
+      val = Enum.at(vals, val_i)
+      send proposer, {:bind, acceptors, i, val, quorum, self()}
+    end
+    wait_learned(acceptors, n_proposers, 0)
+  end
+
+  @spec wait_learned(list(), integer(), integer()) :: :ok
+  @ltl "[]((p->!<>q) && (q->!<>p))"
+  @ltl "<>(r)"
+  @ltl "[](s)"
+  def wait_learned(acceptors, p_n, learned_n) do
+    if p_n == learned_n do
+      for acceptor <- acceptors do
+        send acceptor, {:terminate}
+      end
+    else
+      receive do
+        {:learned, final_value} ->
+          predicate p, final_value == 31
+          predicate q, final_value == 42
+          predicate r, final_value != 0
+          predicate s, final_value == 0 || final_value == 31 || final_value == 42
+          IO.puts("Learned final_value:")
+          IO.puts(final_value)
+      end
+      wait_learned(acceptors, p_n, learned_n + 1)
+    end
+  end
+end
+
+\end{lstlisting}
+
+\subsubsection{Paxos bug message log}
+\begin{lstlisting}[xleftmargin=.01\linewidth, xrightmargin=0.01\linewidth, caption={Message passing caused by the proposer's protocol bug.}, label={lst:paxos_bug}]
+    Never claim moves to line 6     [(1)]
+138:    proc  7 (start_proposer:1) test_out.pml:314 Recv 7,BIND,0,0,2,0,0,0,0,0,1,0,0,0,0,0,42,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        <- queue 20 (__BIND)
+154:    proc  8 (proposer_handler:1) test_out.pml:350 Send 1,PREPARE,0,0,1,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 23 (__PREPARE)
+158:    proc  8 (proposer_handler:1) test_out.pml:350 Send 3,PREPARE,0,0,1,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 23 (__PREPARE)
+162:    proc  8 (proposer_handler:1) test_out.pml:350 Send 5,PREPARE,0,0,1,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 23 (__PREPARE)
+197:    proc  6 (accept_handler:1) test_out.pml:262 Recv 5,PREPARE,0,0,1,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0      <- queue 23 (__PREPARE)
+203:    proc  6 (accept_handler:1) test_out.pml:272 Send 7,PROMISE,0,0,-1,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 26 (__PROMISE)
+205:    proc  9 (receive_prepared:1) test_out.pml:425 Recv 7,PROMISE,0,0,-1,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0  <- queue 26 (__PROMISE)
+219:    proc  2 (accept_handler:1) test_out.pml:262 Recv 1,PREPARE,0,0,1,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0      <- queue 23 (__PREPARE)
+262:    proc  4 (accept_handler:1) test_out.pml:262 Recv 3,PREPARE,0,0,1,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0      <- queue 23 (__PREPARE)
+278:    proc  0 (:init::1) test_out.pml:521 Send 10,BIND,0,0,3,0,0,0,0,0,2,0,0,0,0,0,31,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0       -> queue 20 (__BIND)
+292:    proc  4 (accept_handler:1) test_out.pml:272 Send 7,PROMISE,0,0,-1,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 26 (__PROMISE)
+300:    proc 11 (receive_prepared:1) test_out.pml:425 Recv 7,PROMISE,0,0,-1,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0  <- queue 26 (__PROMISE)
+344:    proc  2 (accept_handler:1) test_out.pml:272 Send 7,PROMISE,0,0,-1,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 26 (__PROMISE)
+346:    proc 10 (start_proposer:1) test_out.pml:314 Recv 10,BIND,0,0,3,0,0,0,0,0,2,0,0,0,0,0,31,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0       <- queue 20 (__BIND)
+370:    proc 14 (receive_prepared:1) test_out.pml:421 Send 7,MAJORITY_PREPARED,0,0,1,0,0,0,0,0,42,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 -> queue 46 (__MAJORITY_PREPARED)
+372:    proc  8 (proposer_handler:1) test_out.pml:363 Recv 7,MAJORITY_PREPARED,0,0,1,0,0,0,0,0,42,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 <- queue 46 (__MAJORITY_PREPARED)
+382:    proc  8 (proposer_handler:1) test_out.pml:386 Send 1,ACCEPT,0,0,1,0,0,0,0,0,42,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 47 (__ACCEPT)
+386:    proc  8 (proposer_handler:1) test_out.pml:386 Send 3,ACCEPT,0,0,1,0,0,0,0,0,42,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 47 (__ACCEPT)
+390:    proc  8 (proposer_handler:1) test_out.pml:386 Send 5,ACCEPT,0,0,1,0,0,0,0,0,42,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 47 (__ACCEPT)
+421:    proc 15 (proposer_handler:1) test_out.pml:350 Send 1,PREPARE,0,0,2,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 23 (__PREPARE)
+425:    proc 15 (proposer_handler:1) test_out.pml:350 Send 3,PREPARE,0,0,2,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 23 (__PREPARE)
+429:    proc 15 (proposer_handler:1) test_out.pml:350 Send 5,PREPARE,0,0,2,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 23 (__PREPARE)
+452:    proc 16 (accept_handler:1) test_out.pml:262 Recv 1,PREPARE,0,0,2,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     <- queue 23 (__PREPARE)
+458:    proc 16 (accept_handler:1) test_out.pml:272 Send 10,PROMISE,0,0,-1,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 26 (__PROMISE)
+460:    proc 12 (accept_handler:1) test_out.pml:282 Recv 5,ACCEPT,0,0,1,0,0,0,0,0,42,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0      <- queue 47 (__ACCEPT)
+466:    proc 12 (accept_handler:1) test_out.pml:291 Send 7,ACCEPTED,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     -> queue 48 (__ACCEPTED)
+474:    proc 17 (accept_handler:1) test_out.pml:282 Recv 1,ACCEPT,0,0,1,0,0,0,0,0,42,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0      <- queue 47 (__ACCEPT)
+492:    proc 17 (accept_handler:1) test_out.pml:296 Send 7,ACCEPTED,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     -> queue 48 (__ACCEPTED)
+494:    proc 13 (accept_handler:1) test_out.pml:262 Recv 3,PREPARE,0,0,2,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     <- queue 23 (__PREPARE)
+500:    proc 13 (accept_handler:1) test_out.pml:272 Send 10,PROMISE,0,0,-1,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 26 (__PROMISE)
+512:    proc 18 (receive_accepted:1) test_out.pml:459 Recv 7,ACCEPTED,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   <- queue 48 (__ACCEPTED)
+542:    proc 21 (accept_handler:1) test_out.pml:262 Recv 5,PREPARE,0,0,2,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     <- queue 23 (__PREPARE)
+554:    proc 20 (receive_prepared:1) test_out.pml:425 Recv 10,PROMISE,0,0,-1,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 <- queue 26 (__PROMISE)
+560:    proc 23 (accept_handler:1) test_out.pml:282 Recv 3,ACCEPT,0,0,1,0,0,0,0,0,42,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0      <- queue 47 (__ACCEPT)
+578:    proc 23 (accept_handler:1) test_out.pml:296 Send 7,ACCEPTED,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     -> queue 48 (__ACCEPTED)
+580:    proc 21 (accept_handler:1) test_out.pml:272 Send 10,PROMISE,0,0,1,0,0,0,0,0,42,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 26 (__PROMISE)
+582:    proc 24 (receive_prepared:1) test_out.pml:425 Recv 10,PROMISE,0,0,-1,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 <- queue 26 (__PROMISE)
+602:    proc 25 (receive_prepared:1) test_out.pml:421 Send 10,MAJORITY_PREPARED,0,0,2,0,0,0,0,0,31,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        -> queue 46 (__MAJORITY_PREPARED)
+616:    proc 15 (proposer_handler:1) test_out.pml:363 Recv 10,MAJORITY_PREPARED,0,0,2,0,0,0,0,0,31,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        <- queue 46 (__MAJORITY_PREPARED)
+626:    proc 15 (proposer_handler:1) test_out.pml:386 Send 1,ACCEPT,0,0,2,0,0,0,0,0,31,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 47 (__ACCEPT)
+630:    proc 15 (proposer_handler:1) test_out.pml:386 Send 3,ACCEPT,0,0,2,0,0,0,0,0,31,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 47 (__ACCEPT)
+634:    proc 15 (proposer_handler:1) test_out.pml:386 Send 5,ACCEPT,0,0,2,0,0,0,0,0,31,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 47 (__ACCEPT)
+659:    proc 27 (receive_accepted:1) test_out.pml:459 Recv 7,ACCEPTED,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   <- queue 48 (__ACCEPTED)
+681:    proc 29 (accept_handler:1) test_out.pml:282 Recv 5,ACCEPT,0,0,2,0,0,0,0,0,31,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     <- queue 47 (__ACCEPT)
+699:    proc 29 (accept_handler:1) test_out.pml:291 Send 10,ACCEPTED,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 48 (__ACCEPTED)
+701:    proc 28 (receive_accepted:1) test_out.pml:459 Recv 10,ACCEPTED,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0  <- queue 48 (__ACCEPTED)
+707:    proc 30 (receive_accepted:1) test_out.pml:454 Send 1    -> queue 78 (ret)
+711:    proc 22 (accept_handler:1) test_out.pml:282 Recv 1,ACCEPT,0,0,2,0,0,0,0,0,31,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     <- queue 47 (__ACCEPT)
+717:    proc 27 (receive_accepted:1) test_out.pml:466 Recv 1    <- queue 78 (ret1)
+719:    proc 27 (receive_accepted:1) test_out.pml:467 Send 1    -> queue 54 (ret)
+721:    proc 18 (receive_accepted:1) test_out.pml:471 Recv 1    <- queue 54 (ret2)
+723:    proc 18 (receive_accepted:1) test_out.pml:472 Sent 1    -> queue 22 (ret)
+724:    proc  8 (proposer_handler:1) test_out.pml:396 Recv 1    <- queue 22 (ret2)
+740:    proc 22 (accept_handler:1) test_out.pml:291 Send 10,ACCEPTED,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 48 (__ACCEPTED)
+742:    proc 30 (receive_accepted:1) test_out.pml:459 Recv 10,ACCEPTED,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0  <- queue 48 (__ACCEPTED)
+748:    proc  8 (proposer_handler:1) test_out.pml:401 Send 0,LEARNED,0,0,42,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 90 (__LEARNED)
+762:    proc 31 (receive_accepted:1) test_out.pml:454 Send 2    -> queue 89 (ret)
+766:    proc 30 (receive_accepted:1) test_out.pml:471 Recv 2    <- queue 89 (ret2)
+768:    proc 30 (receive_accepted:1) test_out.pml:472 Send 2    -> queue 81 (ret)
+772:    proc 28 (receive_accepted:1) test_out.pml:471 Recv 2    <- queue 81 (ret2)
+774:    proc 28 (receive_accepted:1) test_out.pml:472 Sent 2    -> queue 41 (ret)
+775:    proc 15 (proposer_handler:1) test_out.pml:396 Recv 2    <- queue 41 (ret2)
+791:    proc 19 (wait_learned:1) test_out.pml:558 Recv 0,LEARNED,0,0,42,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0       <- queue 90 (__LEARNED)
+Never claim moves to line 5     [(!(!((final_value==42))))]
+Never claim moves to line 16    [(1)]
+807:    proc 26 (accept_handler:1) test_out.pml:282 Recv 3,ACCEPT,0,0,2,0,0,0,0,0,31,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     <- queue 47 (__ACCEPT)
+813:    proc 26 (accept_handler:1) test_out.pml:291 Send 10,ACCEPTED,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 48 (__ACCEPTED)
+815:    proc 15 (proposer_handler:1) test_out.pml:401 Send 0,LEARNED,0,0,31,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 90 (__LEARNED)
+823:    proc 32 (wait_learned:1) test_out.pml:558 Recv 0,LEARNED,0,0,31,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0       <- queue 90 (__LEARNED)
+spin: _spin_nvr.tmp:15, Error: assertion violated
+spin: text of failed assertion: assert(!((final_value==31)))
+Never claim moves to line 15    [assert(!((final_value==31)))]
+spin: trail ends after 826 steps
+\end{lstlisting}

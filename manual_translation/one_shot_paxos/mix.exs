@@ -21,7 +21,8 @@ defmodule OneShotPaxos.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:vae_lib, path: "/mnt/c/Users/matth/Documents/imperial/final/metaprogramming_conditions/vae_lib"}
+      {:vae_lib, path: "/mnt/c/Users/matth/Documents/imperial/final/metaprogramming_conditions/vae_lib"},
+      {:stream_data, "~> 1.0", only: :test}
     ]
   end
 end

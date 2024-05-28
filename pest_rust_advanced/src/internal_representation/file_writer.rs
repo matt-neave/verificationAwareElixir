@@ -1016,6 +1016,7 @@ impl FileWriter {
         for var in vars {
             self.move_var_to_global(var);
         }
+        self.used_ltl_vars.push(predicate_name.clone());
         self.ltl_header.push_str(&format!("#define {} ({})\n", predicate_name, Self::condition_to_string(condition)));
     }
 }

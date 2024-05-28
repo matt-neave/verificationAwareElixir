@@ -11,12 +11,16 @@
 - Weak type inference leads to inextensible code. Elixir is dynamically typed with future type system being developed
 - Can't handle failures (fault tolerence) (Erlang has a let it go crash design)
 - Can't handle CTL, can't check the existence of a path where each of the consensus values are chosen
+- Notion of failure / restarting + more abstracted process types like genservers being translated to model checker
+- different backends
+- 
 # Limitations of research
 
 - Concurrency in Elixir has not been reasoned about.
 - Can verify message passing of two sessions using binary session types - https://gerardtabone.com/publications/UoM%20-%20technical%20report%202022.pdf. Real world systems often rely on more than two actors.
 - UnitEx -> designed for unit testing, can't be used to specify and reason about properties. Requires developers to think of conditions / executions that could break the system in stead of exhaustive checking -> can miss cases
 - property based testing can't handle messages? https://github.com/parroty/excheck
+- No other translators like C ->, Gomela handle a comprehensive suite of safety properties and none handle liveness
 
 What tools? PropEr, ExUnit, Session types -- struggle with system wide property specification
 # Research questions

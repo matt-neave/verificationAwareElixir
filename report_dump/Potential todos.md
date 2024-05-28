@@ -50,5 +50,6 @@ SF_v(A) ==
 	- Non-exhaustive searching with DBITSTATE ✅
 		- Refactor channels to use a mapping from \_\_pid -> arr_idx
 	- Multithread multiple LTL formula
-	- Extract MESSAGE ORDERING VERY IMORPTANT, DONE WITH -t -r -s -l -g?
+	- Extract MESSAGE ORDERING VERY IMORPTANT, DONE WITH -t -r -s -l -g? ✅
 	- Every message sends it's own pid -> better readability
+	- Verification of multiple LTL formula doesnt find trace (need to move the path the trace is ran from)

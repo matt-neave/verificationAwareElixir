@@ -73,7 +73,19 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Potential todos.md",
+                "file": "Limitations.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "3708f643b2bb01c4",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Report notes.md",
                 "mode": "source",
                 "source": false
               }
@@ -140,7 +152,7 @@
             }
           }
         ],
-        "currentTab": 5
+        "currentTab": 6
       }
     ],
     "direction": "vertical"
@@ -206,7 +218,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Potential todos.md",
+                "file": "Report notes.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -223,7 +235,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Potential todos.md",
+                "file": "Report notes.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -246,7 +258,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Potential todos.md"
+                "file": "Report notes.md"
               }
             }
           }
@@ -267,16 +279,17 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "48b160224e1e5768",
+  "active": "3708f643b2bb01c4",
   "lastOpenFiles": [
-    "Report plan.md",
-    "Report Todos.md",
-    "error.md",
     "Limitations.md",
+    "Report notes.md",
     "Potential todos.md",
-    "Random notes.md",
-    "state space exploration.md",
     "Question for Naranker.md",
+    "Report plan.md",
+    "error.md",
+    "Random notes.md",
+    "Report Todos.md",
+    "state space exploration.md",
     "Verification of Elixir paper.md",
     "Pasted image 20240527104552.png",
     "Pasted image 20240527104042.png",

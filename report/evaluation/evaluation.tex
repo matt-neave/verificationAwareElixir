@@ -34,10 +34,23 @@ We can now use the predicates to simplify the formulation of the safety requirem
     \item \textbf{SR3}: $\square s$
 \end{itemize}
 We now have a complete specification of the basic paxos algorithm in LTLixir. Note that SR1 could be considered a liveness requirement, this is a result of slight modifications on the original SRs to align with our specific implementation decisions. We can run Veriflixir on the model to verify the safety requirements. When we run the verification mode, we see that no SRs are violated. This justifies that both the informal paxos specification we defined is correct regarding our SRs and that the implementation of the specification is also correct.
-
+\begin{lstlisting}[language=bash, xleftmargin=.3\linewidth]
+    ./veriflixir -v -r paxos.ex
+    Running 3 model(s).
+    Model ran successfully. 0 error(s) found.
+    Model ran successfully. 0 error(s) found.
+    Model ran successfully. 0 error(s) found.
+    The verifier terminated with no errors.
+    Elapsed time: 3413.647886964.
+\end{lstlisting}
+This gives a good indication that the expressiveness of Veriflixir is sufficient to model and verify distributed systems. However, we also should investigate how Veriflixir can express errors for a more complex system such as paxos. We introduce a bug into the proposer's protocol. The proposer will now wait for a majority of acceptors to accept the proposal and only be rejected if a majority of acceptors reject the proposal. This is a violation of the protocol, as we only need a single rejection for a proposer to retry with a higher proposal number. We can now run the verifier on the model again to see if the bug is detected. Veriflixir reports a violation of SR2, which is expected. In particular, we are told there is a violation SR2 due to $( final\_value == 31 )$. We can infer that the learner was informed the chosen value is $42$, but a later proposer informed the learner the chosen value is $31$. Veriflixir detects this bug, informing us that SR2 was violated and then produces its counterexample. Digesting this counterexample can take some time, as the interleaving of process communication that triggers this bug involves approximately 50 messages and 800 steps. The full message log is available in the appendix. We will provide a simpler interpretation to help reason that Veriflixir has correctly identified the bug (derived from the message log).
+\par
+TODO INSERT DIAGRAM OF MESSAGE INTERLEVING AND WHY IT FAILED
+\par
 \subsubsection{Comparison with `Model Checking Paxos in Spin' Paper?}
 \subsection{Alternating-bit Protocol} \label{sec:ab}
 \subsubsection{Informal Specification}
 \subsubsection{Experimental Analysis}
-\section{Veriflixir vs } \label{sec:vs}
+\section{Veriflixir vs state-of-the-art} \label{sec:vs}
+
 \section{Performance} \label{sec:perf}

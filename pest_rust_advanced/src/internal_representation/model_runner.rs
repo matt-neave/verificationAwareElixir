@@ -223,7 +223,13 @@ fn generate_trace(model_path: &str) -> (Vec<ErrorLine>, Vec<Message>) {
     // Run the trace
     let mut trace_output = Command::new("spin");
 
+    let dir = model_path.split("/").collect::<Vec<&str>>();
+    let path = dir[dir.len()-1];
+    let dir_path = &dir[..dir.len()-1].join("/");
+    let dir = if dir.len() == 1 { "." } else { dir_path };
+    
     trace_output
+        .current_dir(dir)
         .arg("-t") // View trace
         .arg("-r")
         .arg("-s");
@@ -233,7 +239,7 @@ fn generate_trace(model_path: &str) -> (Vec<ErrorLine>, Vec<Message>) {
     }
 
     let trace_output = trace_output
-        .arg(model_path)
+        .arg(path)
         .stdout(Stdio::piped())
         .output()
         .expect("Failed to get the trace.");
@@ -298,7 +304,7 @@ fn report_elixir_trace(model_path: &str, trace: Vec<ErrorLine>, messages: Vec<Me
     let elixir_file = std::fs::read_to_string(elixir_dir).expect("Failed to read the elixir file.");
 
     // First send all message events
-    println!("<<<Message Events>>>\n");
+    println!("<<<Message Events>>>");
     for (i, message) in messages.iter().enumerate() {
         println!(
             "[{}] ({} - {}) {} {} <{}>",
@@ -311,7 +317,7 @@ fn report_elixir_trace(model_path: &str, trace: Vec<ErrorLine>, messages: Vec<Me
         );
     }
 
-    println!("\n\n<<<Error Trace>>>\n");
+    println!("\n<<<Error Trace>>>");
     // Then send the exact trace
     let mut eot = false;
     for (i, trace_line) in trace.iter().enumerate() {
