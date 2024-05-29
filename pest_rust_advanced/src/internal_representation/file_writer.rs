@@ -139,7 +139,7 @@ impl FileWriter {
             sym_table::SymbolType::Boolean => String::from("int"),
             sym_table::SymbolType::Atom    => String::from("int"),
             sym_table::SymbolType::NoRet   => String::from("unparsable type"),
-            sym_table::SymbolType::Array(x, _) => format!("{}[]", Self::type_to_str(x)),
+            sym_table::SymbolType::Array(_, _) => String::from("int"),
             sym_table::SymbolType::Unknown => String::from("int"),
         }
     }
@@ -738,6 +738,7 @@ impl FileWriter {
                     self.function_body.last_mut().unwrap().push_str(&format!("__list_append_list({}, {});\n", var, element));
                     i += 1;
                 } else {
+                    println!("{} is {:?}", element, self.function_sym_table.safe_lookup(&element));
                     self.function_body.last_mut().unwrap().push_str(&format!("__list_append({}, {});\n", var, element));
                     i += 1;
                 }
@@ -825,8 +826,8 @@ impl FileWriter {
         if (self.block_assignment) {
             let var = self.array_var_stack.last().unwrap();
             self.function_sym_table.add_entry(var.clone(), SymbolType::Array(Box::from(SymbolType::Integer), 0));
-            self.function_body.last_mut().unwrap().push_str(&format!("LIST_ALLOCATED({}, {}) = true;\n", var, iterator));
-            let new_var = format!("LIST_VAL({}, {})", var, iterator);
+            self.function_body.last_mut().unwrap().push_str("int __tmp;\n");
+            let new_var = String::from("__tmp");
             self.var_stack.push(vec![new_var]);
         } else {
             println!("Do something?");
@@ -839,8 +840,12 @@ impl FileWriter {
         if self.block_assignment {
             self.var_stack.pop();
         }
-        self.function_body.last_mut().unwrap().push_str("}\n");
-
+        if (self.block_assignment) {
+            let var = self.array_var_stack.last().unwrap();
+            self.function_body.last_mut().unwrap().push_str(&format!("__list_append({}, __tmp);\n}}\n", var));
+        } else {
+            self.function_body.last_mut().unwrap().push_str("}\n");
+        }
     }
 
     pub fn write_enum_random(

@@ -127,7 +127,7 @@ fi
 ### Example 10 ###
 echo "Example 10..."
 
-output=$(./target/release/verlixir -q -s ../manual_translation/report_examples/lib/ex.ex 2>&1)
+output=$(./target/release/verlixir -q -s ../manual_translation/report_examples/lib/ex9.ex 2>&1)
 
 if echo "$output" | grep -q "8 processes created"; then
     echo "Test passed"

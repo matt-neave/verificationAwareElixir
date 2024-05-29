@@ -246,10 +246,6 @@ fn generate_trace(model_path: &str) -> (Vec<ErrorLine>, Vec<Message>) {
 
     let output_str = String::from_utf8(trace_output.stdout).expect("Failed to get the trace.");
 
-    if output_str.contains("START OF CYCLE") {
-        println!("Start of cycle:")
-    }
-
     let re: Regex = Regex::new(r"\d+:\s*proc\s*(\d+)\s*\(([^)]+)\)\s*test_out\.pml:(\d+).*").unwrap();
     let re_message = Regex::new(r"\d+:\s*proc\s*(\d+)\s*\(([^):]+:[^)]*?)\)\s*test_out\.pml:\d+\s*(Send|Recv)\s*([^ ]+)\s*(->|<-)\s*queue\s*\d+\s*\(([^)]+)\)"
 ).unwrap();
@@ -258,6 +254,19 @@ fn generate_trace(model_path: &str) -> (Vec<ErrorLine>, Vec<Message>) {
     let mut messages = Vec::new();
 
     for line in output_str.lines() {
+        if line.contains("START OF CYCLE") {
+            let err = ErrorLine {
+                process_num: 0,
+                line_num: 0,
+                valid_end_state: false,
+                function_name: "".to_string(),
+                start_of_cycle: true,
+                ltl_violation: false,
+                trail_ended: false,
+            };
+            trace.push(err);
+        }
+
         if let Some(captures) = re.captures(line) {
             let proc_number: u32 = captures[1].parse().unwrap_or(0);
             let function_name = captures[2].to_string().chars()
@@ -307,13 +316,11 @@ fn report_elixir_trace(model_path: &str, trace: Vec<ErrorLine>, messages: Vec<Me
     println!("<<<Message Events>>>");
     for (i, message) in messages.iter().enumerate() {
         println!(
-            "[{}] ({} - {}) {} {} <{}>",
+            "[{}] ({}) {} [{}]",
             i+1,
             message.function_name,
-            message.process_num,
-            message.mtype,
-            message.direction,
-            message.data,
+            if message.direction == "<-" { "recv" } else { "send" },
+            message.data.trim(),
         );
     }
 
@@ -322,7 +329,7 @@ fn report_elixir_trace(model_path: &str, trace: Vec<ErrorLine>, messages: Vec<Me
     let mut eot = false;
     for (i, trace_line) in trace.iter().enumerate() {
         if trace_line.start_of_cycle {
-            println!("<<< START OF CYCLE >>>");
+            println!("<<< start of cycle >>>");
             continue;
         } else if trace_line.ltl_violation {
             println!("LTL PROPERTY VIOLATED");

@@ -7,17 +7,17 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
         bool allocated;\n\
     }\n\
     \n\
+    #define MEM_LIMIT 40\n\
+    #define LIST_LIMIT 10\n\
+    \n\
     typedef __linked_list {\n\
-        __node vals[10];\n\
+        __node vals[LIST_LIMIT];\n\
         bool allocated;\n\
     }\n\
     \n\
     typedef __memory {\n\
-        __linked_list lists[10];\n\
+        __linked_list lists[MEM_LIMIT];\n\
     }\n\
-    \n\
-    #define MEM_LIMIT 10\n\
-    #define LIST_LIMIT 10\n\
     \n\
     #define LIST(idx) __mem.lists[(idx)]\n\
     #define LIST_ALLOCATED(ls, idx) LIST(ls).vals[(idx)].allocated\n\

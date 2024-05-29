@@ -656,7 +656,7 @@ fn get_variable_name(ast_node: Pair<Rule>) -> String {
     if ast_node.as_rule() != Rule::assigned_variable && 
         ast_node.as_rule() != Rule::send_target &&
         ast_node.as_rule() != Rule::recv_binding {
-        panic!("Can't get variable name unless type assigned_variable");
+        panic!("Can't get variable name unless type assigned_variable. Got: {:?}\n For: {}", ast_node.as_rule(), ast_node.as_str());
     }
     if let Some(x) = ast_node.clone().into_inner().find(|y| y.as_rule() == Rule::atom) {
         return x.as_str().replace(':', "");
@@ -928,6 +928,7 @@ fn get_symbol_type(
         ":atom"       => internal_representation::sym_table::SymbolType::Atom,
         ":pid"        => internal_representation::sym_table::SymbolType::Integer,
         ":ok"         => internal_representation::sym_table::SymbolType::NoRet,
+        ":list"       => internal_representation::sym_table::SymbolType::Array(Box::new(sym_table::SymbolType::Integer), 0),
         _             => internal_representation::sym_table::SymbolType::Integer,
     }
 }
@@ -1544,9 +1545,9 @@ fn get_elements_from_primitive_array(
     for pair in ast_node.into_inner() {
         let arg = pair.clone().into_inner().next().unwrap();
         match arg.as_rule() {
-            Rule::primitive => elements.push(get_primitive_as_str(pair)),
-            Rule::assigned_variable => elements.push(get_variable_name(pair)),
-            _               => parse_warn!("get elements from primitive array", pair.as_rule()),
+            Rule::primitive => elements.push(get_primitive_as_str(arg)),
+            Rule::assigned_variable => elements.push(get_variable_name(arg)),
+            _               => parse_warn!("get elements from primitive array", arg.as_rule()),
         }
     }
     elements
