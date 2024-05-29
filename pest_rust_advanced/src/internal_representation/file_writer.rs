@@ -43,6 +43,7 @@ pub struct FileWriter {
     array_var_stack: Vec<String>,
     anonymous_function_count: u32,
     returning_function: bool,
+    parent_returning: bool,
     ltl_vars: Vec<String>,
     used_ltl_vars: Vec<String>,
     post_condition: String,
@@ -88,6 +89,7 @@ impl FileWriter {
             array_var_stack: Vec::new(),
             anonymous_function_count: 0,
             returning_function: true,
+            parent_returning: true,
             ltl_vars: Vec::new(),
             used_ltl_vars: Vec::new(),
             post_condition: String::new(),
@@ -413,9 +415,11 @@ impl FileWriter {
         } else if !self.var_stack.is_empty() {
             let var = self.get_next_var();
             if !self.ltl_vars.contains(&var) {
-                self.function_sym_table.add_entry(var.clone(), sym_table::SymbolType::Integer);
-                let last_body = self.function_body.pop().unwrap();
-                self.function_body.push(last_body.replace(&format!("int {};\n", var), ""));
+                if self.function_body.last_mut().unwrap().contains(&format!("int {};\n", var)) {
+                    self.function_sym_table.remove_entry(&var.clone());
+                    let last_body = self.function_body.pop().unwrap();
+                    self.function_body.push(last_body.replace(&format!("int {};\n", var), ""));
+                } 
             }
             if self.parameterized_function && self.parameterized_model && self.parameterized_vars.contains(&var.to_string()) {
                 if self.ltl_vars.contains(&var) {
@@ -423,7 +427,8 @@ impl FileWriter {
                 } else {
                     self.function_body.last_mut().unwrap().push_str(&format!("int {} = {};\n", var, PARAM_STR));
                 }
-            } else if !self.ltl_vars.contains(&var) {
+            } else if !self.ltl_vars.contains(&var) && !self.function_sym_table.contains(&var) {
+                self.function_sym_table.add_entry(var.clone(), SymbolType::Integer);
                 self.function_body.last_mut().unwrap().push_str(&format!("int {} = {};\n", var, number));
             } else {
                 self.function_body.last_mut().unwrap().push_str(&format!("{} = {};\n", var, number));
@@ -852,11 +857,14 @@ impl FileWriter {
     pub fn write_enum_at(
         &mut self,
         args: Vec<String>,
+        ret: bool,
     ) {
         let list = &args[0];
         let index = &args[1];
         if let Some(x) = self.get_next_var_safe() {
             self.function_body.last_mut().unwrap().push_str(&format!("{} = ", x));
+        } else if ret && self.returning_function {
+            self.function_body.last_mut().unwrap().push_str("ret ! ");
         }
         self.function_body.last_mut().unwrap().push_str(&format!("__list_at({}, {})\n", list, index));
     }
@@ -867,10 +875,6 @@ impl FileWriter {
         fn_args: Vec<String>,
         assignee: String,
     ) {
-        let size = sym_table::get_array_size(self.function_sym_table.lookup(&iterable));
-        let typ = Self::type_to_str(sym_table::get_array_inner_type(self.function_sym_table.lookup(&iterable)));
-        self.function_sym_table.update_array_size(&assignee, size);
-        
         // TODO only supports single argument functions for now
         if fn_args.len() != 1 {
             panic!("Enum map only supports single argument functions");
@@ -898,6 +902,7 @@ impl FileWriter {
         
         let mut anonymous_sym_table = sym_table::SymbolTable::new();
         // TODO only supports integer arguments for now
+        self.parent_returning = self.returning_function;
         anonymous_sym_table.add_entry(arg.to_string(), sym_table::SymbolType::Integer);
         self.new_function(&format!("__anonymous_{}", self.anonymous_function_count), &arg.to_string(), anonymous_sym_table, false, Vec::new(), Vec::new());
         self.anonymous_function_count += 1;
@@ -906,6 +911,7 @@ impl FileWriter {
     pub fn commit_enum_map(
         &mut self,
     ) {
+        self.returning_function = self.parent_returning;
         self.commit_function();
     }
 

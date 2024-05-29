@@ -269,11 +269,13 @@ pub fn parse_block_statement(
             Rule::io                      => parse_io(pair, file_writer, ret),
             Rule::spawn_process           => parse_spawn_process(pair, file_writer, ret),
             Rule::assigned_variable       => parse_assigned_variable(pair, file_writer, ret),
+            Rule::number                  => parse_number(pair, file_writer, ret, func_def), 
             Rule::r#for                   => parse_for(pair, file_writer, ret, func_def),
             Rule::r#if                    => parse_if(pair, file_writer, ret, func_def),
             Rule::bool                    => parse_boolean(pair, file_writer, ret),
             Rule::case                    => parse_case(pair, file_writer, ret, func_def),
             Rule::predicate               => parse_predicate(pair, file_writer, ret, func_def),
+            Rule::enum_call               => parse_enum_call(pair, file_writer, ret),
             _                             => parse_warn!("block statement", pair.as_rule()),
         }
     }
@@ -1338,7 +1340,7 @@ fn parse_number(
 fn parse_enum_call(
     ast_node: Pair<Rule>, 
     file_writer: &mut internal_representation::file_writer::FileWriter, 
-    _ret: bool
+    ret: bool
 ) {
     let mut func = None;
     let mut args = Vec::new();
@@ -1381,7 +1383,7 @@ fn parse_enum_call(
                 if string_args.len() != 2 {
                     error!("Enum at calls only support two arguments (variable, number)");
                 }
-                file_writer.write_enum_at(string_args);
+                file_writer.write_enum_at(string_args, ret);
             },
             _ => warn!("Tried writing unsupported enum function"),
         }

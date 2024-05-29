@@ -2,18 +2,18 @@
 
 pub fn add_linked_list_boiler_plate(mut model: String) -> String {
     model.push_str(
-        "typedef node {\n\
+        "typedef __node {\n\
         int val;\n\
         bool allocated;\n\
     }\n\
     \n\
-    typedef linked_list {\n\
-        node vals[10];\n\
+    typedef __linked_list {\n\
+        __node vals[10];\n\
         bool allocated;\n\
     }\n\
     \n\
-    typedef memory {\n\
-        linked_list lists[10];\n\
+    typedef __memory {\n\
+        __linked_list lists[10];\n\
     }\n\
     \n\
     #define MEM_LIMIT 10\n\
@@ -208,7 +208,7 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
     }\n\
     \n\
     int __dummy_iterator;\n\
-    memory __mem;\n\
+    __memory __mem;\n\
     ");
     model
 }
