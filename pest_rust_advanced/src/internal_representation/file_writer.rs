@@ -265,7 +265,9 @@ impl FileWriter {
             if self.function_sym_table.contains(arg) {
                 if let sym_table::SymbolType::Array(_, _) = self.function_sym_table.lookup(arg) {
                     self.function_body.last_mut().unwrap().push_str(&format!("int __temp_cp_arr_{};\n__copy_memory_to_next(__temp_cp_arr_{}, {});\n", self.arr_cp_count, self.arr_cp_count, arg));
-                    call_arguments = call_arguments.replace(arg, &format!("__temp_cp_arr_{}", self.arr_cp_count));
+                    // Split call arguments and replace just arg
+                    let new_arg = &format!("__temp_cp_arr_{}", self.arr_cp_count);
+                    call_arguments = call_arguments.split(',').map(|a| if a == arg { new_arg } else { a }).collect::<Vec<&str>>().join(",");
                     self.arr_cp_count += 1;
                 }
             }
@@ -360,6 +362,10 @@ impl FileWriter {
 
     pub fn write_else(&mut self) {
         self.function_body.last_mut().unwrap().push_str(":: else ->\n");
+    }
+
+    pub fn skip_if(&mut self) {
+        self.function_body.last_mut().unwrap().push_str(":: else -> skip;\n");
     }
 
     pub fn commit_if(&mut self) {
@@ -987,7 +993,9 @@ impl FileWriter {
                 self.function_body.push(last_body.replace(str, ""));
                 self.used_ltl_vars.push(var);
             },
-            _ => (),
+            _ => {
+                error!("Could not move variable to global scope: {}", var);
+            },
         }
     }
 
@@ -1009,7 +1017,9 @@ impl FileWriter {
                     number = matched.as_str().parse().unwrap();
                     self.ltl_header.push_str(&format!("{} = {};\n", search_term, number));
                 }
-            } 
+            }  else {
+                self.ltl_header.push_str(&format!("int {};\n", var));
+            }
 
             // Remove the entire line containing the pattern
             let result_string = re.replace_all(&last_body, "").to_string();

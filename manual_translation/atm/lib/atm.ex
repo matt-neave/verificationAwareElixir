@@ -4,7 +4,7 @@ defmodule User do
   @spec start() :: :ok
   def start do
     possible_amounts = [1500, 300]
-    atm = spawn(Atm, :start, [])
+    atm = spawn(Atm, :start_atm, [])
     send atm, {:insert_card, self()}
     insert_pin(atm)
     amount = Enum.random(possible_amounts)
@@ -38,8 +38,9 @@ end
 defmodule Atm do
 
   @spec start() :: :ok
-  @ltl "<>(card_inserted)&&[](card_inserted->(<>[](transaction_failed)||<>[](atm_balance<1000)))"
-  def start do
+  @ltl "<>(card_inserted)"
+  @ltl "[](card_inserted->(<>[](transaction_failed)||<>[](atm_balance<1000)))"
+  def start_atm do
     atm_balance = 1000
     card_inserted = false
     transaction_failed = false

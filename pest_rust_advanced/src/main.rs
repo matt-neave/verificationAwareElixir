@@ -1229,6 +1229,7 @@ fn parse_tuple(
             Rule::tuple               => parse_tuple(pair, file_writer, ret, func_def),
             Rule::tupled_elements     => parse_tupled_elements(pair, file_writer, ret),
             Rule::send                => parse_send(pair, file_writer, ret),
+            Rule::bool                => parse_boolean(pair, file_writer, ret),
             _                         => parse_warn!("tuple", pair.as_rule()),
         }
     }
@@ -1779,6 +1780,7 @@ fn parse_conditions(
     // Parse the do block
     if let Some(x) = do_block {
         parse_do(x, file_writer, ret, func_def);
+        file_writer.skip_if();
         file_writer.commit_if();
         return;
     }

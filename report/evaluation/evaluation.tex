@@ -40,11 +40,11 @@ We now have a complete specification of the basic paxos algorithm in LTLixir. No
 \end{lstlisting}
 This gives a good indication that the expressiveness of Verlixir is sufficient to model and verify distributed systems. However, we also should investigate how Verlixir can express errors for a more complex system such as paxos. 
 \subsubsection{Counter-example one}
-We introduce a bug into the proposer's protocol. The proposer will now wait for a majority of acceptors to accept the proposal and only be rejected if a majority of acceptors reject the proposal. This is a violation of the protocol, as we only need a single rejection (within the accepting quorum) for a proposer to retry with a higher proposal number. We can now run the verifier on the model again to see if the bug is detected. Verlixir reports a violation of SR2, which is expected. In particular, we are told there is a violation SR2 due to $( final\_value == 31 )$. We can infer that the learner was informed the chosen value is $42$, but a later proposer informed the learner the chosen value is $31$. Verlixir detects this bug, informing us that SR2 was violated and then produces its counterexample. Digesting this counterexample can take some time, as the interleaving of process communication that triggers this bug involves approximately 50 messages and 800 steps. The full message log is available in the appendix. We will provide a simpler interpretation to help reason that Verlixir has correctly identified the bug (derived from the message log).
+We introduce a bug into the proposer's protocol. The proposer will now wait for a majority of acceptors to accept the proposal and only be rejected if a majority of acceptors reject the proposal. This is a violation of the protocol, as we only need a single rejection (within the accepting quorum) for a proposer to retry with a higher proposal number. We can now run the verifier on the model again to see if the bug is detected. Verlixir reports a violation of SR2, which is expected. In particular, we are told there is a violation SR2 due to $( final\_value == 31 )$. We can infer that the learner was informed the chosen value is $42$, but a later proposer informed the learner the chosen value is $31$. Verlixir detects this bug, informing us that SR2 was violated and then produces its counterexample. Digesting this counterexample can take some time, as the interleaving of process communication that triggers this bug involves approximately 50 messages and 800 steps. The full message log is available in the appendix. We will provide a simpler interpretation to help reason that Verlixir has correctly identified the bug (derived from the message log) in figure \ref{fig:paxos_1}.
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.7\textwidth]{images/paxos_1.png}
-    \caption{Violation of paxos specification due to proposer bug. Note the figure only shows the ordering of receive events.}
+    \includegraphics[width=0.7\textwidth]{images/paxos_2.png}
+    \caption{Violation of paxos specification due to proposer bug. Note the figure only shows the ordering of receive events. We see that although $p1$ forms a quorum of $accepted$ messages from $\{a1, a2\}$. Although one of these acceptors rejects the proposal (by sending a higher proposal number than $p1$ expected), the bug would require a majority of acceptors to have rejected the proposal, so $p1$ asks the learner to learn its value regardless.}
     \label{fig:paxos_1}
 \end{figure}
 \subsubsection{Counter-example two}
@@ -52,9 +52,49 @@ We now explore a second counter-example, again, the paxos specification and mess
 \par
 TODO INSERT DIAGRAM OF MESSAGE INTERLEVING AND WHY IT FAILED?
 \par
+\subsection{Consistent Hash Ring}
+Consistent hashing is a distributed hashing technique designed to support dynamic loads of nodes in a system \cite{consistent_hash}. It has been used in large real-world systems to help scalability and load balancing \cite{dynamo}. Consistent hashing requires choosing a hash space and distributing both system nodes and system requests over the hash space. The hash-space is logically considered a ring due to the wrap-around semantics of the distribution applied over the hashing function.
+\par
+We will look at a simple version of a consistent hash ring involving a handler and a ring manager. The handler receives requests from the outside world and sends these to the ring manager to be distributed. The ring manager is responsible for taking these requests and determining which node should be responsible for handling them. The ring can dynamically grow and shrink in size depending on the load from handlers.
+\par
+To model the system, we are primarily concerned with one liveness property. Every incoming request should eventually be forwarded to the correct node in the ring. A more detailed implementation may involve the nodes communicating to determine the correct node for requests, identify faulty nodes and handle hand-off when nodes join or leave the ring. We will abstract this behaviour within our ring manager for now, and introduce some temporal properties to specify the system's correctness. Firstly, we will introduce some predicates to help simplify the LTL formulae.
+\[
+    \begin{aligned}
+    & \forall i \in \{1..4\} \ \text{predicate p\textsubscript{i}: assigned\_node == node\textsubscript{i}} \\
+    & \forall j \in \{1..3\} \ \text{predicate r\textsubscript{j}: next\_request == V[j]} \\
+    & \text{where } V = \{1 \rightarrow 42, 2 \rightarrow 31, 3 \rightarrow 25\}
+    \end{aligned}
+\]
+These predicates $p_i$ specify assignments of a value to a node in the ring and $r_j$ specify the next request to be processed by the ring manager. We can now introduce our liveness property, which we do so by breaking into components to capture specific details of the system.
+\[
+    \begin{aligned}
+    & \phi_1: \square ( r1 \rightarrow \lozenge p1 ) \\
+    & \phi_2: \square ( r2 \rightarrow \lozenge p3 ) \\
+    & \phi_3: \square ( r3 \land n\_nodes == 3 \rightarrow \lozenge p1 ) \\
+    & \phi_4: \square ( r3 \land n\_nodes == 4 \rightarrow \lozenge p4 ) \\
+    \end{aligned}
+\]
+We use these properties to ensure the correctness of the system, by using an understanding of how the system hashes requests to enable verification of evolving behaviour. For example, we use the variable $n\_nodes$ to distinguish between different behaviour patterns depending on the loads of the system. In particular, $\phi_1$ and $\phi_2$ ensure that the ring manager assigns requests to the next sequential node in the ring. $\phi_3$ is responsible for ensuring the wrap-around semantics, when the hash value of a request is larger than the last node's range, it should be assigned to the first node. $\phi_4$ is responsible for ensuring that as the ring grows, the ring manager adjusts its assignment of requests so that the new node now receives its relevant load.
+\par
+We can attach these LTL properties to the handler model, $S$, to determine that our incoming requests are being handled as expected. We can run them with Verlixir, which determines there are no violations of the properties, and our hashing is performing as intended.
+\subsubsection{Evolving the System Requirements}
+Up to now, we have been strict in our liveness properties. In other flavors of the system, it may not want to concern ourselves with the exact node a request is assigned to, but rather that the request is assigned to a node. Our current implementation enforces a synchronisation between the handler and the ring manager. Let's introduce a bug into the system that breaks this synchronization. Currently, our handler will wait for ring resizing to complete before sending more requests. We will modify the ring manager to dynamically resize asynchronously to the handler requests. This introduces a violation of our liveness properties, as we can no longer guarantee that every request is assigned to a specific node. 
+\par
+When we run Verlixir on the updated model, $S'$, we see that $S' \not\models \phi_4$. The erroneous message log, alongside both specifications, can be found in the appendix. We will provide a simplified interpretation of the message log to help reason that Verlixir has correctly identified the bug in figure \ref{fig:dht}.
+\par
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/dht.png}
+    \caption{Violating and accepting consistent hash ring implementations. The violating model shows the handler sending lookup requests without awaiting confirmation of ring resize. This violates the liveness property $\phi_4$, which specifically requires the manager to assign $31$ to node $4$. The accepting implementation waits for confirmation of a resize before continuing with requests. Note that $n\_nodes$ is the number of nodes the handler believes to be in the ring, not the actual number.}
+    \label{fig:dht}
+\end{figure}
+\par
+In this instance, instead of considering this an error, we may instead want to refine the system requirements. To do this, we can introduce a new liveness property to specify a weaker system, where we only care about requests being distributed to nodes.
+\[
+\phi_5: \square (\text{sent\_request} \rightarrow \lozenge \text{assigned\_node})
+\]
+Verlixir reports that $S \models \phi_5$ and $S' \models \phi_5$.
 \subsection{Alternating-bit Protocol} \label{sec:ab}
 \subsubsection{Informal Specification}
-\subsubsection{Experimental Analysis}
-\section{Verlixir vs state-of-the-art} \label{sec:vs}
-
-\section{Performance} \label{sec:perf}
+\subsection{Two-Phase Commit} \label{sec:2pc}
+\section{Summary}

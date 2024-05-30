@@ -476,3 +476,619 @@ spin: trail ends after 826 steps
     Never claim moves to line 15    [assert(!((final_value==31)))]
     spin: trail ends after 820 steps
 \end{lstlisting}
+
+\subsubsection{Working Consistent Hash Table}
+\begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
+  import VaeLib
+
+  defmodule ConsistentHashRing do
+  
+    @spec start_ring(list(), integer()) :: :ok
+    def start_ring(nodes, n) do
+      node_positions = Enum.map(nodes, fn n -> hash(n) end)
+      ring_handler(nodes, node_positions, n)
+    end
+  
+    @spec ring_handler(list(), list(), integer()) :: :ok
+    defp ring_handler(nodes, node_positions, n) do
+      receive do
+        {:lookup, key, sender} ->
+          position = hash(key)
+          node = find_closest_node(nodes, node_positions, position, 0, n)
+          send sender, {:ring_pos, node}
+          ring_handler(nodes, node_positions, n)
+  
+        {:add_node, node, sender} ->
+          new_nodes = nodes ++ [node]
+          new_node_position = hash(node)
+          new_node_positions = node_positions ++ [new_node_position]
+          send sender, {:node_accepted}
+          ring_handler(new_nodes, new_node_positions, n + 1)
+  
+        {:terminate} ->
+          IO.puts("Terminating ring handler")
+      end
+    end
+  
+    @spec find_closest_node(list(), list(), integer(), integer(), integer()) :: integer()
+    defp find_closest_node(nodes, node_positions, position, i, n) do
+      if i >= n do
+        Enum.at(nodes, 0)
+      else
+        check_node = Enum.at(nodes, i)
+        check_pos = Enum.at(node_positions, i)
+  
+        if check_pos >= position do
+          check_node
+        else
+          find_closest_node(nodes, node_positions, position, i + 1, n)
+        end
+      end
+    end
+  
+    @spec hash(integer()) :: integer()
+    defp hash(key) do
+      # Example hardcoded hash values for keys and nodes
+      case key do
+        # Keys
+        42 -> 1
+        25 -> 8
+        31 -> 10
+  
+        # Nodes
+        1 -> 2
+        2 -> 5
+        3 -> 9
+        4 -> 15
+      end
+    end
+  end
+  
+  defmodule Client do
+  
+    @vae_init true
+    @spec start() :: :ok
+    @ltl "[](r1 -> <>(p1))"
+    @ltl "[](r2 -> <>(p3))"
+    @ltl "[](r3 && n_nodes==3 -> <>(p1))"
+    @ltl "[](r3 && n_nodes==4 -> <>(p4))"
+    def start do
+      n_nodes = 3
+      nodes = for i <- 1..n_nodes do
+        i
+      end
+      ring = spawn(ConsistentHashRing, :start_ring, [nodes, n_nodes])
+  
+      next_key = 42
+      send ring, {:lookup, next_key, self()}
+      ring_position = receive do
+        {:ring_pos, node} ->
+          IO.puts("Key 42 is assigned to")
+          IO.puts node
+          node
+      end
+  
+      next_key = 25
+      send ring, {:lookup, next_key, self()}
+      ring_position = receive do
+        {:ring_pos, node} ->
+          IO.puts("Key 25 is assigned to")
+          IO.puts node
+          node
+      end
+  
+      next_key = 31
+      send ring, {:lookup, next_key, self()}
+      ring_position = receive do
+        {:ring_pos, node} ->
+          IO.puts("Key 31 is assigned to")
+          IO.puts node
+          node
+      end
+  
+      # Dynamically grow the ring
+      send ring, {:add_node, 4, self()}
+      n_nodes = n_nodes + 1
+  
+      receive do
+        {:node_accepted} ->
+          IO.puts("Node 4 added to the ring")
+      end
+  
+      next_key = 31
+      send ring, {:lookup, next_key, self()}
+      ring_position = receive do
+        {:ring_pos, node} ->
+          IO.puts("Key 31 is assigned to")
+          IO.puts node
+          node
+      end
+  
+      predicate p1, ring_position == 1
+      predicate p2, ring_position == 2
+      predicate p3, ring_position == 3
+      predicate p4, ring_position == 4
+      predicate r1, next_key == 42
+      predicate r2, next_key == 25
+      predicate r3, next_key == 31
+  
+      send ring, {:terminate}
+    end
+  end  
+\end{lstlisting}
+
+\subsubsection{Promela for Consistent Hash Table}
+\begin{lstlisting}[xleftmargin=.01\linewidth, xrightmargin=0.01\linewidth, caption={Promela of consistent hash table}, label={lst:dht_promela}]
+int n_nodes;
+int ring_position;
+#define p1 ((ring_position == 1))
+#define p2 ((ring_position == 2))
+#define p3 ((ring_position == 3))
+#define p4 ((ring_position == 4))
+int next_key = 42;
+#define r1 ((next_key == 42))
+#define r2 ((next_key == 25))
+#define r3 ((next_key == 31))
+
+proctype __anonymous_0 (int n; chan ret; int __pid) {
+chan ret1 = [1] of { int }; /*7*/
+if
+::__pid==-1 -> __pid = _pid;
+::else->skip;
+fi;
+run hash(n, ret1, __pid); /*7*/
+int __ret_placeholder_1; /*7*/
+ret1 ? __ret_placeholder_1; /*7*/
+ret ! __ret_placeholder_1; /*7*/
+}
+
+proctype start_ring (int nodes;int n; chan ret; int __pid) {
+chan __anonymous_ret_0 = [0] of { int };
+chan ret2 = [1] of { int }; /*8*/
+if
+::__pid==-1 -> __pid = _pid;
+::else->skip;
+fi;
+int node_positions;
+__get_next_memory_allocation(node_positions);
+atomic {
+int __iter;
+__iter = 0;
+do
+:: __iter >= LIST_LIMIT -> break;
+:: else ->
+if
+:: LIST_ALLOCATED(nodes, __iter) ->
+run __anonymous_0(LIST_VAL(nodes, __iter),__anonymous_ret_0,__pid);
+LIST_ALLOCATED(node_positions, __iter) = true;
+__anonymous_ret_0 ? LIST_VAL(node_positions, __iter);
+__iter++;
+:: else -> __iter++;
+fi
+od
+}
+int __temp_cp_arr_0;
+__copy_memory_to_next(__temp_cp_arr_0, nodes);
+int __temp_cp_arr_1;
+__copy_memory_to_next(__temp_cp_arr_1, node_positions);
+run ring_handler(__temp_cp_arr_0,__temp_cp_arr_1,n, ret2, __pid); /*8*/
+}
+
+proctype ring_handler (int nodes;int node_positions;int n; chan ret; int __pid) {
+chan ret1 = [0] of { int }; /*15*/
+chan ret2 = [0] of { int }; /*16*/
+chan ret3 = [1] of { int }; /*18*/
+chan ret4 = [0] of { int }; /*22*/
+chan ret5 = [1] of { int }; /*25*/
+if
+::__pid==-1 -> __pid = _pid;
+::else->skip;
+fi;
+MessageList rec_v_0; /*13*/
+do /*13*/
+:: __LOOKUP ?? eval(__pid),LOOKUP, rec_v_0 -> /*14*/
+int key; /*14*/
+key = rec_v_0.m1.data2; /*14*/
+int sender; /*14*/
+sender = rec_v_0.m2.data2; /*14*/
+int position;
+position = run hash(key, ret1, __pid); /*15*/
+ret1 ? position; /*15*/
+int node;
+int __temp_cp_arr_2;
+__copy_memory_to_next(__temp_cp_arr_2, nodes);
+int __temp_cp_arr_3;
+__copy_memory_to_next(__temp_cp_arr_3, node_positions);
+node = run find_closest_node(__temp_cp_arr_2,__temp_cp_arr_3,position,0,n, ret2, __pid); /*16*/
+ret2 ? node; /*16*/
+MessageList msg_0; /*17*/
+msg_0.m1.data2 = node; /*17*/
+__RING_POS !! sender,RING_POS, msg_0; /*17*/
+int __temp_cp_arr_4;
+__copy_memory_to_next(__temp_cp_arr_4, nodes);
+int __temp_cp_arr_5;
+__copy_memory_to_next(__temp_cp_arr_5, node_positions);
+run ring_handler(__temp_cp_arr_4,__temp_cp_arr_5,n, ret3, __pid); /*18*/
+break;
+:: __ADD_NODE ?? eval(__pid),ADD_NODE, rec_v_0 -> /*20*/
+node = rec_v_0.m1.data2; /*20*/
+sender = rec_v_0.m2.data2; /*20*/
+int new_nodes;
+__get_next_memory_allocation(new_nodes);
+__list_append_list(new_nodes, nodes);
+__list_append(new_nodes, node);
+int new_node_position;
+new_node_position = run hash(node, ret4, __pid); /*22*/
+ret4 ? new_node_position; /*22*/
+int new_node_positions;
+__get_next_memory_allocation(new_node_positions);
+__list_append_list(new_node_positions, node_positions);
+__list_append(new_node_positions, new_node_position);
+MessageList msg_1; /*24*/
+__NODE_ACCEPTED !! sender,NODE_ACCEPTED, msg_1; /*24*/
+int __temp_cp_arr_6;
+__copy_memory_to_next(__temp_cp_arr_6, new_nodes);
+int __temp_cp_arr_7;
+__copy_memory_to_next(__temp_cp_arr_7, new_node_positions);
+run ring_handler(__temp_cp_arr_6,__temp_cp_arr_7,n + 1, ret5, __pid); /*25*/
+break;
+:: __TERMINATE ?? eval(__pid),TERMINATE, rec_v_0 -> /*27*/
+printf("Terminating ring handler\n");
+break;
+od;
+}
+
+proctype find_closest_node (int nodes;int node_positions;int position;int i;int n; chan ret; int __pid) {
+chan ret1 = [1] of { int }; /*43*/
+if
+::__pid==-1 -> __pid = _pid;
+::else->skip;
+fi;
+if
+:: (i >= n) -> /*0*/
+ret ! __list_at(nodes, 0)
+:: else ->
+int check_node;
+check_node = __list_at(nodes, i)
+int check_pos;
+check_pos = __list_at(node_positions, i)
+if
+:: (check_pos >= position) -> /*0*/
+ret ! check_node; /*41*/
+:: else ->
+int __temp_cp_arr_8;
+__copy_memory_to_next(__temp_cp_arr_8, nodes);
+int __temp_cp_arr_9;
+__copy_memory_to_next(__temp_cp_arr_9, node_positions);
+run find_closest_node(__temp_cp_arr_8,__temp_cp_arr_9,position,i + 1,n, ret1, __pid); /*43*/
+int __ret_placeholder_1; /*43*/
+ret1 ? __ret_placeholder_1; /*43*/
+ret ! __ret_placeholder_1; /*43*/
+fi;
+fi;
+}
+
+proctype hash (int key; chan ret; int __pid) {
+if
+::__pid==-1 -> __pid = _pid;
+::else->skip;
+fi;
+do
+:: key == 42 ->
+ret ! 1; /*0*/
+break;
+:: key == 25 ->
+ret ! 8; /*0*/
+break;
+:: key == 31 ->
+ret ! 10; /*0*/
+break;
+:: key == 1 ->
+ret ! 2; /*0*/
+break;
+:: key == 2 ->
+ret ! 5; /*0*/
+break;
+:: key == 3 ->
+ret ! 9; /*0*/
+break;
+:: key == 4 ->
+ret ! 15; /*0*/
+break;
+od
+}
+
+active proctype start () {
+chan ret1 = [1] of { int };
+int __pid = 0;
+if
+::__pid==-1 -> __pid = _pid;
+::else->skip;
+fi;
+n_nodes = 3;
+int nodes;
+__get_next_memory_allocation(nodes);
+int i;
+for(i : 1 .. n_nodes) { /*76*/
+int __tmp;
+__tmp = i; /*77*/
+__list_append(nodes, __tmp);
+}
+int ring;
+atomic {
+ring = run start_ring(nodes,n_nodes,ret1,-1); /*79*/
+}
+MessageList msg_0; /*82*/
+msg_0.m1.data2 = next_key; /*82*/
+msg_0.m2.data2 = __pid; /*82*/
+__LOOKUP !! ring,LOOKUP, msg_0; /*82*/
+MessageList rec_v_1; /*83*/
+do /*83*/
+:: __RING_POS ?? eval(__pid),RING_POS, rec_v_1 -> /*0*/
+int node; /*0*/
+node = rec_v_1.m1.data2; /*0*/
+printf("Key 42 is assigned to\n");
+printf("node\n");
+ring_position = node; /*87*/
+break;
+od;
+next_key = 25;
+MessageList msg_1; /*91*/
+msg_1.m1.data2 = next_key; /*91*/
+msg_1.m2.data2 = __pid; /*91*/
+__LOOKUP !! ring,LOOKUP, msg_1; /*91*/
+MessageList rec_v_2; /*92*/
+do /*92*/
+:: __RING_POS ?? eval(__pid),RING_POS, rec_v_2 -> /*0*/
+node = rec_v_2.m1.data2; /*0*/
+printf("Key 25 is assigned to\n");
+printf("node\n");
+ring_position = node; /*96*/
+break;
+od;
+next_key = 31;
+MessageList msg_2; /*100*/
+msg_2.m1.data2 = next_key; /*100*/
+msg_2.m2.data2 = __pid; /*100*/
+__LOOKUP !! ring,LOOKUP, msg_2; /*100*/
+MessageList rec_v_3; /*101*/
+do /*101*/
+:: __RING_POS ?? eval(__pid),RING_POS, rec_v_3 -> /*0*/
+node = rec_v_3.m1.data2; /*0*/
+printf("Key 31 is assigned to\n");
+printf("node\n");
+ring_position = node; /*105*/
+break;
+od;
+MessageList msg_3; /*109*/
+msg_3.m1.data2 = 4; /*109*/
+msg_3.m2.data2 = __pid; /*109*/
+__ADD_NODE !! ring,ADD_NODE, msg_3; /*109*/
+n_nodes = n_nodes + 1; 
+MessageList rec_v_4; /*112*/
+do /*112*/
+:: __NODE_ACCEPTED ?? eval(__pid),NODE_ACCEPTED, rec_v_4 -> /*113*/
+printf("Node 4 added to the ring\n");
+break;
+od;
+next_key = 31;
+MessageList msg_4; /*118*/
+msg_4.m1.data2 = next_key; /*118*/
+msg_4.m2.data2 = __pid; /*118*/
+__LOOKUP !! ring,LOOKUP, msg_4; /*118*/
+MessageList rec_v_5; /*119*/
+do /*119*/
+:: __RING_POS ?? eval(__pid),RING_POS, rec_v_5 -> /*0*/
+node = rec_v_5.m1.data2; /*0*/
+printf("Key 31 is assigned to\n");
+printf("node\n");
+ring_position = node; /*123*/
+break;
+od;
+MessageList msg_5; /*134*/
+__TERMINATE !! ring,TERMINATE, msg_5; /*134*/
+}
+
+
+ltl ltl_1 { [](r1 -> <>(p1)) };
+ltl ltl_2 { [](r2 -> <>(p3)) };
+ltl ltl_3 { [](r3 && n_nodes==3 -> <>(p1)) };
+ltl ltl_4 { [](r3 && n_nodes==4 -> <>(p4)) };
+
+\end{lstlisting}
+
+\subsubsection{Buggy Consistent Hash Table}
+\begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
+  import VaeLib
+
+  defmodule ConsistentHashRingB do
+  
+    @spec start_ring(list(), integer()) :: :ok
+    def start_ring(nodes, n) do
+      node_positions = Enum.map(nodes, fn n -> hash(n) end)
+      ring_handler(nodes, node_positions, n)
+    end
+  
+    @spec ring_handler(list(), list(), integer()) :: :ok
+    defp ring_handler(nodes, node_positions, n) do
+      receive do
+        {:lookup, key, sender} ->
+          position = hash(key)
+          node = find_closest_node(nodes, node_positions, position, 0, n)
+          send sender, {:ring_pos, node}
+          ring_handler(nodes, node_positions, n)
+  
+        {:add_node, node} ->
+          new_nodes = nodes ++ [node]
+          new_node_position = hash(node)
+          new_node_positions = node_positions ++ [new_node_position]
+          ring_handler(new_nodes, new_node_positions, n + 1)
+  
+        {:terminate} ->
+          IO.puts("Terminating ring handler")
+      end
+    end
+  
+    @spec find_closest_node(list(), list(), integer(), integer(), integer()) :: integer()
+    defp find_closest_node(nodes, node_positions, position, i, n) do
+      if i >= n do
+        Enum.at(nodes, 0)
+      else
+        check_node = Enum.at(nodes, i)
+        check_pos = Enum.at(node_positions, i)
+  
+        if check_pos >= position do
+          check_node
+        else
+          find_closest_node(nodes, node_positions, position, i + 1, n)
+        end
+      end
+    end
+  
+    @spec hash(integer()) :: integer()
+    defp hash(key) do
+      # Example hardcoded hash values for keys and nodes
+      case key do
+        # Keys
+        42 -> 1
+        25 -> 8
+        31 -> 10
+  
+        # Nodes
+        1 -> 2
+        2 -> 5
+        3 -> 9
+        4 -> 15
+      end
+    end
+  end
+  
+  defmodule ClientB do
+  
+    @vae_init true
+    @spec start() :: :ok
+    @ltl "[](r1 -> <>(p1))"
+    @ltl "[](r2 -> <>(p3))"
+    @ltl "[](r3 && n_nodes==3 -> <>(p1))"
+    @ltl "[](r3 && n_nodes==4 -> <>(p4))"
+    def start do
+      n_nodes = 3
+      nodes = for i <- 1..n_nodes do
+        i
+      end
+      ring = spawn(ConsistentHashRingB, :start_ring, [nodes, n_nodes])
+  
+      next_key = 42
+      send ring, {:lookup, next_key, self()}
+      ring_position = receive do
+        {:ring_pos, node} ->
+          IO.puts("Key 42 is assigned to")
+          IO.puts node
+          node
+      end
+  
+      next_key = 25
+      send ring, {:lookup, next_key, self()}
+      ring_position = receive do
+        {:ring_pos, node} ->
+          IO.puts("Key 25 is assigned to")
+          IO.puts node
+          node
+      end
+  
+      next_key = 31
+      send ring, {:lookup, next_key, self()}
+      ring_position = receive do
+        {:ring_pos, node} ->
+          IO.puts("Key 31 is assigned to")
+          IO.puts node
+          node
+      end
+  
+      # Dynamically grow the ring
+      send ring, {:add_node, 4}
+      n_nodes = n_nodes + 1
+  
+      next_key = 31
+      send ring, {:lookup, next_key, self()}
+      ring_position = receive do
+        {:ring_pos, node} ->
+          IO.puts("Key 31 is assigned to")
+          IO.puts node
+          node
+      end
+  
+      predicate p1, ring_position == 1
+      predicate p2, ring_position == 2
+      predicate p3, ring_position == 3
+      predicate p4, ring_position == 4
+      predicate r1, next_key == 42
+      predicate r2, next_key == 25
+      predicate r3, next_key == 31
+  
+      send ring, {:terminate}
+    end
+  end
+  
+\end{lstlisting}
+  
+\subsubsection{Buggy Hash Table Logs}
+
+\begin{lstlisting}[xleftmargin=.01\linewidth, xrightmargin=0.01\linewidth, caption={Message passing caused by the proposer's protocol bug.}, label={lst:paxos_bug}]
+The program is livelocked, or an ltl property was violated. Generating trace.
+<<<Message Events>>>
+[1] (hash:1) send [2]
+[2] (__anonymous_0:1) recv [2]
+[3] (start_ring:1) recv [2]
+[4] (hash:1) send [5]
+[5] (__anonymous_0:1) recv [5]
+[6] (start_ring:1) recv [5]
+[7] (hash:1) send [9]
+[8] (__anonymous_0:1) recv [9]
+[9] (start_ring:1) recv [9]
+[10] (start:1) send [1,LOOKUP,0,0,42,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[11] (ring_handler:1) recv [1,LOOKUP,0,0,42,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[12] (ring_handler:1) recv [1]
+[13] (ring_handler:1) recv [1]
+[14] (ring_handler:1) send [0,RING_POS,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[15] (start:1) recv [0,RING_POS,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[16] (start:1) send [1,LOOKUP,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[17] (ring_handler:1) recv [1,LOOKUP,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[18] (ring_handler:1) recv [8]
+[19] (find_closest_node:1) send [3]
+[20] (find_closest_node:1) recv [3]
+[21] (find_closest_node:1) send [3]
+[22] (find_closest_node:1) recv [3]
+[23] (ring_handler:1) recv [3]
+[24] (ring_handler:1) send [0,RING_POS,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[25] (start:1) recv [0,RING_POS,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[26] (start:1) send [1,LOOKUP,0,0,31,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[27] (ring_handler:1) recv [1,LOOKUP,0,0,31,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[28] (ring_handler:1) recv [10]
+[29] (find_closest_node:1) send [1]
+[30] (find_closest_node:1) recv [1]
+[31] (find_closest_node:1) send [1]
+[32] (find_closest_node:1) recv [1]
+[33] (find_closest_node:1) send [1]
+[34] (find_closest_node:1) recv [1]
+[35] (ring_handler:1) recv [1]
+[36] (ring_handler:1) send [0,RING_POS,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[37] (start:1) recv [0,RING_POS,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[38] (start:1) send [1,ADD_NODE,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[39] (start:1) send [1,LOOKUP,0,0,31,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[40] (ring_handler:1) recv [1,LOOKUP,0,0,31,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[41] (ring_handler:1) recv [10]
+[42] (find_closest_node:1) send [1]
+[43] (find_closest_node:1) recv [1]
+[44] (find_closest_node:1) send [1]
+[45] (find_closest_node:1) recv [1]
+[46] (find_closest_node:1) send [1]
+[47] (find_closest_node:1) recv [1]
+[48] (ring_handler:1) recv [1]
+[49] (ring_handler:1) send [0,RING_POS,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[50] (ring_handler:1) recv [1,ADD_NODE,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[51] (ring_handler:1) recv [15]
+[52] (start:1) recv [0,RING_POS,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[53] (start:1) send [1,TERMINATE,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[54] (ring_handler:1) recv [1,TERMINATE,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+\end{lstlisting}

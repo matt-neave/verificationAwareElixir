@@ -1,6 +1,6 @@
 import VaeLib
 
-defmodule ConsistentHashRing do
+defmodule ConsistentHashRingB do
 
   @spec start_ring(list(), integer()) :: :ok
   def start_ring(nodes, n) do
@@ -17,11 +17,10 @@ defmodule ConsistentHashRing do
         send sender, {:ring_pos, node}
         ring_handler(nodes, node_positions, n)
 
-      {:add_node, node, sender} ->
+      {:add_node, node} ->
         new_nodes = nodes ++ [node]
         new_node_position = hash(node)
         new_node_positions = node_positions ++ [new_node_position]
-        send sender, {:node_accepted}
         ring_handler(new_nodes, new_node_positions, n + 1)
 
       {:terminate} ->
@@ -63,7 +62,7 @@ defmodule ConsistentHashRing do
   end
 end
 
-defmodule Client do
+defmodule ClientB do
 
   @vae_init true
   @spec start() :: :ok
@@ -76,7 +75,7 @@ defmodule Client do
     nodes = for i <- 1..n_nodes do
       i
     end
-    ring = spawn(ConsistentHashRing, :start_ring, [nodes, n_nodes])
+    ring = spawn(ConsistentHashRingB, :start_ring, [nodes, n_nodes])
 
     next_key = 42
     send ring, {:lookup, next_key, self()}
@@ -106,13 +105,8 @@ defmodule Client do
     end
 
     # Dynamically grow the ring
-    send ring, {:add_node, 4, self()}
+    send ring, {:add_node, 4}
     n_nodes = n_nodes + 1
-
-    receive do
-      {:node_accepted} ->
-        IO.puts("Node 4 added to the ring")
-    end
 
     next_key = 31
     send ring, {:lookup, next_key, self()}

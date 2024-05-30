@@ -67,10 +67,7 @@ defmodule Client do
 
   @vae_init true
   @spec start() :: :ok
-  @ltl "[](r1 -> <>(p1))"
-  @ltl "[](r2 -> <>(p3))"
-  @ltl "[](r3 && n_nodes==3 -> <>(p1))"
-  @ltl "[](r3 && n_nodes==4 -> <>(p4))"
+  @ltl "[](sent_request -> <>assigned_node)"
   def start do
     n_nodes = 3
     nodes = for i <- 1..n_nodes do
@@ -78,58 +75,19 @@ defmodule Client do
     end
     ring = spawn(ConsistentHashRing, :start_ring, [nodes, n_nodes])
 
-    next_key = 42
-    send ring, {:lookup, next_key, self()}
-    ring_position = receive do
-      {:ring_pos, node} ->
-        IO.puts("Key 42 is assigned to")
-        IO.puts node
-        node
+
+    values = [42, 25, 31]
+    sent_request = false
+    assigned_node = false
+    for v <- values do
+      assigned_node= false
+      send ring, {:lookup, v, self()}
+      assigned_node = receive do
+        {:ring_pos, node} ->
+          true
+        end
+      sent_request = false
     end
-
-    next_key = 25
-    send ring, {:lookup, next_key, self()}
-    ring_position = receive do
-      {:ring_pos, node} ->
-        IO.puts("Key 25 is assigned to")
-        IO.puts node
-        node
-    end
-
-    next_key = 31
-    send ring, {:lookup, next_key, self()}
-    ring_position = receive do
-      {:ring_pos, node} ->
-        IO.puts("Key 31 is assigned to")
-        IO.puts node
-        node
-    end
-
-    # Dynamically grow the ring
-    send ring, {:add_node, 4, self()}
-    n_nodes = n_nodes + 1
-
-    receive do
-      {:node_accepted} ->
-        IO.puts("Node 4 added to the ring")
-    end
-
-    next_key = 31
-    send ring, {:lookup, next_key, self()}
-    ring_position = receive do
-      {:ring_pos, node} ->
-        IO.puts("Key 31 is assigned to")
-        IO.puts node
-        node
-    end
-
-    predicate p1, ring_position == 1
-    predicate p2, ring_position == 2
-    predicate p3, ring_position == 3
-    predicate p4, ring_position == 4
-    predicate r1, next_key == 42
-    predicate r2, next_key == 25
-    predicate r3, next_key == 31
 
     send ring, {:terminate}
   end

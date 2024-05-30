@@ -20,5 +20,7 @@
 \contentsline {lstlisting}{\numberline {5.3}{The structure of a list}.}{37}{lstlisting.5.3}%
 \contentsline {lstlisting}{\numberline {5.4}Example of a list node typed `int'.}{37}{lstlisting.5.4}%
 \contentsline {lstlisting}{\numberline {5.5}Memory intermediate representation.}{38}{lstlisting.5.5}%
-\contentsline {lstlisting}{\numberline {A.1}Message passing caused by the proposer's protocol bug.}{52}{lstlisting.A.1}%
-\contentsline {lstlisting}{\numberline {A.2}Message passing caused by the proposer's protocol bug.}{58}{lstlisting.A.2}%
+\contentsline {lstlisting}{\numberline {A.1}Message passing caused by the proposer's protocol bug.}{54}{lstlisting.A.1}%
+\contentsline {lstlisting}{\numberline {A.2}Message passing caused by the proposer's protocol bug.}{60}{lstlisting.A.2}%
+\contentsline {lstlisting}{\numberline {A.3}Promela of consistent hash table}{65}{lstlisting.A.3}%
+\contentsline {lstlisting}{\numberline {A.4}Message passing caused by the proposer's protocol bug.}{72}{lstlisting.A.4}%
