@@ -30,13 +30,17 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
     int __list_ptr;\n\
     int __list_last;\n\
     int __list_ptr_new;\n\
+    int __list_ptr_old;\n\
     int __mem_ptr;\n\
     inline __list_append (ls, v)\n\
     {\n\
         atomic {\n\
+            __list_ptr_old = __list_ptr;\n\
             __list_ptr = 0;\n\
             do\n\
-            :: __list_ptr >= LIST_LIMIT -> break;\n\
+            :: __list_ptr >= LIST_LIMIT -> 
+                __list_ptr = __list_ptr_old;\n\
+                break;\n\
             :: else ->\n\
                 if\n\
                 :: ! LIST_ALLOCATED(ls, __list_ptr) ->\n\
@@ -52,9 +56,12 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
     inline __list_pop (ls, v)\n\
     {\n\
         atomic {\n\
+            __list_ptr_old = __list_ptr;\n\
             __list_ptr = LIST_LIMIT - 1;\n\
             do\n\
-            :: __list_ptr < 0 -> break;\n\
+            :: __list_ptr < 0 ->
+                __list_ptr = __list_ptr_old;\n\
+                break;\n\
             :: else ->\n\
                 if\n\
                 :: LIST_ALLOCATED(ls, __list_ptr) ->\n\
@@ -69,9 +76,12 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
     inline __list_first (ls, assignee)\n\
     {\n\
         atomic {\n\
+            __list_ptr_old = __list_ptr;\n\
             __list_ptr = 0;\n\
             do\n\
-            :: __list_ptr >= LIST_LIMIT -> break;\n\
+            :: __list_ptr >= LIST_LIMIT -> 
+                __list_ptr = __list_ptr_old;\n\
+                break;\n\
             :: else ->\n\
                 if\n\
                 :: LIST_ALLOCATED(ls, __list_ptr) ->\n\
@@ -98,9 +108,12 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
     inline __list_remove_first (ls)\n\
     {\n\
         atomic {\n\
+            __list_ptr_old = __list_ptr;\n\
             __list_ptr = 0;\n\
             do\n\
-            :: __list_ptr >= LIST_LIMIT -> break;\n\
+            :: __list_ptr >= LIST_LIMIT -> 
+                __list_ptr = __list_ptr_old;\n\
+                break;\n\
             :: else ->\n\
                 if\n\
                 :: LIST_ALLOCATED(ls, __list_ptr) ->\n\
@@ -116,6 +129,7 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
     inline __list_random (ls, assignee)\n\
     {\n\
         atomic {\n\
+            __list_ptr_old = __list_ptr;\n\
             __list_ptr = 0;\n\
             __list_last = 0;\n\
             do\n\
@@ -129,9 +143,11 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
                 __list_ptr++;\n\
             :: __list_ptr < LIST_LIMIT && LIST_ALLOCATED(ls, __list_ptr) ->\n\
                 assignee = LIST_VAL(ls, __list_ptr);\n\
+                __list_ptr = __list_ptr_old;\n\
                 break;\n\
             :: __list_ptr >= LIST_LIMIT ->\n\
                 assignee = LIST_VAL(ls, __list_last);\n\
+                __list_ptr = __list_ptr_old;\n\
                 break;\n\
             od\n\
         }\n\
@@ -140,10 +156,13 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
     inline __list_append_list (ls_new, ls_old)\n\
     {\n\
         atomic {\n\
+            __list_ptr_old = __list_ptr;\n\
             __list_ptr = 0;\n\
             __list_ptr_new = 0;\n\
             do\n\
-            :: __list_ptr >= LIST_LIMIT || __list_ptr_new >= LIST_LIMIT -> break;\n\
+            :: __list_ptr >= LIST_LIMIT || __list_ptr_new >= LIST_LIMIT -> 
+                __list_ptr = __list_ptr_old;\n\
+                break;\n\
             :: else ->\n\
                 if\n\
                 :: ! LIST_ALLOCATED(ls_new, __list_ptr_new) ->\n\
@@ -184,6 +203,7 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
     inline __copy_memory_to_next (new_idx, old_idx)\n\
     {\n\
         atomic {\n\
+            __list_ptr_old = __list_ptr;\n\
             __mem_ptr = 0;\n\
             do \n\
             :: __mem_ptr >= MEM_LIMIT -> break;\n\
@@ -200,6 +220,7 @@ pub fn add_linked_list_boiler_plate(mut model: String) -> String {
                     LIST_VAL(__mem_ptr, __list_ptr) = LIST_VAL(old_idx, __list_ptr);\n\
                     __list_ptr++;\n\
                 od\n\
+                __list_ptr = __list_ptr_old;\n\
                 break;\n\
                 :: else -> __mem_ptr++;\n\
                 fi\n\

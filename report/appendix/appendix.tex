@@ -1092,3 +1092,220 @@ The program is livelocked, or an ltl property was violated. Generating trace.
 [53] (start:1) send [1,TERMINATE,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 [54] (ring_handler:1) recv [1,TERMINATE,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 \end{lstlisting}
+
+\subsubsection{LTLixir 2PC}
+\begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
+  import VaeLib
+
+  defmodule Coordinator do
+    @spec start_coordinator(list(), integer(), integer(), integer()) :: :ok
+    def start_coordinator(participants, transaction_id, value, n_participants) do
+      coordinator_handler(participants, transaction_id, value, 0, n_participants)
+    end
+  
+    @spec coordinator_handler(list(), integer(), integer(), integer(), integer()) :: :ok
+    defp coordinator_handler(participants, transaction_id, value, phase, n_participants) do
+      case phase do
+        0 -> # Phase 1: Prepare
+          for participant <- participants do
+            send participant, {:prepare, transaction_id, value, self()}
+          end
+          receive_prepare_responses(participants, transaction_id, value, 0, 0, n_participants)
+        1 -> # Phase 2: Commit
+          for participant <- participants do
+            send participant, {:commit, transaction_id, self()}
+          end
+          wait_for_acks(participants, 0, n_participants, 1)
+      end
+    end
+  
+    @spec receive_prepare_responses(list(), integer(), integer(), integer(), integer(), integer()) :: :ok
+    defp receive_prepare_responses(participants, transaction_id, value, count, acks, n_participants) do
+      if count >= n_participants do
+        if acks == n_participants do
+          coordinator_handler(participants, transaction_id, value, 1, n_participants)
+        else
+          IO.puts("Transaction aborted")
+          for participant <- participants do
+            send participant, {:abort, transaction_id, self()}
+          end
+          wait_for_acks(participants, 0, n_participants, 0)
+        end
+      else
+        receive do
+          {:prepared, response_transaction_id, participant} ->
+            if response_transaction_id == transaction_id do
+              receive_prepare_responses(participants, transaction_id, value, count + 1, acks + 1, n_participants)
+            else
+              receive_prepare_responses(participants, transaction_id, value, count, acks, n_participants)
+            end
+          {:abort, response_transaction_id, participant} ->
+            if response_transaction_id == transaction_id do
+              receive_prepare_responses(participants, transaction_id, value, count + 1, acks, n_participants)
+            else
+              receive_prepare_responses(participants, transaction_id, value, count, acks, n_participants)
+            end
+        end
+      end
+    end
+  
+    @spec wait_for_acks(list(), integer(), integer(), integer()) :: :ok
+    defp wait_for_acks(participants, count, n_participants, committed) do
+      if count >= n_participants do
+        if committed == 1 do
+          IO.puts("Transaction committed")
+        end
+        for participant <- participants do
+          send participant, {:terminate}
+        end
+      else
+        receive do
+          {:ack, _participant} ->
+            wait_for_acks(participants, count + 1, n_participants, committed)
+        end
+      end
+    end
+  end
+  
+  defmodule Participant do
+    @spec start_participant(integer()) :: :ok
+    def start_participant(client) do
+      participant_handler(client)
+    end
+  
+    @spec participant_handler(integer()) :: :ok
+    defp participant_handler(client) do
+      receive do
+        {:prepare, transaction_id, value, coordinator} ->
+          prepare = decide_to_prepare(value)
+          if prepare do
+            send coordinator, {:prepared, transaction_id, self()}
+          else
+            send coordinator, {:abort, transaction_id, self()}
+          end
+          participant_handler(client)
+        {:commit, transaction_id, coordinator} ->
+          commit(transaction_id, client)
+          send coordinator, {:ack, self()}
+          participant_handler(client)
+        {:abort, transaction_id, coordinator} ->
+          abort(transaction_id, client)
+          send coordinator, {:ack, self()}
+          participant_handler(client)
+        {:terminate} ->
+          IO.puts("Terminating participant")
+      end
+    end
+  
+    @spec decide_to_prepare(integer()) :: boolean()
+    defp decide_to_prepare(value) do
+      # Example decision logic i.e. ensure all locks are required to make the commit
+      # We use some arbitrary random logic
+      cmps = [10, 90]
+      cmp = Enum.random(cmps)
+      if value < cmp do
+        true
+      else
+        false
+      end
+    end
+  
+    @spec commit(integer(), integer()) :: :ok
+    defp commit(transaction_id, client) do
+      IO.puts("Committing transaction")
+      send client, {:transaction_commit}
+    end
+  
+    @spec abort(integer(), integer()) :: :ok
+    defp abort(transaction_id, client) do
+      IO.puts("Aborting transaction")
+      send client, {:transaction_abort}
+  
+    end
+  end
+  
+  defmodule Client do
+    @vae_init true
+    @spec start() :: :ok
+    def start do
+      n_participants = 3
+      participants = for _ <- 1..n_participants do
+        spawn(Participant, :start_participant, [self()])
+      end
+  
+      transaction_id = 1
+      value = 42
+      coordinator = spawn(Coordinator, :start_coordinator, [participants, transaction_id, value, n_participants])
+  
+      await_transaction_result(0, 0, n_participants)
+    end
+  
+    @spec await_transaction_result(integer(), integer(), integer()) :: :ok
+    @ltl "<>[]p || <>[]q"
+    @ltl "[](p -> !<>[]q)"
+    @ltl "[](q -> !<>[]p)"
+    def await_transaction_result(n_c, n_a, n_p) do
+      commit_count = n_c
+      abort_count = n_a
+      participant_count = n_p
+      predicate p, commit_count == participant_count
+      predicate q, abort_count == participant_count
+      if n_c + n_a >= n_p do
+        IO.puts("All participants have responded")
+      else
+        receive do
+          {:transaction_commit} ->
+            await_transaction_result(n_c + 1, n_a, n_p)
+          {:transaction_abort} ->
+            await_transaction_result(n_c, n_a + 1, n_p)
+        end
+      end
+    end
+  end
+  
+\end{lstlisting}
+
+\subsubsection{Buggy 2PC Logs}
+\begin{lstlisting}[xleftmargin=.01\linewidth, xrightmargin=0.01\linewidth, caption={Message passing caused by the proposer's protocol bug.}, label={lst:paxos_bug}]
+The program is livelocked, or an ltl property was violated. Generating trace.
+<<<Message Events>>>
+[1] (coordinator_handler:1) send [1,PREPARE,0,0,1,0,0,0,0,0,42,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[2] (coordinator_handler:1) send [3,PREPARE,0,0,1,0,0,0,0,0,42,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[3] (coordinator_handler:1) send [5,PREPARE,0,0,1,0,0,0,0,0,42,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[4] (participant_handler:1) recv [5,PREPARE,0,0,1,0,0,0,0,0,42,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[5] (participant_handler:1) recv [1]
+[6] (participant_handler:1) send [7,PREPARED,0,0,1,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[7] (receive_prepare_responses:1) recv [7,PREPARED,0,0,1,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[8] (participant_handler:1) recv [3,PREPARE,0,0,1,0,0,0,0,0,42,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[9] (participant_handler:1) recv [1]
+[10] (participant_handler:1) send [7,PREPARED,0,0,1,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[11] (receive_prepare_responses:1) recv [7,PREPARED,0,0,1,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[12] (participant_handler:1) recv [1,PREPARE,0,0,1,0,0,0,0,0,42,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[13] (participant_handler:1) recv [1]
+[14] (participant_handler:1) send [7,PREPARED,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[15] (receive_prepare_responses:1) recv [7,PREPARED,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[16] (coordinator_handler:1) send [1,COMMIT,0,0,1,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[17] (coordinator_handler:1) send [3,COMMIT,0,0,1,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[18] (coordinator_handler:1) send [5,COMMIT,0,0,1,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[19] (participant_handler:1) recv [3,COMMIT,0,0,1,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[20] (commit:1) send [0,TRANSACTION_COMMIT,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[21] (participant_handler:1) send [7,ACK,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[22] (wait_for_acks:1) recv [7,ACK,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[23] (participant_handler:1) recv [5,COMMIT,0,0,1,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[24] (commit:1) send [0,TRANSACTION_COMMIT,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[25] (participant_handler:1) send [7,ACK,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[26] (wait_for_acks:1) recv [7,ACK,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[27] (participant_handler:1) recv [1,COMMIT,0,0,1,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[28] (commit:1) send [0,TRANSACTION_ABORT,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[29] (participant_handler:1) send [7,ACK,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[30] (wait_for_acks:1) recv [7,ACK,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[31] (wait_for_acks:1) send [1,TERMINATE,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[32] (wait_for_acks:1) send [3,TERMINATE,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[33] (wait_for_acks:1) send [5,TERMINATE,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[34] (participant_handler:1) recv [1,TERMINATE,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[35] (participant_handler:1) recv [5,TERMINATE,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[36] (participant_handler:1) recv [3,TERMINATE,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[37] (await_transaction_result:1) recv [0,TRANSACTION_COMMIT,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[38] (await_transaction_result:1) recv [0,TRANSACTION_COMMIT,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+[39] (await_transaction_result:1) recv [0,TRANSACTION_ABORT,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+\end{lstlisting}

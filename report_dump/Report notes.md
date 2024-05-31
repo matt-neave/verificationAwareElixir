@@ -1,22 +1,22 @@
-The title is too long and does not reflect report. 'Actor based' is hardly mentioned, 'message passing' is more appropriate. In reality, the name of the tool, or 'verification-aware elixir' could be more appropriate.
+The title is too long and does not reflect report. 'Actor based' is hardly mentioned, 'message passing' is more appropriate. In reality, the name of the tool, or 'verification-aware elixir' could be more appropriate. ✅
 
 ## Introduction
-Talk more about my contribution, why is it non-trivial?
-What are verification aware languages.
+Talk more about my contribution, why is it non-trivial? ✅
+What are verification aware languages. 
 
 ### Objectives
 Reorder them, so that specifications are mentioned first. 'Message passing systems' important here.
-Talk about techniques.
-Mention we will map elixir -> model checkers like spin.
+Talk about techniques. ✅
+Mention we will map elixir -> model checkers like spin. ✅
 
 ### Contributions
 Can be more specific and detailed than objectives (i.e. the model checker is spin). Featureset of the tools. Diagram of the toolchain (higher level than implementation)
 
 ## Background
 Mention hybrid systems involving shared memory and message passing.
-Needs an introduction, explain why the background is important, what VA is, mention existing languages and other state-of-the-art tools.
-What is the alternative to VA? I.e. hand translation, no specification only code ect..
-What are the requirements of a good VA tool.
+Needs an introduction, explain why the background is important, what VA is, mention existing languages and other state-of-the-art tools. ✅
+What is the alternative to VA? I.e. hand translation, no specification only code ect.. ✅
+What are the requirements of a good VA tool. ✅
 What is needed for Elixir to be VA.
 How would theorem proving extend VAE.
 Be fair to other model checkers and give examples of PAT, BLAST, PRISM (or we can use a table for comparison by comparing features like LTL, CTL, probabilistic, perf, scalability ect. -- check wikipedia)
@@ -27,7 +27,6 @@ Remove theorem proving, mention it in passing.
 What can / cant they do > examples. Features / limitations.
 
 Move 2.4.2 to seperate chapter.
-
 If too much space, move elixir / promela chapter to appendix and keep together.
 
 ## Project

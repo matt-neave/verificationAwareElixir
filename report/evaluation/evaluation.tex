@@ -94,7 +94,60 @@ In this instance, instead of considering this an error, we may instead want to r
 \phi_5: \square (\text{sent\_request} \rightarrow \lozenge \text{assigned\_node})
 \]
 Verlixir reports that $S \models \phi_5$ and $S' \models \phi_5$.
-\subsection{Alternating-bit Protocol} \label{sec:ab}
-\subsubsection{Informal Specification}
 \subsection{Two-Phase Commit} \label{sec:2pc}
+The two-phase commit protocol is a distributed algorithm used to update resources on multiple nodes in a single operation. It can be used to ensure replication of data is consistent across multiple nodes. For example, Spanner \cite{spanner} uses a two-phase commit between leaders of replica groups to preserve the atomicity of transactions.
+\par
+The protocol involves a coordinator and multiple participants. The coordinator is responsible for communicating with the participants to complete the two phases of the protocol. The first phase is the prepare phase, where the coordinator asks participants to prepare for a transaction. The second phase is the commit phase, where the coordinator asks participants to commit the transaction. In our design, the coordinator will also be responsible for terminating the participants after the transaction has been completed. When a participant is asked to prepare for a transaction, it will check the conditions it requires to commit a transaction and then reply with a $prepared$ or $abort$ message. The condition is typically application-specific, for example it could be ensuring the participant has access to a lock required for a write operation. If a single participant aborts the transaction, the coordinator will ask all participants to abort. If all participants are prepared, the coordinator will ask the participants to commit.
+\par
+We informally specify the system with a safety and liveness property. The safety property is that all participants must agree on the same outcome of the transaction. The liveness property is that eventually, an outcome is agreed on. We can now formalise these by constructing predicates and LTL formulae.
+\[
+\begin{array}{l}
+\text{predicate p: commit\_count == participant\_count} \\
+\text{predicate q: abort\_count == participant\_count} \\
+\end{array}
+\]
+The $commit\_count$ is the number of participants that have committed the transaction and similarly, the $abort\_count$ is the number of participants that have aborted the transaction. The $participant\_count$ is a property specified by the system, we will reason about the protocol using a system with three participants. We can now introduce the LTL formulae to specify the system.
+\begin{itemize}
+    \item \textbf{SR1}: $ \square ( p \rightarrow \neg \lozenge q ) $
+    \item \textbf{SR2}: $ \square ( q \rightarrow \neg \lozenge p ) $
+    \item \textbf{LR1}: $ \lozenge \square p \lor \lozenge \square q $
+\end{itemize}
+Verlixir verifies the model is correct under these properties. We can now introduce a bug into the system. As we have mainly looked at safety properties so far, we will introduce a bug that may trigger a violation of LR1. To do this, we randomly make a participator `faulty'. Faulty participators will always abort the transaction, regardless of the coordinator's request and even if they agree to commit. We can now run the Verlixir on the updated model to see if the system violates the specification. Verlixir reports that the system violates LR1, and provides a counterexample of an execution that violates the specification. We can again use a diagram to represent the violating execution, as shown in figure \ref{fig:2pc}.
+\par
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{images/2pc.png}
+    \caption{Implementation of two phase commit that violates specification (LR1).}
+    \label{fig:2pc}
+\end{figure}
+\par
+We can see from the figure \ref{fig:2pc} that in the counterexample reported by Verlixir, the erroneous participant has an implementation issue such that it may reply to the coordinator with a $:prepared$ message before it asserted the condition to do so (acquiring relevant locks). This means the coordinator has the relevant information to ask participants to commit. The erroneous participant will attempt to commit, determine it does not have the required locks to do so and then abort. Verlixir reports this violates the liveness property LR1, as the system never reaches a state where all participants either commit or abort.
+\par
+For this counterexample, the message log produced by Verlixir makes the violation relatively obvious.
+\begin{lstlisting}[xleftmargin=.01\linewidth, xrightmargin=0.01\linewidth, caption={Message log produced by counterexample violating LR1.}, label={lst:2pc_violation}]
+send [1, PREPARE, ...]
+send [3, PREPARE, ...]
+send [5, PREPARE, ...]
+...
+send [7, PREPARED, ...]
+...
+send [7, PREPARED, ...]
+...
+send [7, PREPARED, ...]
+...
+send [1, COMMIT, ...]
+send [3, COMMIT, ...]
+send [5, COMMIT, ...]
+...
+send [7, TRANSACTION_COMMIT, ...]
+...
+send [7, TRANSACTION_COMMIT, ...]
+...
+send [7, TRANSACTION_ABORT, ...]
+...
+\end{lstlisting}
+Listing \ref{lst:2pc_violation} shows a reduced version of the message log produced. We can see the first broadcast of $prepare$ messages send to all participants\footnote{The numbers 1, 3 and 5 are the process identifiers assigned to the participants by Verlixir. Although this reveals some of the internals Verlixir uses to model programs, being aware of what these are can help understanding errors. They do not have any significance in the actual program.}. and subsequently the participants replying with $prepared$ messages. The coordinator then broadcasts a $commit$ message, which is received by all participants. However, in the response to $commit$ we notice that one participant sends an unexpected $transaction\_abort$ message. This explains the violation of LR1, as well as gives an indication as to where in the execution it was violated.
+\subsection{Raft Consensus} \label{sec:raft}
+
+\section{Verlixir vs. SOMETHING??} \label{sec:vs}
 \section{Summary}

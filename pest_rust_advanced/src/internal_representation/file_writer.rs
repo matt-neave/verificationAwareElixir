@@ -290,6 +290,7 @@ impl FileWriter {
             self.function_body.last_mut().unwrap().push_str(&format!("ret{} ? {}; /*{}*/\n", self.function_call_count, return_variable, line_number));
         }
         if ret && self.returning_function {
+            self.post_condition_check(0);
             self.function_body.last_mut().unwrap().push_str(&format!("int __ret_placeholder_{}; /*{}*/\n", self.function_call_count, line_number));
             self.function_body.last_mut().unwrap().push_str(&format!("{} ? __ret_placeholder_{}; /*{}*/\n", return_variable, self.function_call_count, line_number));
             self.function_body.last_mut().unwrap().push_str(&format!("ret ! __ret_placeholder_{}; /*{}*/\n", self.function_call_count, line_number));
@@ -384,7 +385,7 @@ impl FileWriter {
             var_name = String::from(&format!("mtype = {{{}}};\n", unique_mtypes.join(",")));
         }
         // Messages
-        var_name.push_str("typedef MessageType {\nbyte data1[2];\nint data2;\nbyte data3[2];\nbool data4;\n};\ntypedef\nMessageList {\nMessageType m1;\nMessageType m2;\nMessageType m3;\nMessageType m4;\nMessageType m5;\nMessageType m6;\n};\n\n");
+        var_name.push_str("typedef MessageType {\nbyte data1[2];\nint data2;\nbyte data3[2];\nbool data4;\n};\ntypedef\nMessageList {\nMessageType m1;\nMessageType m2;\nMessageType m3;\nMessageType m4;\nMessageType m5;\nMessageType m6;\nMessageType m7;\n};\n\n");
         
         let mut mailbox_assignment = String::new();
         for mtype in unique_mtypes.iter() {
@@ -772,10 +773,13 @@ impl FileWriter {
     ) {
         self.function_body.last_mut().unwrap().push_str(&format!(
             "atomic {{\n\
+                __list_ptr_old = __list_ptr;\n\
                 __list_ptr = 0;\n\
                 __list_ptr_new = 0;\n\
                 do\n\
-                :: __list_ptr >= LIST_LIMIT || __list_ptr_new >= LIST_LIMIT -> break;\n\
+                :: __list_ptr >= LIST_LIMIT || __list_ptr_new >= LIST_LIMIT -> \n\
+                    __list_ptr = __list_ptr_old;\n\
+                    break;\n\
                 :: else ->\n\
                     if\n\
                     :: LIST_ALLOCATED({}, __list_ptr) ->\n\
@@ -809,7 +813,7 @@ impl FileWriter {
         }\n");
         self.function_sym_table.remove_entry(&iterator);
         if !self.array_var_stack.is_empty() {
-            self.var_stack.pop();
+            self.array_var_stack.pop();
         }
     }
 
@@ -843,11 +847,11 @@ impl FileWriter {
     pub fn commit_range_for_loop(
         &mut self,
     ) {
-        if self.block_assignment {
-            self.var_stack.pop();
-        }
+        // if self.block_assignment {
+        //     self.var_stack.pop();
+        // }
         if (self.block_assignment) {
-            let var = self.array_var_stack.last().unwrap();
+            let var = self.array_var_stack.pop().unwrap();
             self.function_body.last_mut().unwrap().push_str(&format!("__list_append({}, __tmp);\n}}\n", var));
         } else {
             self.function_body.last_mut().unwrap().push_str("}\n");
@@ -875,6 +879,7 @@ impl FileWriter {
         if let Some(x) = self.get_next_var_safe() {
             self.function_body.last_mut().unwrap().push_str(&format!("{} = ", x));
         } else if ret && self.returning_function {
+            self.post_condition_check(0);
             self.function_body.last_mut().unwrap().push_str("ret ! ");
         }
         self.function_body.last_mut().unwrap().push_str(&format!("__list_at({}, {})\n", list, index));
@@ -979,13 +984,6 @@ impl FileWriter {
         }
         let typ = typ.unwrap();
         match typ {
-            sym_table::SymbolType::Integer => {
-                // Find the line with the variable declaration, format: int var...
-                // Format is something like int var; or int var = 0;
-                let search_term = &format!("int {}", var);
-                self.move_int_to_global(search_term, var.clone());
-                self.used_ltl_vars.push(var);
-            },
             sym_table::SymbolType::Boolean => {
                 let str = &format!("bool {};\n", var);
                 self.ltl_header.push_str(str);
@@ -994,7 +992,12 @@ impl FileWriter {
                 self.used_ltl_vars.push(var);
             },
             _ => {
-                error!("Could not move variable to global scope: {}", var);
+                // TODO, all other types assumed to be integers
+                // Find the line with the variable declaration, format: int var...
+                // Format is something like int var; or int var = 0;
+                let search_term = &format!("int {}", var);
+                self.move_int_to_global(search_term, var.clone());
+                self.used_ltl_vars.push(var);
             },
         }
     }

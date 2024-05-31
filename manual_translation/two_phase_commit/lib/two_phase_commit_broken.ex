@@ -1,6 +1,6 @@
 import VaeLib
 
-defmodule Coordinator do
+defmodule CoordinatorB do
   @spec start_coordinator(list(), integer(), integer(), integer()) :: :ok
   def start_coordinator(participants, transaction_id, value, n_participants) do
     coordinator_handler(participants, transaction_id, value, 0, n_participants)
@@ -70,7 +70,7 @@ defmodule Coordinator do
   end
 end
 
-defmodule Participant do
+defmodule ParticipantB do
   @spec start_participant(integer()) :: :ok
   def start_participant(client) do
     participant_handler(client)
@@ -104,9 +104,7 @@ defmodule Participant do
   defp decide_to_prepare(value) do
     # Example decision logic i.e. ensure all locks are required to make the commit
     # We use some arbitrary random logic
-    cmps = [10, 90]
-    cmp = Enum.random(cmps)
-    if value < cmp do
+    if value < 50 do
       true
     else
       false
@@ -116,7 +114,13 @@ defmodule Participant do
   @spec commit(integer(), integer()) :: :ok
   defp commit(transaction_id, client) do
     IO.puts("Committing transaction")
-    send client, {:transaction_commit}
+    config = [1, 0]
+    faulty = Enum.random(config)
+    if faulty do
+      send client, {:transaction_abort}
+    else
+      send client, {:transaction_commit}
+    end
   end
 
   @spec abort(integer(), integer()) :: :ok
@@ -127,18 +131,18 @@ defmodule Participant do
   end
 end
 
-defmodule Client do
+defmodule ClientB do
   @vae_init true
   @spec start() :: :ok
   def start do
     n_participants = 3
     participants = for _ <- 1..n_participants do
-      spawn(Participant, :start_participant, [self()])
+      spawn(ParticipantB, :start_participant, [self()])
     end
 
     transaction_id = 1
     value = 42
-    coordinator = spawn(Coordinator, :start_coordinator, [participants, transaction_id, value, n_participants])
+    coordinator = spawn(CoordinatorB, :start_coordinator, [participants, transaction_id, value, n_participants])
 
     await_transaction_result(0, 0, n_participants)
   end

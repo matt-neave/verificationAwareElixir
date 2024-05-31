@@ -1,6 +1,6 @@
 \contentsline {lstlisting}{\numberline {2.1}Example of a Promela specification that enqueues a message in a channel}{14}{lstlisting.2.1}%
 \contentsline {lstlisting}{\numberline {2.2}{Example of a method in Dafny}.}{16}{lstlisting.2.2}%
-\contentsline {lstlisting}{\numberline {2.3}{\texttt {forall} quantifier in Dafny \cite {dafny_tutorial}}.}{16}{lstlisting.2.3}%
+\contentsline {lstlisting}{\numberline {2.3}{\texttt {forall} quantifier in Dafny \cite {dafny_tutorial}}.}{17}{lstlisting.2.3}%
 \contentsline {lstlisting}{\numberline {2.4}{An example Boogie IVL program}.}{17}{lstlisting.2.4}%
 \contentsline {lstlisting}{\numberline {2.5}{Defining and spawning processes in Promela}.}{18}{lstlisting.2.5}%
 \contentsline {lstlisting}{\numberline {3.1}An example of spawn/1 and spawn/4 in Elixir for spawning a new lightweight process and a new Elixir node}{20}{lstlisting.3.1}%
@@ -20,7 +20,9 @@
 \contentsline {lstlisting}{\numberline {5.3}{The structure of a list}.}{37}{lstlisting.5.3}%
 \contentsline {lstlisting}{\numberline {5.4}Example of a list node typed `int'.}{37}{lstlisting.5.4}%
 \contentsline {lstlisting}{\numberline {5.5}Memory intermediate representation.}{38}{lstlisting.5.5}%
-\contentsline {lstlisting}{\numberline {A.1}Message passing caused by the proposer's protocol bug.}{54}{lstlisting.A.1}%
-\contentsline {lstlisting}{\numberline {A.2}Message passing caused by the proposer's protocol bug.}{60}{lstlisting.A.2}%
-\contentsline {lstlisting}{\numberline {A.3}Promela of consistent hash table}{65}{lstlisting.A.3}%
-\contentsline {lstlisting}{\numberline {A.4}Message passing caused by the proposer's protocol bug.}{72}{lstlisting.A.4}%
+\contentsline {lstlisting}{\numberline {6.1}Message log produced by counterexample violating LR1.}{47}{lstlisting.6.1}%
+\contentsline {lstlisting}{\numberline {A.1}Message passing caused by the proposer's protocol bug.}{56}{lstlisting.A.1}%
+\contentsline {lstlisting}{\numberline {A.2}Message passing caused by the proposer's protocol bug.}{62}{lstlisting.A.2}%
+\contentsline {lstlisting}{\numberline {A.3}Promela of consistent hash table}{67}{lstlisting.A.3}%
+\contentsline {lstlisting}{\numberline {A.4}Message passing caused by the proposer's protocol bug.}{74}{lstlisting.A.4}%
+\contentsline {lstlisting}{\numberline {A.5}Message passing caused by the proposer's protocol bug.}{79}{lstlisting.A.5}%

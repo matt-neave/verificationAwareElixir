@@ -85,7 +85,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "error.md",
+                "file": "Report notes.md",
                 "mode": "source",
                 "source": false
               }
@@ -218,7 +218,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "error.md",
+                "file": "Report notes.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -235,7 +235,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "error.md",
+                "file": "Report notes.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -258,7 +258,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "error.md"
+                "file": "Report notes.md"
               }
             }
           }
@@ -281,16 +281,16 @@
   },
   "active": "3708f643b2bb01c4",
   "lastOpenFiles": [
-    "Report notes.md",
     "Report plan.md",
-    "Report Todos.md",
+    "Verification of Elixir paper.md",
+    "state space exploration.md",
+    "Random notes.md",
     "Question for Naranker.md",
     "Potential todos.md",
     "error.md",
+    "Report notes.md",
+    "Report Todos.md",
     "Limitations.md",
-    "Random notes.md",
-    "state space exploration.md",
-    "Verification of Elixir paper.md",
     "Pasted image 20240527104552.png",
     "Pasted image 20240527104042.png",
     "message passing exploration.md",
