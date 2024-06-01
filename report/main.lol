@@ -21,8 +21,8 @@
 \contentsline {lstlisting}{\numberline {5.4}Example of a list node typed `int'.}{37}{lstlisting.5.4}%
 \contentsline {lstlisting}{\numberline {5.5}Memory intermediate representation.}{38}{lstlisting.5.5}%
 \contentsline {lstlisting}{\numberline {6.1}Message log produced by counterexample violating LR1.}{47}{lstlisting.6.1}%
-\contentsline {lstlisting}{\numberline {A.1}Message passing caused by the proposer's protocol bug.}{56}{lstlisting.A.1}%
-\contentsline {lstlisting}{\numberline {A.2}Message passing caused by the proposer's protocol bug.}{62}{lstlisting.A.2}%
-\contentsline {lstlisting}{\numberline {A.3}Promela of consistent hash table}{67}{lstlisting.A.3}%
-\contentsline {lstlisting}{\numberline {A.4}Message passing caused by the proposer's protocol bug.}{74}{lstlisting.A.4}%
-\contentsline {lstlisting}{\numberline {A.5}Message passing caused by the proposer's protocol bug.}{79}{lstlisting.A.5}%
+\contentsline {lstlisting}{\numberline {A.1}Message passing caused by the proposer's protocol bug.}{57}{lstlisting.A.1}%
+\contentsline {lstlisting}{\numberline {A.2}Message passing caused by the proposer's protocol bug.}{63}{lstlisting.A.2}%
+\contentsline {lstlisting}{\numberline {A.3}Promela of consistent hash table}{68}{lstlisting.A.3}%
+\contentsline {lstlisting}{\numberline {A.4}Message passing caused by the proposer's protocol bug.}{75}{lstlisting.A.4}%
+\contentsline {lstlisting}{\numberline {A.5}Message passing caused by the proposer's protocol bug.}{80}{lstlisting.A.5}%

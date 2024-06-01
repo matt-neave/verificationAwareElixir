@@ -148,6 +148,62 @@ send [7, TRANSACTION_ABORT, ...]
 \end{lstlisting}
 Listing \ref{lst:2pc_violation} shows a reduced version of the message log produced. We can see the first broadcast of $prepare$ messages send to all participants\footnote{The numbers 1, 3 and 5 are the process identifiers assigned to the participants by Verlixir. Although this reveals some of the internals Verlixir uses to model programs, being aware of what these are can help understanding errors. They do not have any significance in the actual program.}. and subsequently the participants replying with $prepared$ messages. The coordinator then broadcasts a $commit$ message, which is received by all participants. However, in the response to $commit$ we notice that one participant sends an unexpected $transaction\_abort$ message. This explains the violation of LR1, as well as gives an indication as to where in the execution it was violated.
 \subsection{Raft Consensus} \label{sec:raft}
+The final algorithm we will use in the evaluation of Verlixir's expressiveness is raft \cite{raft}. The raft consensus algorithm was introduced to be a simpler consensus algorithm than paxos. It is a consensus algorithm for managing a replicated log. The result produced is similar to multi-paxos and is as efficient as paxos. Unlike paxos, raft explicitly coordinates through a leader.
+\par
+We split the design of raft into two components: leader election and log replication. We will primarily be focusing on leader election in this evaluation. The raft design involves four process types: clients, followers, candidates and leaders. Clients communicates directly with leaders to propose log entries for replication. Leaders will commit these log messages and forward them onto followers. There can be multiple leaders at any moment, however, the raft algorithm is divided into `terms'. If multiple leaders forward log entries to a follower, it will only respect the leader elected for the highest term. If a follower does not receive a message from a leader within a certain time frame, it will mark itself as a candidate and initiate a new leader election.
+\par
+Leader election involves selecting a new term number and asking all followers to vote for the candidate. If a candidate receives a majority of votes, it marks itself as the leader for the term. The consensus algorithm is designed such that only one leader can be elected per term, in the case of a split vote then no leader is elected.
+\section{Verlixir vs. Existing Work} \label{sec:vs}
+We will now compare Verlixir to existing state-of-the-art work in verification-aware languages and modern programming language verification tools. We believe Verlixir is the first tool to support a pure message-passing model of computation, and hence much of the design has introduced novel techniques to support this. We will first discuss some of these techniques that differentiate Verlixir from exiting work. We will then provide a direct comparison between Verlixir and existing tools, before discussing the future of Verlixir.
+\subsection{Difference in Approach}
+Verlixir is the first verification-aware language to support a pure message based model. This is a significantly different approach to existing tools, which have either ignored concurrency, used shared-memory models or communication over channels. To support a shared-nothing model, we ensure all heap memory is kept local to processes and all data sharing is achieved explicitly through communication. We applied heuristics to bound the communication possible between processes, my modelling infinite mailboxes as finite Promela channels. The biggest challenge with a shared-nothing model is supporting passing data structures. To support this, we introduced a technique to pass data structures between processes by storing data structures in a global memory and providing processes with pointers to access and send structures through messages. 
+\par
+Any Elixir function can be used to spawn a new process. Elixir functions are also often highly recursive. To handle both the spawning and recursion of a function, we introduced a method to determine the nature of a functions usage at runtime and instrument the behaviour depending on the function's usage. For example, a function being spawned as a new process needs to determine a unique process identifier, whereas a function being called naturally needs access to the parents process identifier and also needs to communicate with the parent through a rendezvous channel to ensure the parent waits for the child to complete.
+\par
+Elixir also uses a receive-anything pattern, where due to the languages dynamic typing and matching, determining how a message should be processed can involve peeking into the message to examine its contents. To enable verification of this, we introduced a method to process messages in a non-blocking manner, where messages can be received and parsed in a first-in-first-fireable-out (FIFFO) order.
+\par
+To give a higher level overview of where Verlixir differentiates itself from existing tools, we provide a table of comparison in table \ref{table:vs}.
 
-\section{Verlixir vs. SOMETHING??} \label{sec:vs}
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{4cm}|c|c|c|c|c|}
+        \hline
+        \textbf{} & \textbf{Verlixir} & \textbf{Dafny} & \textbf{Gomela} & \textbf{Lean} & \textbf{Java PathFinder} \\
+        \hline
+        Concurrency & \cmark & \xmark & \cmark & \xmark & \cmark \\
+        \hline
+        Shared-memory & \xmark & \xmark & \xmark & \xmark & \cmark \\
+        \hline
+        Message-passing & \text{Actor-based} & \xmark & \text{Channel-based} & \xmark & \xmark \\
+        \hline
+        Predicate logic & \cmark & \cmark & \xmark & \cmark & \text{Limited} \\
+        \hline
+        Quantification & \xmark & \cmark & \xmark & \cmark & \xmark \\
+        \hline
+        Temporal logic & \cmark & \xmark & \xmark & \xmark & \xmark \\
+        \hline
+        Model checking & \text{SPIN} & \xmark & \text{SPIN} & \xmark & \text{SPIN \footnote{The original Java PathFinder (JPF) design modelled programs in SPIN \cite{jpf}.}} \\
+        \hline
+        Theorem proving & \xmark & \text{Z3} & \xmark & \text{Built in} & \xmark \\
+        \hline
+        LTL & \cmark & \xmark & \xmark & \xmark & \xmark \\
+        \hline
+        CTL & \xmark & \xmark & \xmark & \xmark & \xmark \\
+        \hline
+        Fault injection & \xmark & \xmark & \xmark & \xmark & \xmark \\
+        \hline
+    \end{tabular}
+    \caption{Comparison of Verlixir to existing tools.}
+    \label{table:vs}
+\end{table}
+
+- talk about novelty, we believe this is the first of its kind
+- talk about why it is novel
+- compare to other tools to show it is novel
+- table of comparison
+
+- talk about futureproofing i.e. begin with the optimisations we applied to reduce state space / time
+- talk about where future optimisations can take place
+- talk about swapping backends / frontends / introducing macros ect
+- what makes the complication / translation fast
 \section{Summary}

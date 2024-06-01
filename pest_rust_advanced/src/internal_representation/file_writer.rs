@@ -190,10 +190,10 @@ impl FileWriter {
             self.function_channels.last_mut().unwrap().push_str(&format!("active proctype {} () {{\n", func_name));
             self.function_body.last_mut().unwrap().push_str("int __pid = 0;\n");
         } else if string_args .is_empty() {
-            self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} (chan ret; int __pid) {{\n", func_name));
+            self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} (chan ret; int __pid; int __ret_f) {{\n", func_name));
         } else {
             let formatted_args = Self::format_arguments(&string_args , &sym_table);
-            self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} ({}; chan ret; int __pid) {{\n", func_name, &*formatted_args));
+            self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} ({}; chan ret; int __pid; int __ret_f) {{\n", func_name, &*formatted_args));
         }
         self.function_body.last_mut().unwrap().push_str("if\n::__pid==-1 -> __pid = _pid;\n::else->skip;\nfi;\n");
 
@@ -208,6 +208,10 @@ impl FileWriter {
         // if self.init {
             // self.function_channels.last_mut().unwrap().push_str("__channel_hook\n");
         // }
+
+        if !self.returning_function && !self.init {
+            self.function_body.last_mut().unwrap().push_str("if\n:: __ret_f -> ret ! 0;\n:: else -> skip;\nfi;\n");
+        }
         self.content.push_str(&self.function_channels.pop().unwrap());
         self.content.push_str(&self.function_metabody.pop().unwrap());
         self.content.push_str(&format!("{}}}\n\n", &*self.function_body.pop().unwrap()));
@@ -248,7 +252,13 @@ impl FileWriter {
         // Track how many function calls have taken place 
         // Create a channel for each
         // Name the receive variables appropriately
-        // TODO determine return type    
+        // TODO determine return type
+
+        if func_name == "rem" {
+            self.write_rem(call_arguments, ret, line_number);
+            return;
+        }
+
         self.function_call_count += 1;
         let rendezvous = if self.var_stack.is_empty() {1} else {0}; 
         self.function_channels.last_mut().unwrap().push_str(&format!("chan ret{} = [{}] of {{ int }}; /*{}*/\n", self.function_call_count, rendezvous, line_number));
@@ -280,11 +290,15 @@ impl FileWriter {
             return_variable = self.get_next_var();
             self.function_body.last_mut().unwrap().push_str(&format!("{} = ", return_variable));
             returning_call = true; 
-        } 
+        } else if !(ret && self.returning_function) {
+            return_variable = format!("__ret_placeholder_{}", self.function_call_count);
+            self.function_body.last_mut().unwrap().push_str(&format!("int {}; /*{}*/\n", return_variable, line_number));
+            returning_call = true;
+        }
         if call_arguments.is_empty() {
-            self.function_body.last_mut().unwrap().push_str(&format!("run {}(ret{}, __pid); /*{}*/\n", func_name, self.function_call_count, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("run {}(ret{}, __pid, 1); /*{}*/\n", func_name, self.function_call_count, line_number));
         } else {
-            self.function_body.last_mut().unwrap().push_str(&format!("run {}{}, ret{}, __pid); /*{}*/\n", func_name, call_arguments, self.function_call_count, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("run {}{}, ret{}, __pid, 1); /*{}*/\n", func_name, call_arguments, self.function_call_count, line_number));
         }
         if returning_call {
             self.function_body.last_mut().unwrap().push_str(&format!("ret{} ? {}; /*{}*/\n", self.function_call_count, return_variable, line_number));
@@ -334,6 +348,23 @@ impl FileWriter {
             formatted_condition::FormattedCondition::Not(inner) => {
                 format!("!({})", Self::condition_to_string(inner))
             }
+        }
+    }
+
+    fn write_rem(&mut self, call_arguments: &str, ret: bool, line_number: u32) {
+        let call_arguments = call_arguments.replace('[', "");
+        let call_arguments = call_arguments.replace(']', "");
+        let arg_list = call_arguments.split(',').collect::<Vec<&str>>();
+        let left_arg = arg_list[0];
+        let right_arg = arg_list[1];
+        if !self.var_stack.is_empty() {
+            let var = self.get_next_var();
+            self.function_body.last_mut().unwrap().push_str(&format!("{} = ({}) % ({}); /*{}*/\n", var, left_arg, right_arg, line_number));
+        } else if ret && self.returning_function {
+            self.function_body.last_mut().unwrap().push_str(&format!("ret ! ({}) % ({}); /*{}*/\n", left_arg, right_arg, line_number));
+            self.post_condition_check(0);
+        } else {
+            self.function_body.last_mut().unwrap().push_str(&format!("({}) % ({})", left_arg, right_arg));
         }
     }
 
@@ -537,7 +568,7 @@ impl FileWriter {
         self.function_channels.last_mut().unwrap().push_str(&format!("chan ret{} = [1] of {{ int }};\n", self.function_call_count));
 
         // Format args depending on if they are empty
-        let formatted_args = format!("{}{}ret{},-1", args, if args.is_empty() {""} else {","}, self.function_call_count);
+        let formatted_args = format!("{}{}ret{},-1, 0", args, if args.is_empty() {""} else {","}, self.function_call_count);
 
         // TODO verify logic, is a stack appropriate
         self.function_body.last_mut().unwrap().push_str("atomic {\n");
@@ -906,7 +937,7 @@ impl FileWriter {
                 :: else ->\n\
                     if\n\
                     :: LIST_ALLOCATED({}, __iter) ->\n\
-                    run __anonymous_{}(LIST_VAL({}, __iter),__anonymous_ret_{},__pid);\n\
+                    run __anonymous_{}(LIST_VAL({}, __iter),__anonymous_ret_{},__pid, 1);\n\
                     LIST_ALLOCATED({}, __iter) = true;\n\
                     __anonymous_ret_{} ? LIST_VAL({}, __iter);\n\
                     __iter++;\n\
