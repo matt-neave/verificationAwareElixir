@@ -26,9 +26,13 @@ defmodule Philosopher do
     # ... think ... #
     send table, {:sit, self()}
     wait()
+
     # ... sitting ... #
+    IO.puts "lfork"
     send lfork, {:pickup, self()}
     wait()
+    IO.puts "rfork"
+
     send rfork, {:pickup, self()}
     wait()
 
@@ -65,20 +69,27 @@ defmodule Fork do
   @spec fork_loop(integer(), integer(), integer()) :: :ok
   def fork_loop(allocated, lphil, rphil) do
     # allocated: 0 => none, 1 => left, 2 => right
-    receive do
-      {:pickup, phil} ->
-        if phil == lphil do
+    if allocated == 0 do
+      receive do
+        {:pickup, phil} ->
+          if phil == lphil do
+            send phil, {:ok}
+            fork_loop(1, lphil, rphil)
+          else
+            send phil, {:ok}
+            fork_loop(2, lphil, rphil)
+          end
+        {:terminate} ->
+          :ok
+      end
+    else
+      receive do
+        {:putdown, phil} ->
           send phil, {:ok}
-          fork_loop(1, lphil, rphil)
-        else
-          send phil, {:ok}
-          fork_loop(2, lphil, rphil)
-        end
-      {:putdown, phil} ->
-        send phil, {:ok}
-        fork_loop(0, lphil, rphil)
-      {:terminate} ->
-        :ok
+          fork_loop(0, lphil, rphil)
+        {:terminate} ->
+          :ok
+      end
     end
   end
 end

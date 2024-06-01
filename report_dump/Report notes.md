@@ -61,9 +61,9 @@ Show lots of examples, introduce artificial bugs
 
 ---
 ## Evaluation
-Argue the solution is distinct. What is unique to VAE from dafny. i.e. we need to support mailboxes, actors ect.  unique instrumentation of the elixir AST.
-Talk about how we extend SPIN too i.e. mailboxes and other concepts spin doesnt have
-Talk about all the capabilities of Verlixir. Construct a TABLE comparing to other tools on i.e. concurrency/message passing/predicate logic/temporal logic/quantification/faults/. Specify where verlixir is better / same / worse i.e. to dafny/lean/gomela/java pathfinder
+Argue the solution is distinct. What is unique to VAE from dafny. i.e. we need to support mailboxes, actors ect.  unique instrumentation of the elixir AST. ✅
+Talk about how we extend SPIN too i.e. mailboxes and other concepts spin doesnt have✅
+Talk about all the capabilities of Verlixir. Construct a TABLE comparing to other tools on i.e. concurrency/message passing/predicate logic/temporal logic/quantification/faults/. Specify where verlixir is better / same / worse i.e. to dafny/lean/gomela/java pathfinder ✅
 
 How easy would it be to extend Verlixir / LTLixir. Evaluate the futureproofing of introducing new features. Talk about extending to other frontends like a more general CSP notation. Perhaps the natural form for specifications should be predicate logic and CSP
 
