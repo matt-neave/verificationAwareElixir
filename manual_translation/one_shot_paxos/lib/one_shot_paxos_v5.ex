@@ -136,6 +136,11 @@ defmodule Learner7 do
   @ltl "<>(r)"
   @ltl "[](s)"
   def wait_learned(acceptors, p_n, learned_n) do
+    predicate p, final_value == 31
+    predicate q, final_value == 42
+    predicate r, final_value != 0
+    predicate s, final_value == 0 || final_value == 31 || final_value == 42
+
     if p_n == learned_n do
       for acceptor <- acceptors do
         send acceptor, {:terminate}
@@ -143,10 +148,6 @@ defmodule Learner7 do
     else
       receive do
         {:learned, final_value} ->
-          predicate p, final_value == 31
-          predicate q, final_value == 42
-          predicate r, final_value != 0
-          predicate s, final_value == 0 || final_value == 31 || final_value == 42
           IO.puts("Learned final_value:")
           IO.puts(final_value)
       end

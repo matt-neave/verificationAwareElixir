@@ -1,6 +1,6 @@
 import VaeLib
 
-defmodule ConsistentHashRing do
+defmodule ConsistentHashRingC do
 
   @spec start_ring(list(), integer()) :: :ok
   def start_ring(nodes, n) do
@@ -63,7 +63,7 @@ defmodule ConsistentHashRing do
   end
 end
 
-defmodule Client do
+defmodule ClientC do
 
   @vae_init true
   @spec start() :: :ok
@@ -73,7 +73,7 @@ defmodule Client do
     nodes = for i <- 1..n_nodes do
       i
     end
-    ring = spawn(ConsistentHashRing, :start_ring, [nodes, n_nodes])
+    ring = spawn(ConsistentHashRingC, :start_ring, [nodes, n_nodes])
 
 
     values = [42, 25, 31]

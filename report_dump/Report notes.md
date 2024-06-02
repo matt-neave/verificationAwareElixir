@@ -88,7 +88,7 @@ Argue the projects feasability
 
 ## Changes
 Timeouts so important
-Quantification (just create multiple formulas)
+Quantification (just create multiple formulas) 
 Option to put elixir lines of code in the promela files ✅
 Killing proecsses (faults)
 Multiline ltl / predicates at top of file (should be possible with macros by setting the variables to -1)

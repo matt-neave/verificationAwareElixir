@@ -72,6 +72,14 @@ defmodule Client do
   @ltl "[](r3 && n_nodes==3 -> <>(p1))"
   @ltl "[](r3 && n_nodes==4 -> <>(p4))"
   def start do
+    predicate p1, ring_position == 1
+    predicate p2, ring_position == 2
+    predicate p3, ring_position == 3
+    predicate p4, ring_position == 4
+    predicate r1, next_key == 42
+    predicate r2, next_key == 25
+    predicate r3, next_key == 31
+
     n_nodes = 3
     nodes = for i <- 1..n_nodes do
       i
@@ -122,15 +130,6 @@ defmodule Client do
         IO.puts node
         node
     end
-
-    predicate p1, ring_position == 1
-    predicate p2, ring_position == 2
-    predicate p3, ring_position == 3
-    predicate p4, ring_position == 4
-    predicate r1, next_key == 42
-    predicate r2, next_key == 25
-    predicate r3, next_key == 31
-
     send ring, {:terminate}
   end
 end

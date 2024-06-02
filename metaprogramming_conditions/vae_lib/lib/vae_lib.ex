@@ -63,10 +63,43 @@ defmodule VaeLib do
     end
   end
 
-  # Macro for storing predicates, they take two arguments, an identifier and a predicate
   defmacro predicate(var_name, condition) do
+    # Helper function to extract variable names from the condition AST
+    vars = extract_vars(condition)
+            |> Enum.map(&({&1, Macro.var(&1, nil)}))
+            |> Enum.uniq()
+
+    # Generate code to set each variable to 0
+    assigns = for {var, ast_var} <- vars do
+      quote do
+        unquote(ast_var) = 0
+      end
+    end
+
+    # Combine the variable assignments with the original condition
     quote do
+      unquote_splicing(assigns)
       unquote(var_name) = unquote(condition)
+    end
+  end
+
+  # Extract variable names from the AST
+  defp extract_vars(ast, vars \\ []) do
+    case ast do
+      {:__block__, _, _} = block ->
+        block
+        |> Macro.prewalk(vars, &extract_vars/2)
+        |> elem(1)
+
+      {var, _, context} when is_atom(var) and is_atom(context) ->
+        [var | vars]
+
+      {_, _, args} when is_list(args) ->
+        args
+        |> Enum.reduce(vars, &extract_vars(&1, &2))
+
+      _ ->
+        vars
     end
   end
 
