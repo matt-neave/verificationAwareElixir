@@ -734,8 +734,16 @@ impl FileWriter {
         spec: &str
     ) {
         self.ltl_func = true;
-        self.ltl_count += 1;
-        self.ltl_specs.push_str(&format!("ltl ltl_{} {{ {} }};\n", self.ltl_count, spec));
+        println!("LTL: {}", spec);
+        let specs: Vec<&str> = spec.split("\\n").collect();
+        for spec in specs {
+            if spec.is_empty() {
+                continue;
+            }
+            self.ltl_count += 1;
+            self.ltl_specs.push_str(&format!("ltl ltl_{} {{ {} }};\n", self.ltl_count, spec));
+        }
+
     }
 
     pub fn ltl_count(

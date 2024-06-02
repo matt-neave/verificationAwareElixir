@@ -289,7 +289,7 @@ directive_argument = {
 // {:import, [line: 1], [{:__aliases__, [line: 1], [:Precondition]}]}
 directive = { "{:" ~ directive_type ~ ", " ~ metadata ~ ", " ~ directive_arguments ~ "}" }
 
-ltl = { ltl_term ~ " "* ~ (ltl_binop  ~ " "* ~ ltl_term ~ " "*)* }
+ltl = { ((ltl_term ~ " "* ~ (ltl_binop  ~ " "* ~ ltl_term ~ " "*)*) ~ "\\n"*)+ }
 
 ltl_term = {
     ltl_opd |

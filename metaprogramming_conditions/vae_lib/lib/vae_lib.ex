@@ -133,7 +133,7 @@ defmodule VaeLib do
 
   defmacro ltl(condition) do
     quote do
-      :ok
+      Module.put_attribute(__MODULE__, :ltl_conditions, unquote(condition))
     end
   end
 end
