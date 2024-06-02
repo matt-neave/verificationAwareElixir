@@ -1,102 +1,973 @@
-Depth=     885 States=    1e+06 Transitions= 1.69e+06 Memory=    76.294 t=      104 R=   1e+04
-Depth=     885 States=    2e+06 Transitions= 3.43e+06 Memory=    76.294 t=      217 R=   9e+03
-Depth=     885 States=    3e+06 Transitions= 5.07e+06 Memory=    76.294 t=      324 R=   9e+03
-Depth=     885 States=    4e+06 Transitions= 6.72e+06 Memory=    76.294 t=      437 R=   9e+03
-Depth=     885 States=    5e+06 Transitions= 8.37e+06 Memory=    76.294 t=      544 R=   9e+03
-Depth=     885 States=    6e+06 Transitions=    1e+07 Memory=    76.294 t=      651 R=   9e+03
-Depth=     885 States=    7e+06 Transitions= 1.17e+07 Memory=    76.294 t=      760 R=   9e+03
-Depth=     885 States=    8e+06 Transitions= 1.33e+07 Memory=    76.294 t=      866 R=   9e+03
-Depth=     885 States=    9e+06 Transitions=  1.5e+07 Memory=    76.294 t=      972 R=   9e+03
-Depth=     885 States=    1e+07 Transitions= 1.66e+07 Memory=    76.294 t= 1.08e+03 R=   9e+03
-Depth=     885 States=  1.1e+07 Transitions= 1.82e+07 Memory=    76.294 t=  1.2e+03 R=   9e+03
-Depth=     885 States=  1.2e+07 Transitions= 2.01e+07 Memory=    76.294 t= 1.31e+03 R=   9e+03
-Depth=     885 States=  1.3e+07 Transitions= 2.21e+07 Memory=    76.294 t= 1.43e+03 R=   9e+03
-Depth=     885 States=  1.4e+07 Transitions= 2.39e+07 Memory=    76.294 t= 1.54e+03 R=   9e+03
-Depth=     885 States=  1.5e+07 Transitions= 2.57e+07 Memory=    76.294 t= 1.66e+03 R=   9e+03
-Depth=     885 States=  1.6e+07 Transitions= 2.75e+07 Memory=    76.294 t= 1.78e+03 R=   9e+03
-Depth=     885 States=  1.7e+07 Transitions= 2.93e+07 Memory=    76.294 t= 1.89e+03 R=   9e+03
-Depth=     885 States=  1.8e+07 Transitions=  3.1e+07 Memory=    76.294 t=    2e+03 R=   9e+03
-Depth=     885 States=  1.9e+07 Transitions= 3.28e+07 Memory=    76.294 t= 2.12e+03 R=   9e+03
-Depth=     885 States=    2e+07 Transitions= 3.46e+07 Memory=    76.294 t= 2.24e+03 R=   9e+03
-Depth=     885 States=  2.1e+07 Transitions= 3.64e+07 Memory=    76.294 t= 2.36e+03 R=   9e+03
-Depth=     885 States=  2.2e+07 Transitions= 3.82e+07 Memory=    76.294 t= 2.48e+03 R=   9e+03
-Depth=     885 States=  2.3e+07 Transitions= 4.01e+07 Memory=    76.294 t=  2.6e+03 R=   9e+03
-Depth=     885 States=  2.4e+07 Transitions= 4.19e+07 Memory=    76.294 t= 2.72e+03 R=   9e+03
-Depth=     885 States=  2.5e+07 Transitions= 4.38e+07 Memory=    76.294 t= 2.84e+03 R=   9e+03
-Depth=     885 States=  2.6e+07 Transitions= 4.55e+07 Memory=    76.294 t= 2.97e+03 R=   9e+03
-Depth=     885 States=  2.7e+07 Transitions= 4.73e+07 Memory=    76.294 t= 3.09e+03 R=   9e+03
-Depth=     885 States=  2.8e+07 Transitions= 4.93e+07 Memory=    76.294 t= 3.21e+03 R=   9e+03
-Depth=     885 States=  2.9e+07 Transitions= 5.11e+07 Memory=    76.294 t= 3.33e+03 R=   9e+03
-Depth=     885 States=    3e+07 Transitions=  5.3e+07 Memory=    76.294 t= 3.45e+03 R=   9e+03
-Depth=     885 States=  3.1e+07 Transitions= 5.48e+07 Memory=    76.294 t= 3.58e+03 R=   9e+03
-Depth=     885 States=  3.2e+07 Transitions= 5.67e+07 Memory=    76.294 t=  3.7e+03 R=   9e+03
-Depth=     885 States=  3.3e+07 Transitions= 5.85e+07 Memory=    76.294 t= 3.82e+03 R=   9e+03
-Depth=     885 States=  3.4e+07 Transitions= 6.04e+07 Memory=    76.294 t= 3.93e+03 R=   9e+03
-Depth=     885 States=  3.5e+07 Transitions= 6.23e+07 Memory=    76.294 t= 4.05e+03 R=   9e+03
-Depth=     885 States=  3.6e+07 Transitions= 6.43e+07 Memory=    76.294 t= 4.17e+03 R=   9e+03
-Depth=     885 States=  3.7e+07 Transitions= 6.62e+07 Memory=    76.294 t= 4.29e+03 R=   9e+03
-Depth=     885 States=  3.8e+07 Transitions=  6.8e+07 Memory=    76.294 t= 4.38e+03 R=   9e+03
-Depth=     885 States=  3.9e+07 Transitions=    7e+07 Memory=    76.294 t= 4.48e+03 R=   9e+03
-Depth=     885 States=    4e+07 Transitions=  7.2e+07 Memory=    76.294 t= 4.58e+03 R=   9e+03
-Depth=     885 States=  4.1e+07 Transitions=  7.4e+07 Memory=    76.294 t= 4.69e+03 R=   9e+03
-Depth=     885 States=  4.2e+07 Transitions= 7.59e+07 Memory=    76.294 t= 4.79e+03 R=   9e+03
-Depth=     885 States=  4.3e+07 Transitions= 7.79e+07 Memory=    76.294 t= 4.89e+03 R=   9e+03
-Depth=     885 States=  4.4e+07 Transitions= 7.99e+07 Memory=   114.441 t= 4.99e+03 R=   9e+03
-Depth=     885 States=  4.5e+07 Transitions=  8.2e+07 Memory=   114.441 t=  5.1e+03 R=   9e+03
-Depth=     885 States=  4.6e+07 Transitions= 8.41e+07 Memory=   114.441 t= 5.21e+03 R=   9e+03
-Depth=     885 States=  4.7e+07 Transitions= 8.61e+07 Memory=   114.441 t= 5.31e+03 R=   9e+03
-Depth=     885 States=  4.8e+07 Transitions= 8.82e+07 Memory=   114.441 t= 5.42e+03 R=   9e+03
-Depth=     885 States=  4.9e+07 Transitions= 9.05e+07 Memory=   114.441 t= 5.57e+03 R=   9e+03
-Depth=     885 States=    5e+07 Transitions= 9.26e+07 Memory=   114.441 t= 5.73e+03 R=   9e+03
-Depth=     885 States=  5.1e+07 Transitions= 9.48e+07 Memory=   114.441 t= 5.87e+03 R=   9e+03
-
-(Spin Version 6.5.2 -- 6 December 2019)
-        + Partial Order Reduction
-
-Bit statespace search for:
-        never claim             - (none specified)
-        assertion violations    +
-        cycle checks            - (disabled by -DSAFETY)
-        invalid end states      +
-
-State-vector 29080 byte, depth reached 885, errors: 0
- 51874280 states, stored
- 44770115 states, matched
- 96644395 transitions (= stored+matched)
-     2149 atomic steps
-
-hash factor: 2.58737 (best if > 100.)
-
-bits set per state: 3 (-k3)
-
-Stats on memory usage (in Megabytes):
-1439611.004     equivalent memory usage for states (stored*(State-vector + overhead))
-   16.000       memory used for hash array (-w27)
-    0.076       memory used for bit stack
-    0.611       memory used for DFS stack (-m10000)
-   97.739       other (proc and chan stacks)
-  114.441       total actual memory usage
-
-
-unreached in proctype table_loop
-        (0 of 36 states)
-unreached in proctype start_phil
-        test_out.pml:297, state 4, "(1)"
-        test_out.pml:314, state 23, "ret!0"
-        (2 of 28 states)
-unreached in proctype phil_loop
-        (0 of 51 states)
-unreached in proctype wait
-        (0 of 19 states)
-unreached in proctype start_fork
-        test_out.pml:394, state 4, "(1)"
-        test_out.pml:414, state 27, "ret!0"
-        (2 of 32 states)
-unreached in proctype fork_loop
-        (0 of 45 states)
-unreached in proctype start
-        test_out.pml:221, state 21, "mem_ptr = (mem_ptr+1)"
-        (1 of 176 states)
-
-pan: elapsed time 6e+03 seconds
-pan: rate 8647.8465 states/second
+                        lfork
+                                lfork
+                                        lfork
+                                                lfork
+133:    proc  0 (start:1) test_out.pml:574 Send 6,BIND,0,0,1,0,0,0,0,0,2,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0      -> queue 14 (__BIND)
+134:    proc  6 (start_phil:1) test_out.pml:311 Recv 6,BIND,0,0,1,0,0,0,0,0,2,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 <- queue 14 (__BIND)
+137:    proc  0 (start:1) test_out.pml:579 Send 2,LPHIL,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     -> queue 15 (__LPHIL)
+139:    proc  0 (start:1) test_out.pml:584 Send 3,RPHIL,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     -> queue 16 (__RPHIL)
+149:    proc  2 (start_fork:1) test_out.pml:436 Recv 2,LPHIL,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        <- queue 15 (__LPHIL)
+152:    proc  0 (start:1) test_out.pml:574 Send 7,BIND,0,0,1,0,0,0,0,0,3,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0      -> queue 14 (__BIND)
+154:    proc  0 (start:1) test_out.pml:579 Send 3,LPHIL,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     -> queue 15 (__LPHIL)
+156:    proc  0 (start:1) test_out.pml:584 Send 4,RPHIL,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     -> queue 16 (__RPHIL)
+159:    proc 10 (phil_loop:1) test_out.pml:347 Send 1,SIT,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 23 (__SIT)
+163:    proc  1 (table_loop:1) test_out.pml:269 Recv 1,SIT,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0  <- queue 23 (__SIT)
+166:    proc  1 (table_loop:1) test_out.pml:274 Send 6,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 24 (__OK)
+167:    proc  3 (start_fork:1) test_out.pml:436 Recv 3,LPHIL,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        <- queue 15 (__LPHIL)
+169:    proc  7 (start_phil:1) test_out.pml:311 Recv 7,BIND,0,0,1,0,0,0,0,0,3,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 <- queue 14 (__BIND)
+174:    proc 11 (wait:1) test_out.pml:415 Recv 6,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 <- queue 24 (__OK)
+176:    proc 12 (phil_loop:1) test_out.pml:347 Send 1,SIT,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 23 (__SIT)
+181:    proc 11 (wait:1) test_out.pml:420 Send 0        -> queue 17 (ret)
+182:    proc  3 (start_fork:1) test_out.pml:441 Recv 3,RPHIL,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        <- queue 16 (__RPHIL)
+190:    proc  0 (start:1) test_out.pml:574 Send 8,BIND,0,0,1,0,0,0,0,0,4,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0      -> queue 14 (__BIND)
+192:    proc  0 (start:1) test_out.pml:579 Send 4,LPHIL,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     -> queue 15 (__LPHIL)
+198:    proc  0 (start:1) test_out.pml:584 Send 5,RPHIL,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     -> queue 16 (__RPHIL)
+202:    proc  4 (start_fork:1) test_out.pml:436 Recv 4,LPHIL,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        <- queue 15 (__LPHIL)
+207:    proc 15 (table_loop:1) test_out.pml:269 Recv 1,SIT,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0  <- queue 23 (__SIT)
+211:    proc  4 (start_fork:1) test_out.pml:441 Recv 4,RPHIL,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        <- queue 16 (__RPHIL)
+214:    proc 15 (table_loop:1) test_out.pml:274 Send 7,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 24 (__OK)
+218:    proc 13 (wait:1) test_out.pml:415 Recv 7,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 <- queue 24 (__OK)
+221:    proc 13 (wait:1) test_out.pml:420 Send 0        -> queue 25 (ret)
+223:    proc  0 (start:1) test_out.pml:574 Send 9,BIND,0,0,1,0,0,0,0,0,5,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0      -> queue 14 (__BIND)
+224:    proc 12 (phil_loop:1) test_out.pml:351 Recv 0   <- queue 25 (ret1)
+225:    proc 10 (phil_loop:1) test_out.pml:351 Recv 0   <- queue 17 (ret1)
+226:    proc  8 (start_phil:1) test_out.pml:311 Recv 8,BIND,0,0,1,0,0,0,0,0,4,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 <- queue 14 (__BIND)
+229:    proc  0 (start:1) test_out.pml:579 Send 5,LPHIL,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     -> queue 15 (__LPHIL)
+230:    proc  9 (start_phil:1) test_out.pml:311 Recv 9,BIND,0,0,1,0,0,0,0,0,5,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 <- queue 14 (__BIND)
+236:    proc  0 (start:1) test_out.pml:584 Send 2,RPHIL,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0     -> queue 16 (__RPHIL)
+240:    proc  5 (start_fork:1) test_out.pml:436 Recv 5,LPHIL,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        <- queue 15 (__LPHIL)
+243:    proc 17 (phil_loop:1) test_out.pml:347 Send 1,SIT,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 23 (__SIT)
+248:    proc 12 (phil_loop:1) test_out.pml:355 Send 3,PICKUP,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        -> queue 44 (__PICKUP)
+252:    proc 16 (table_loop:1) test_out.pml:269 Recv 1,SIT,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0  <- queue 23 (__SIT)
+255:    proc 16 (table_loop:1) test_out.pml:274 Send 9,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 24 (__OK)
+259:    proc 18 (wait:1) test_out.pml:415 Recv 9,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 <- queue 24 (__OK)
+263:    proc  5 (start_fork:1) test_out.pml:441 Recv 5,RPHIL,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        <- queue 16 (__RPHIL)
+269:    proc  2 (start_fork:1) test_out.pml:441 Recv 2,RPHIL,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        <- queue 16 (__RPHIL)
+272:    proc 21 (phil_loop:1) test_out.pml:347 Send 1,SIT,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 23 (__SIT)
+276:    proc 20 (table_loop:1) test_out.pml:269 Recv 1,SIT,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0  <- queue 23 (__SIT)
+283:    proc 10 (phil_loop:1) test_out.pml:355 Send 2,PICKUP,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        -> queue 44 (__PICKUP)
+288:    proc 20 (table_loop:1) test_out.pml:274 Send 8,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   -> queue 24 (__OK)
+289:    proc 23 (wait:1) test_out.pml:415 Recv 8,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 <- queue 24 (__OK)
+294:    proc 26 (fork_loop:1) test_out.pml:473 Recv 2,PICKUP,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        <- queue 44 (__PICKUP)
+298:    proc 23 (wait:1) test_out.pml:420 Send 0        -> queue 47 (ret)
+299:    proc 21 (phil_loop:1) test_out.pml:351 Recv 0   <- queue 47 (ret1)
+300:    proc 14 (fork_loop:1) test_out.pml:473 Recv 3,PICKUP,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        <- queue 44 (__PICKUP)
+304:    proc 21 (phil_loop:1) test_out.pml:355 Send 4,PICKUP,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        -> queue 44 (__PICKUP)
+309:    proc 14 (fork_loop:1) test_out.pml:480 Send 7,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 24 (__OK)
+310:    proc 19 (wait:1) test_out.pml:415 Recv 7,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 <- queue 24 (__OK)
+312:    proc 18 (wait:1) test_out.pml:420 Send 0        -> queue 38 (ret)
+314:    proc 26 (fork_loop:1) test_out.pml:480 Send 6,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 24 (__OK)
+315:    proc 22 (fork_loop:1) test_out.pml:473 Recv 4,PICKUP,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        <- queue 44 (__PICKUP)
+318:    proc 17 (phil_loop:1) test_out.pml:351 Recv 0   <- queue 38 (ret1)
+320:    proc 19 (wait:1) test_out.pml:420 Send 0        -> queue 26 (ret)
+327:    proc 22 (fork_loop:1) test_out.pml:480 Send 8,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 24 (__OK)
+328:    proc 27 (wait:1) test_out.pml:415 Recv 8,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 <- queue 24 (__OK)
+332:    proc 12 (phil_loop:1) test_out.pml:359 Recv 0   <- queue 26 (ret2)
+335:    proc 17 (phil_loop:1) test_out.pml:355 Send 5,PICKUP,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        -> queue 44 (__PICKUP)
+340:    proc 27 (wait:1) test_out.pml:420 Send 0        -> queue 48 (ret)
+341:    proc 24 (fork_loop:1) test_out.pml:473 Recv 5,PICKUP,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        <- queue 44 (__PICKUP)
+345:    proc 24 (fork_loop:1) test_out.pml:480 Send 9,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0    -> queue 24 (__OK)
+351:    proc 21 (phil_loop:1) test_out.pml:359 Recv 0   <- queue 48 (ret2)
+354:    proc 12 (phil_loop:1) test_out.pml:364 Send 4,PICKUP,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        -> queue 44 (__PICKUP)
+358:    proc 25 (wait:1) test_out.pml:415 Recv 6,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 <- queue 24 (__OK)
+365:    proc 25 (wait:1) test_out.pml:420 Send 0        -> queue 18 (ret)
+366:    proc 10 (phil_loop:1) test_out.pml:359 Recv 0   <- queue 18 (ret2)
+369:    proc 21 (phil_loop:1) test_out.pml:364 Send 5,PICKUP,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        -> queue 44 (__PICKUP)
+379:    proc 10 (phil_loop:1) test_out.pml:364 Send 3,PICKUP,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        -> queue 44 (__PICKUP)
+383:    proc 30 (wait:1) test_out.pml:415 Recv 9,OK,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 <- queue 24 (__OK)
+385:    proc 30 (wait:1) test_out.pml:420 Send 0        -> queue 39 (ret)
+386:    proc 17 (phil_loop:1) test_out.pml:359 Recv 0   <- queue 39 (ret2)
+389:    proc 17 (phil_loop:1) test_out.pml:364 Send 2,PICKUP,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        -> queue 44 (__PICKUP)
+spin: trail ends after 392 steps
+#processes: 38
+                queue 14 (__BIND):
+                queue 23 (__SIT):
+                queue 16 (__RPHIL):
+                queue 15 (__LPHIL):
+                queue 44 (__PICKUP): [2,PICKUP,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0][3,PICKUP,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0][4,PICKUP,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0][5,PICKUP,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+                queue 24 (__OK):
+                __list_ptr = 3
+                __list_last = 0
+                __list_ptr_new = 0
+                __list_ptr_old = 2
+                __mem_ptr = 1
+                __dummy_iterator = 5
+                __mem.lists[0].vals[0].val = 2
+                __mem.lists[0].vals[0].allocated = 1
+                __mem.lists[0].vals[1].val = 3
+                __mem.lists[0].vals[1].allocated = 1
+                __mem.lists[0].vals[2].val = 4
+                __mem.lists[0].vals[2].allocated = 1
+                __mem.lists[0].vals[3].val = 5
+                __mem.lists[0].vals[3].allocated = 1
+                __mem.lists[0].vals[4].val = 0
+                __mem.lists[0].vals[4].allocated = 0
+                __mem.lists[0].vals[5].val = 0
+                __mem.lists[0].vals[5].allocated = 0
+                __mem.lists[0].vals[6].val = 0
+                __mem.lists[0].vals[6].allocated = 0
+                __mem.lists[0].vals[7].val = 0
+                __mem.lists[0].vals[7].allocated = 0
+                __mem.lists[0].vals[8].val = 0
+                __mem.lists[0].vals[8].allocated = 0
+                __mem.lists[0].vals[9].val = 0
+                __mem.lists[0].vals[9].allocated = 0
+                __mem.lists[0].allocated = 1
+                __mem.lists[1].vals[0].val = 6
+                __mem.lists[1].vals[0].allocated = 1
+                __mem.lists[1].vals[1].val = 7
+                __mem.lists[1].vals[1].allocated = 1
+                __mem.lists[1].vals[2].val = 8
+                __mem.lists[1].vals[2].allocated = 1
+                __mem.lists[1].vals[3].val = 9
+                __mem.lists[1].vals[3].allocated = 1
+                __mem.lists[1].vals[4].val = 0
+                __mem.lists[1].vals[4].allocated = 0
+                __mem.lists[1].vals[5].val = 0
+                __mem.lists[1].vals[5].allocated = 0
+                __mem.lists[1].vals[6].val = 0
+                __mem.lists[1].vals[6].allocated = 0
+                __mem.lists[1].vals[7].val = 0
+                __mem.lists[1].vals[7].allocated = 0
+                __mem.lists[1].vals[8].val = 0
+                __mem.lists[1].vals[8].allocated = 0
+                __mem.lists[1].vals[9].val = 0
+                __mem.lists[1].vals[9].allocated = 0
+                __mem.lists[1].allocated = 1
+                __mem.lists[2].vals[0].val = 0
+                __mem.lists[2].vals[0].allocated = 0
+                __mem.lists[2].vals[1].val = 0
+                __mem.lists[2].vals[1].allocated = 0
+                __mem.lists[2].vals[2].val = 0
+                __mem.lists[2].vals[2].allocated = 0
+                __mem.lists[2].vals[3].val = 0
+                __mem.lists[2].vals[3].allocated = 0
+                __mem.lists[2].vals[4].val = 0
+                __mem.lists[2].vals[4].allocated = 0
+                __mem.lists[2].vals[5].val = 0
+                __mem.lists[2].vals[5].allocated = 0
+                __mem.lists[2].vals[6].val = 0
+                __mem.lists[2].vals[6].allocated = 0
+                __mem.lists[2].vals[7].val = 0
+                __mem.lists[2].vals[7].allocated = 0
+                __mem.lists[2].vals[8].val = 0
+                __mem.lists[2].vals[8].allocated = 0
+                __mem.lists[2].vals[9].val = 0
+                __mem.lists[2].vals[9].allocated = 0
+                __mem.lists[2].allocated = 0
+                __mem.lists[3].vals[0].val = 0
+                __mem.lists[3].vals[0].allocated = 0
+                __mem.lists[3].vals[1].val = 0
+                __mem.lists[3].vals[1].allocated = 0
+                __mem.lists[3].vals[2].val = 0
+                __mem.lists[3].vals[2].allocated = 0
+                __mem.lists[3].vals[3].val = 0
+                __mem.lists[3].vals[3].allocated = 0
+                __mem.lists[3].vals[4].val = 0
+                __mem.lists[3].vals[4].allocated = 0
+                __mem.lists[3].vals[5].val = 0
+                __mem.lists[3].vals[5].allocated = 0
+                __mem.lists[3].vals[6].val = 0
+                __mem.lists[3].vals[6].allocated = 0
+                __mem.lists[3].vals[7].val = 0
+                __mem.lists[3].vals[7].allocated = 0
+                __mem.lists[3].vals[8].val = 0
+                __mem.lists[3].vals[8].allocated = 0
+                __mem.lists[3].vals[9].val = 0
+                __mem.lists[3].vals[9].allocated = 0
+                __mem.lists[3].allocated = 0
+                __mem.lists[4].vals[0].val = 0
+                __mem.lists[4].vals[0].allocated = 0
+                __mem.lists[4].vals[1].val = 0
+                __mem.lists[4].vals[1].allocated = 0
+                __mem.lists[4].vals[2].val = 0
+                __mem.lists[4].vals[2].allocated = 0
+                __mem.lists[4].vals[3].val = 0
+                __mem.lists[4].vals[3].allocated = 0
+                __mem.lists[4].vals[4].val = 0
+                __mem.lists[4].vals[4].allocated = 0
+                __mem.lists[4].vals[5].val = 0
+                __mem.lists[4].vals[5].allocated = 0
+                __mem.lists[4].vals[6].val = 0
+                __mem.lists[4].vals[6].allocated = 0
+                __mem.lists[4].vals[7].val = 0
+                __mem.lists[4].vals[7].allocated = 0
+                __mem.lists[4].vals[8].val = 0
+                __mem.lists[4].vals[8].allocated = 0
+                __mem.lists[4].vals[9].val = 0
+                __mem.lists[4].vals[9].allocated = 0
+                __mem.lists[4].allocated = 0
+                __mem.lists[5].vals[0].val = 0
+                __mem.lists[5].vals[0].allocated = 0
+                __mem.lists[5].vals[1].val = 0
+                __mem.lists[5].vals[1].allocated = 0
+                __mem.lists[5].vals[2].val = 0
+                __mem.lists[5].vals[2].allocated = 0
+                __mem.lists[5].vals[3].val = 0
+                __mem.lists[5].vals[3].allocated = 0
+                __mem.lists[5].vals[4].val = 0
+                __mem.lists[5].vals[4].allocated = 0
+                __mem.lists[5].vals[5].val = 0
+                __mem.lists[5].vals[5].allocated = 0
+                __mem.lists[5].vals[6].val = 0
+                __mem.lists[5].vals[6].allocated = 0
+                __mem.lists[5].vals[7].val = 0
+                __mem.lists[5].vals[7].allocated = 0
+                __mem.lists[5].vals[8].val = 0
+                __mem.lists[5].vals[8].allocated = 0
+                __mem.lists[5].vals[9].val = 0
+                __mem.lists[5].vals[9].allocated = 0
+                __mem.lists[5].allocated = 0
+                __mem.lists[6].vals[0].val = 0
+                __mem.lists[6].vals[0].allocated = 0
+                __mem.lists[6].vals[1].val = 0
+                __mem.lists[6].vals[1].allocated = 0
+                __mem.lists[6].vals[2].val = 0
+                __mem.lists[6].vals[2].allocated = 0
+                __mem.lists[6].vals[3].val = 0
+                __mem.lists[6].vals[3].allocated = 0
+                __mem.lists[6].vals[4].val = 0
+                __mem.lists[6].vals[4].allocated = 0
+                __mem.lists[6].vals[5].val = 0
+                __mem.lists[6].vals[5].allocated = 0
+                __mem.lists[6].vals[6].val = 0
+                __mem.lists[6].vals[6].allocated = 0
+                __mem.lists[6].vals[7].val = 0
+                __mem.lists[6].vals[7].allocated = 0
+                __mem.lists[6].vals[8].val = 0
+                __mem.lists[6].vals[8].allocated = 0
+                __mem.lists[6].vals[9].val = 0
+                __mem.lists[6].vals[9].allocated = 0
+                __mem.lists[6].allocated = 0
+                __mem.lists[7].vals[0].val = 0
+                __mem.lists[7].vals[0].allocated = 0
+                __mem.lists[7].vals[1].val = 0
+                __mem.lists[7].vals[1].allocated = 0
+                __mem.lists[7].vals[2].val = 0
+                __mem.lists[7].vals[2].allocated = 0
+                __mem.lists[7].vals[3].val = 0
+                __mem.lists[7].vals[3].allocated = 0
+                __mem.lists[7].vals[4].val = 0
+                __mem.lists[7].vals[4].allocated = 0
+                __mem.lists[7].vals[5].val = 0
+                __mem.lists[7].vals[5].allocated = 0
+                __mem.lists[7].vals[6].val = 0
+                __mem.lists[7].vals[6].allocated = 0
+                __mem.lists[7].vals[7].val = 0
+                __mem.lists[7].vals[7].allocated = 0
+                __mem.lists[7].vals[8].val = 0
+                __mem.lists[7].vals[8].allocated = 0
+                __mem.lists[7].vals[9].val = 0
+                __mem.lists[7].vals[9].allocated = 0
+                __mem.lists[7].allocated = 0
+                __mem.lists[8].vals[0].val = 0
+                __mem.lists[8].vals[0].allocated = 0
+                __mem.lists[8].vals[1].val = 0
+                __mem.lists[8].vals[1].allocated = 0
+                __mem.lists[8].vals[2].val = 0
+                __mem.lists[8].vals[2].allocated = 0
+                __mem.lists[8].vals[3].val = 0
+                __mem.lists[8].vals[3].allocated = 0
+                __mem.lists[8].vals[4].val = 0
+                __mem.lists[8].vals[4].allocated = 0
+                __mem.lists[8].vals[5].val = 0
+                __mem.lists[8].vals[5].allocated = 0
+                __mem.lists[8].vals[6].val = 0
+                __mem.lists[8].vals[6].allocated = 0
+                __mem.lists[8].vals[7].val = 0
+                __mem.lists[8].vals[7].allocated = 0
+                __mem.lists[8].vals[8].val = 0
+                __mem.lists[8].vals[8].allocated = 0
+                __mem.lists[8].vals[9].val = 0
+                __mem.lists[8].vals[9].allocated = 0
+                __mem.lists[8].allocated = 0
+                __mem.lists[9].vals[0].val = 0
+                __mem.lists[9].vals[0].allocated = 0
+                __mem.lists[9].vals[1].val = 0
+                __mem.lists[9].vals[1].allocated = 0
+                __mem.lists[9].vals[2].val = 0
+                __mem.lists[9].vals[2].allocated = 0
+                __mem.lists[9].vals[3].val = 0
+                __mem.lists[9].vals[3].allocated = 0
+                __mem.lists[9].vals[4].val = 0
+                __mem.lists[9].vals[4].allocated = 0
+                __mem.lists[9].vals[5].val = 0
+                __mem.lists[9].vals[5].allocated = 0
+                __mem.lists[9].vals[6].val = 0
+                __mem.lists[9].vals[6].allocated = 0
+                __mem.lists[9].vals[7].val = 0
+                __mem.lists[9].vals[7].allocated = 0
+                __mem.lists[9].vals[8].val = 0
+                __mem.lists[9].vals[8].allocated = 0
+                __mem.lists[9].vals[9].val = 0
+                __mem.lists[9].vals[9].allocated = 0
+                __mem.lists[9].allocated = 0
+                __mem.lists[10].vals[0].val = 0
+                __mem.lists[10].vals[0].allocated = 0
+                __mem.lists[10].vals[1].val = 0
+                __mem.lists[10].vals[1].allocated = 0
+                __mem.lists[10].vals[2].val = 0
+                __mem.lists[10].vals[2].allocated = 0
+                __mem.lists[10].vals[3].val = 0
+                __mem.lists[10].vals[3].allocated = 0
+                __mem.lists[10].vals[4].val = 0
+                __mem.lists[10].vals[4].allocated = 0
+                __mem.lists[10].vals[5].val = 0
+                __mem.lists[10].vals[5].allocated = 0
+                __mem.lists[10].vals[6].val = 0
+                __mem.lists[10].vals[6].allocated = 0
+                __mem.lists[10].vals[7].val = 0
+                __mem.lists[10].vals[7].allocated = 0
+                __mem.lists[10].vals[8].val = 0
+                __mem.lists[10].vals[8].allocated = 0
+                __mem.lists[10].vals[9].val = 0
+                __mem.lists[10].vals[9].allocated = 0
+                __mem.lists[10].allocated = 0
+                __mem.lists[11].vals[0].val = 0
+                __mem.lists[11].vals[0].allocated = 0
+                __mem.lists[11].vals[1].val = 0
+                __mem.lists[11].vals[1].allocated = 0
+                __mem.lists[11].vals[2].val = 0
+                __mem.lists[11].vals[2].allocated = 0
+                __mem.lists[11].vals[3].val = 0
+                __mem.lists[11].vals[3].allocated = 0
+                __mem.lists[11].vals[4].val = 0
+                __mem.lists[11].vals[4].allocated = 0
+                __mem.lists[11].vals[5].val = 0
+                __mem.lists[11].vals[5].allocated = 0
+                __mem.lists[11].vals[6].val = 0
+                __mem.lists[11].vals[6].allocated = 0
+                __mem.lists[11].vals[7].val = 0
+                __mem.lists[11].vals[7].allocated = 0
+                __mem.lists[11].vals[8].val = 0
+                __mem.lists[11].vals[8].allocated = 0
+                __mem.lists[11].vals[9].val = 0
+                __mem.lists[11].vals[9].allocated = 0
+                __mem.lists[11].allocated = 0
+                __mem.lists[12].vals[0].val = 0
+                __mem.lists[12].vals[0].allocated = 0
+                __mem.lists[12].vals[1].val = 0
+                __mem.lists[12].vals[1].allocated = 0
+                __mem.lists[12].vals[2].val = 0
+                __mem.lists[12].vals[2].allocated = 0
+                __mem.lists[12].vals[3].val = 0
+                __mem.lists[12].vals[3].allocated = 0
+                __mem.lists[12].vals[4].val = 0
+                __mem.lists[12].vals[4].allocated = 0
+                __mem.lists[12].vals[5].val = 0
+                __mem.lists[12].vals[5].allocated = 0
+                __mem.lists[12].vals[6].val = 0
+                __mem.lists[12].vals[6].allocated = 0
+                __mem.lists[12].vals[7].val = 0
+                __mem.lists[12].vals[7].allocated = 0
+                __mem.lists[12].vals[8].val = 0
+                __mem.lists[12].vals[8].allocated = 0
+                __mem.lists[12].vals[9].val = 0
+                __mem.lists[12].vals[9].allocated = 0
+                __mem.lists[12].allocated = 0
+                __mem.lists[13].vals[0].val = 0
+                __mem.lists[13].vals[0].allocated = 0
+                __mem.lists[13].vals[1].val = 0
+                __mem.lists[13].vals[1].allocated = 0
+                __mem.lists[13].vals[2].val = 0
+                __mem.lists[13].vals[2].allocated = 0
+                __mem.lists[13].vals[3].val = 0
+                __mem.lists[13].vals[3].allocated = 0
+                __mem.lists[13].vals[4].val = 0
+                __mem.lists[13].vals[4].allocated = 0
+                __mem.lists[13].vals[5].val = 0
+                __mem.lists[13].vals[5].allocated = 0
+                __mem.lists[13].vals[6].val = 0
+                __mem.lists[13].vals[6].allocated = 0
+                __mem.lists[13].vals[7].val = 0
+                __mem.lists[13].vals[7].allocated = 0
+                __mem.lists[13].vals[8].val = 0
+                __mem.lists[13].vals[8].allocated = 0
+                __mem.lists[13].vals[9].val = 0
+                __mem.lists[13].vals[9].allocated = 0
+                __mem.lists[13].allocated = 0
+                __mem.lists[14].vals[0].val = 0
+                __mem.lists[14].vals[0].allocated = 0
+                __mem.lists[14].vals[1].val = 0
+                __mem.lists[14].vals[1].allocated = 0
+                __mem.lists[14].vals[2].val = 0
+                __mem.lists[14].vals[2].allocated = 0
+                __mem.lists[14].vals[3].val = 0
+                __mem.lists[14].vals[3].allocated = 0
+                __mem.lists[14].vals[4].val = 0
+                __mem.lists[14].vals[4].allocated = 0
+                __mem.lists[14].vals[5].val = 0
+                __mem.lists[14].vals[5].allocated = 0
+                __mem.lists[14].vals[6].val = 0
+                __mem.lists[14].vals[6].allocated = 0
+                __mem.lists[14].vals[7].val = 0
+                __mem.lists[14].vals[7].allocated = 0
+                __mem.lists[14].vals[8].val = 0
+                __mem.lists[14].vals[8].allocated = 0
+                __mem.lists[14].vals[9].val = 0
+                __mem.lists[14].vals[9].allocated = 0
+                __mem.lists[14].allocated = 0
+                __mem.lists[15].vals[0].val = 0
+                __mem.lists[15].vals[0].allocated = 0
+                __mem.lists[15].vals[1].val = 0
+                __mem.lists[15].vals[1].allocated = 0
+                __mem.lists[15].vals[2].val = 0
+                __mem.lists[15].vals[2].allocated = 0
+                __mem.lists[15].vals[3].val = 0
+                __mem.lists[15].vals[3].allocated = 0
+                __mem.lists[15].vals[4].val = 0
+                __mem.lists[15].vals[4].allocated = 0
+                __mem.lists[15].vals[5].val = 0
+                __mem.lists[15].vals[5].allocated = 0
+                __mem.lists[15].vals[6].val = 0
+                __mem.lists[15].vals[6].allocated = 0
+                __mem.lists[15].vals[7].val = 0
+                __mem.lists[15].vals[7].allocated = 0
+                __mem.lists[15].vals[8].val = 0
+                __mem.lists[15].vals[8].allocated = 0
+                __mem.lists[15].vals[9].val = 0
+                __mem.lists[15].vals[9].allocated = 0
+                __mem.lists[15].allocated = 0
+                __mem.lists[16].vals[0].val = 0
+                __mem.lists[16].vals[0].allocated = 0
+                __mem.lists[16].vals[1].val = 0
+                __mem.lists[16].vals[1].allocated = 0
+                __mem.lists[16].vals[2].val = 0
+                __mem.lists[16].vals[2].allocated = 0
+                __mem.lists[16].vals[3].val = 0
+                __mem.lists[16].vals[3].allocated = 0
+                __mem.lists[16].vals[4].val = 0
+                __mem.lists[16].vals[4].allocated = 0
+                __mem.lists[16].vals[5].val = 0
+                __mem.lists[16].vals[5].allocated = 0
+                __mem.lists[16].vals[6].val = 0
+                __mem.lists[16].vals[6].allocated = 0
+                __mem.lists[16].vals[7].val = 0
+                __mem.lists[16].vals[7].allocated = 0
+                __mem.lists[16].vals[8].val = 0
+                __mem.lists[16].vals[8].allocated = 0
+                __mem.lists[16].vals[9].val = 0
+                __mem.lists[16].vals[9].allocated = 0
+                __mem.lists[16].allocated = 0
+                __mem.lists[17].vals[0].val = 0
+                __mem.lists[17].vals[0].allocated = 0
+                __mem.lists[17].vals[1].val = 0
+                __mem.lists[17].vals[1].allocated = 0
+                __mem.lists[17].vals[2].val = 0
+                __mem.lists[17].vals[2].allocated = 0
+                __mem.lists[17].vals[3].val = 0
+                __mem.lists[17].vals[3].allocated = 0
+                __mem.lists[17].vals[4].val = 0
+                __mem.lists[17].vals[4].allocated = 0
+                __mem.lists[17].vals[5].val = 0
+                __mem.lists[17].vals[5].allocated = 0
+                __mem.lists[17].vals[6].val = 0
+                __mem.lists[17].vals[6].allocated = 0
+                __mem.lists[17].vals[7].val = 0
+                __mem.lists[17].vals[7].allocated = 0
+                __mem.lists[17].vals[8].val = 0
+                __mem.lists[17].vals[8].allocated = 0
+                __mem.lists[17].vals[9].val = 0
+                __mem.lists[17].vals[9].allocated = 0
+                __mem.lists[17].allocated = 0
+                __mem.lists[18].vals[0].val = 0
+                __mem.lists[18].vals[0].allocated = 0
+                __mem.lists[18].vals[1].val = 0
+                __mem.lists[18].vals[1].allocated = 0
+                __mem.lists[18].vals[2].val = 0
+                __mem.lists[18].vals[2].allocated = 0
+                __mem.lists[18].vals[3].val = 0
+                __mem.lists[18].vals[3].allocated = 0
+                __mem.lists[18].vals[4].val = 0
+                __mem.lists[18].vals[4].allocated = 0
+                __mem.lists[18].vals[5].val = 0
+                __mem.lists[18].vals[5].allocated = 0
+                __mem.lists[18].vals[6].val = 0
+                __mem.lists[18].vals[6].allocated = 0
+                __mem.lists[18].vals[7].val = 0
+                __mem.lists[18].vals[7].allocated = 0
+                __mem.lists[18].vals[8].val = 0
+                __mem.lists[18].vals[8].allocated = 0
+                __mem.lists[18].vals[9].val = 0
+                __mem.lists[18].vals[9].allocated = 0
+                __mem.lists[18].allocated = 0
+                __mem.lists[19].vals[0].val = 0
+                __mem.lists[19].vals[0].allocated = 0
+                __mem.lists[19].vals[1].val = 0
+                __mem.lists[19].vals[1].allocated = 0
+                __mem.lists[19].vals[2].val = 0
+                __mem.lists[19].vals[2].allocated = 0
+                __mem.lists[19].vals[3].val = 0
+                __mem.lists[19].vals[3].allocated = 0
+                __mem.lists[19].vals[4].val = 0
+                __mem.lists[19].vals[4].allocated = 0
+                __mem.lists[19].vals[5].val = 0
+                __mem.lists[19].vals[5].allocated = 0
+                __mem.lists[19].vals[6].val = 0
+                __mem.lists[19].vals[6].allocated = 0
+                __mem.lists[19].vals[7].val = 0
+                __mem.lists[19].vals[7].allocated = 0
+                __mem.lists[19].vals[8].val = 0
+                __mem.lists[19].vals[8].allocated = 0
+                __mem.lists[19].vals[9].val = 0
+                __mem.lists[19].vals[9].allocated = 0
+                __mem.lists[19].allocated = 0
+                __mem.lists[20].vals[0].val = 0
+                __mem.lists[20].vals[0].allocated = 0
+                __mem.lists[20].vals[1].val = 0
+                __mem.lists[20].vals[1].allocated = 0
+                __mem.lists[20].vals[2].val = 0
+                __mem.lists[20].vals[2].allocated = 0
+                __mem.lists[20].vals[3].val = 0
+                __mem.lists[20].vals[3].allocated = 0
+                __mem.lists[20].vals[4].val = 0
+                __mem.lists[20].vals[4].allocated = 0
+                __mem.lists[20].vals[5].val = 0
+                __mem.lists[20].vals[5].allocated = 0
+                __mem.lists[20].vals[6].val = 0
+                __mem.lists[20].vals[6].allocated = 0
+                __mem.lists[20].vals[7].val = 0
+                __mem.lists[20].vals[7].allocated = 0
+                __mem.lists[20].vals[8].val = 0
+                __mem.lists[20].vals[8].allocated = 0
+                __mem.lists[20].vals[9].val = 0
+                __mem.lists[20].vals[9].allocated = 0
+                __mem.lists[20].allocated = 0
+                __mem.lists[21].vals[0].val = 0
+                __mem.lists[21].vals[0].allocated = 0
+                __mem.lists[21].vals[1].val = 0
+                __mem.lists[21].vals[1].allocated = 0
+                __mem.lists[21].vals[2].val = 0
+                __mem.lists[21].vals[2].allocated = 0
+                __mem.lists[21].vals[3].val = 0
+                __mem.lists[21].vals[3].allocated = 0
+                __mem.lists[21].vals[4].val = 0
+                __mem.lists[21].vals[4].allocated = 0
+                __mem.lists[21].vals[5].val = 0
+                __mem.lists[21].vals[5].allocated = 0
+                __mem.lists[21].vals[6].val = 0
+                __mem.lists[21].vals[6].allocated = 0
+                __mem.lists[21].vals[7].val = 0
+                __mem.lists[21].vals[7].allocated = 0
+                __mem.lists[21].vals[8].val = 0
+                __mem.lists[21].vals[8].allocated = 0
+                __mem.lists[21].vals[9].val = 0
+                __mem.lists[21].vals[9].allocated = 0
+                __mem.lists[21].allocated = 0
+                __mem.lists[22].vals[0].val = 0
+                __mem.lists[22].vals[0].allocated = 0
+                __mem.lists[22].vals[1].val = 0
+                __mem.lists[22].vals[1].allocated = 0
+                __mem.lists[22].vals[2].val = 0
+                __mem.lists[22].vals[2].allocated = 0
+                __mem.lists[22].vals[3].val = 0
+                __mem.lists[22].vals[3].allocated = 0
+                __mem.lists[22].vals[4].val = 0
+                __mem.lists[22].vals[4].allocated = 0
+                __mem.lists[22].vals[5].val = 0
+                __mem.lists[22].vals[5].allocated = 0
+                __mem.lists[22].vals[6].val = 0
+                __mem.lists[22].vals[6].allocated = 0
+                __mem.lists[22].vals[7].val = 0
+                __mem.lists[22].vals[7].allocated = 0
+                __mem.lists[22].vals[8].val = 0
+                __mem.lists[22].vals[8].allocated = 0
+                __mem.lists[22].vals[9].val = 0
+                __mem.lists[22].vals[9].allocated = 0
+                __mem.lists[22].allocated = 0
+                __mem.lists[23].vals[0].val = 0
+                __mem.lists[23].vals[0].allocated = 0
+                __mem.lists[23].vals[1].val = 0
+                __mem.lists[23].vals[1].allocated = 0
+                __mem.lists[23].vals[2].val = 0
+                __mem.lists[23].vals[2].allocated = 0
+                __mem.lists[23].vals[3].val = 0
+                __mem.lists[23].vals[3].allocated = 0
+                __mem.lists[23].vals[4].val = 0
+                __mem.lists[23].vals[4].allocated = 0
+                __mem.lists[23].vals[5].val = 0
+                __mem.lists[23].vals[5].allocated = 0
+                __mem.lists[23].vals[6].val = 0
+                __mem.lists[23].vals[6].allocated = 0
+                __mem.lists[23].vals[7].val = 0
+                __mem.lists[23].vals[7].allocated = 0
+                __mem.lists[23].vals[8].val = 0
+                __mem.lists[23].vals[8].allocated = 0
+                __mem.lists[23].vals[9].val = 0
+                __mem.lists[23].vals[9].allocated = 0
+                __mem.lists[23].allocated = 0
+                __mem.lists[24].vals[0].val = 0
+                __mem.lists[24].vals[0].allocated = 0
+                __mem.lists[24].vals[1].val = 0
+                __mem.lists[24].vals[1].allocated = 0
+                __mem.lists[24].vals[2].val = 0
+                __mem.lists[24].vals[2].allocated = 0
+                __mem.lists[24].vals[3].val = 0
+                __mem.lists[24].vals[3].allocated = 0
+                __mem.lists[24].vals[4].val = 0
+                __mem.lists[24].vals[4].allocated = 0
+                __mem.lists[24].vals[5].val = 0
+                __mem.lists[24].vals[5].allocated = 0
+                __mem.lists[24].vals[6].val = 0
+                __mem.lists[24].vals[6].allocated = 0
+                __mem.lists[24].vals[7].val = 0
+                __mem.lists[24].vals[7].allocated = 0
+                __mem.lists[24].vals[8].val = 0
+                __mem.lists[24].vals[8].allocated = 0
+                __mem.lists[24].vals[9].val = 0
+                __mem.lists[24].vals[9].allocated = 0
+                __mem.lists[24].allocated = 0
+                __mem.lists[25].vals[0].val = 0
+                __mem.lists[25].vals[0].allocated = 0
+                __mem.lists[25].vals[1].val = 0
+                __mem.lists[25].vals[1].allocated = 0
+                __mem.lists[25].vals[2].val = 0
+                __mem.lists[25].vals[2].allocated = 0
+                __mem.lists[25].vals[3].val = 0
+                __mem.lists[25].vals[3].allocated = 0
+                __mem.lists[25].vals[4].val = 0
+                __mem.lists[25].vals[4].allocated = 0
+                __mem.lists[25].vals[5].val = 0
+                __mem.lists[25].vals[5].allocated = 0
+                __mem.lists[25].vals[6].val = 0
+                __mem.lists[25].vals[6].allocated = 0
+                __mem.lists[25].vals[7].val = 0
+                __mem.lists[25].vals[7].allocated = 0
+                __mem.lists[25].vals[8].val = 0
+                __mem.lists[25].vals[8].allocated = 0
+                __mem.lists[25].vals[9].val = 0
+                __mem.lists[25].vals[9].allocated = 0
+                __mem.lists[25].allocated = 0
+                __mem.lists[26].vals[0].val = 0
+                __mem.lists[26].vals[0].allocated = 0
+                __mem.lists[26].vals[1].val = 0
+                __mem.lists[26].vals[1].allocated = 0
+                __mem.lists[26].vals[2].val = 0
+                __mem.lists[26].vals[2].allocated = 0
+                __mem.lists[26].vals[3].val = 0
+                __mem.lists[26].vals[3].allocated = 0
+                __mem.lists[26].vals[4].val = 0
+                __mem.lists[26].vals[4].allocated = 0
+                __mem.lists[26].vals[5].val = 0
+                __mem.lists[26].vals[5].allocated = 0
+                __mem.lists[26].vals[6].val = 0
+                __mem.lists[26].vals[6].allocated = 0
+                __mem.lists[26].vals[7].val = 0
+                __mem.lists[26].vals[7].allocated = 0
+                __mem.lists[26].vals[8].val = 0
+                __mem.lists[26].vals[8].allocated = 0
+                __mem.lists[26].vals[9].val = 0
+                __mem.lists[26].vals[9].allocated = 0
+                __mem.lists[26].allocated = 0
+                __mem.lists[27].vals[0].val = 0
+                __mem.lists[27].vals[0].allocated = 0
+                __mem.lists[27].vals[1].val = 0
+                __mem.lists[27].vals[1].allocated = 0
+                __mem.lists[27].vals[2].val = 0
+                __mem.lists[27].vals[2].allocated = 0
+                __mem.lists[27].vals[3].val = 0
+                __mem.lists[27].vals[3].allocated = 0
+                __mem.lists[27].vals[4].val = 0
+                __mem.lists[27].vals[4].allocated = 0
+                __mem.lists[27].vals[5].val = 0
+                __mem.lists[27].vals[5].allocated = 0
+                __mem.lists[27].vals[6].val = 0
+                __mem.lists[27].vals[6].allocated = 0
+                __mem.lists[27].vals[7].val = 0
+                __mem.lists[27].vals[7].allocated = 0
+                __mem.lists[27].vals[8].val = 0
+                __mem.lists[27].vals[8].allocated = 0
+                __mem.lists[27].vals[9].val = 0
+                __mem.lists[27].vals[9].allocated = 0
+                __mem.lists[27].allocated = 0
+                __mem.lists[28].vals[0].val = 0
+                __mem.lists[28].vals[0].allocated = 0
+                __mem.lists[28].vals[1].val = 0
+                __mem.lists[28].vals[1].allocated = 0
+                __mem.lists[28].vals[2].val = 0
+                __mem.lists[28].vals[2].allocated = 0
+                __mem.lists[28].vals[3].val = 0
+                __mem.lists[28].vals[3].allocated = 0
+                __mem.lists[28].vals[4].val = 0
+                __mem.lists[28].vals[4].allocated = 0
+                __mem.lists[28].vals[5].val = 0
+                __mem.lists[28].vals[5].allocated = 0
+                __mem.lists[28].vals[6].val = 0
+                __mem.lists[28].vals[6].allocated = 0
+                __mem.lists[28].vals[7].val = 0
+                __mem.lists[28].vals[7].allocated = 0
+                __mem.lists[28].vals[8].val = 0
+                __mem.lists[28].vals[8].allocated = 0
+                __mem.lists[28].vals[9].val = 0
+                __mem.lists[28].vals[9].allocated = 0
+                __mem.lists[28].allocated = 0
+                __mem.lists[29].vals[0].val = 0
+                __mem.lists[29].vals[0].allocated = 0
+                __mem.lists[29].vals[1].val = 0
+                __mem.lists[29].vals[1].allocated = 0
+                __mem.lists[29].vals[2].val = 0
+                __mem.lists[29].vals[2].allocated = 0
+                __mem.lists[29].vals[3].val = 0
+                __mem.lists[29].vals[3].allocated = 0
+                __mem.lists[29].vals[4].val = 0
+                __mem.lists[29].vals[4].allocated = 0
+                __mem.lists[29].vals[5].val = 0
+                __mem.lists[29].vals[5].allocated = 0
+                __mem.lists[29].vals[6].val = 0
+                __mem.lists[29].vals[6].allocated = 0
+                __mem.lists[29].vals[7].val = 0
+                __mem.lists[29].vals[7].allocated = 0
+                __mem.lists[29].vals[8].val = 0
+                __mem.lists[29].vals[8].allocated = 0
+                __mem.lists[29].vals[9].val = 0
+                __mem.lists[29].vals[9].allocated = 0
+                __mem.lists[29].allocated = 0
+                __mem.lists[30].vals[0].val = 0
+                __mem.lists[30].vals[0].allocated = 0
+                __mem.lists[30].vals[1].val = 0
+                __mem.lists[30].vals[1].allocated = 0
+                __mem.lists[30].vals[2].val = 0
+                __mem.lists[30].vals[2].allocated = 0
+                __mem.lists[30].vals[3].val = 0
+                __mem.lists[30].vals[3].allocated = 0
+                __mem.lists[30].vals[4].val = 0
+                __mem.lists[30].vals[4].allocated = 0
+                __mem.lists[30].vals[5].val = 0
+                __mem.lists[30].vals[5].allocated = 0
+                __mem.lists[30].vals[6].val = 0
+                __mem.lists[30].vals[6].allocated = 0
+                __mem.lists[30].vals[7].val = 0
+                __mem.lists[30].vals[7].allocated = 0
+                __mem.lists[30].vals[8].val = 0
+                __mem.lists[30].vals[8].allocated = 0
+                __mem.lists[30].vals[9].val = 0
+                __mem.lists[30].vals[9].allocated = 0
+                __mem.lists[30].allocated = 0
+                __mem.lists[31].vals[0].val = 0
+                __mem.lists[31].vals[0].allocated = 0
+                __mem.lists[31].vals[1].val = 0
+                __mem.lists[31].vals[1].allocated = 0
+                __mem.lists[31].vals[2].val = 0
+                __mem.lists[31].vals[2].allocated = 0
+                __mem.lists[31].vals[3].val = 0
+                __mem.lists[31].vals[3].allocated = 0
+                __mem.lists[31].vals[4].val = 0
+                __mem.lists[31].vals[4].allocated = 0
+                __mem.lists[31].vals[5].val = 0
+                __mem.lists[31].vals[5].allocated = 0
+                __mem.lists[31].vals[6].val = 0
+                __mem.lists[31].vals[6].allocated = 0
+                __mem.lists[31].vals[7].val = 0
+                __mem.lists[31].vals[7].allocated = 0
+                __mem.lists[31].vals[8].val = 0
+                __mem.lists[31].vals[8].allocated = 0
+                __mem.lists[31].vals[9].val = 0
+                __mem.lists[31].vals[9].allocated = 0
+                __mem.lists[31].allocated = 0
+                __mem.lists[32].vals[0].val = 0
+                __mem.lists[32].vals[0].allocated = 0
+                __mem.lists[32].vals[1].val = 0
+                __mem.lists[32].vals[1].allocated = 0
+                __mem.lists[32].vals[2].val = 0
+                __mem.lists[32].vals[2].allocated = 0
+                __mem.lists[32].vals[3].val = 0
+                __mem.lists[32].vals[3].allocated = 0
+                __mem.lists[32].vals[4].val = 0
+                __mem.lists[32].vals[4].allocated = 0
+                __mem.lists[32].vals[5].val = 0
+                __mem.lists[32].vals[5].allocated = 0
+                __mem.lists[32].vals[6].val = 0
+                __mem.lists[32].vals[6].allocated = 0
+                __mem.lists[32].vals[7].val = 0
+                __mem.lists[32].vals[7].allocated = 0
+                __mem.lists[32].vals[8].val = 0
+                __mem.lists[32].vals[8].allocated = 0
+                __mem.lists[32].vals[9].val = 0
+                __mem.lists[32].vals[9].allocated = 0
+                __mem.lists[32].allocated = 0
+                __mem.lists[33].vals[0].val = 0
+                __mem.lists[33].vals[0].allocated = 0
+                __mem.lists[33].vals[1].val = 0
+                __mem.lists[33].vals[1].allocated = 0
+                __mem.lists[33].vals[2].val = 0
+                __mem.lists[33].vals[2].allocated = 0
+                __mem.lists[33].vals[3].val = 0
+                __mem.lists[33].vals[3].allocated = 0
+                __mem.lists[33].vals[4].val = 0
+                __mem.lists[33].vals[4].allocated = 0
+                __mem.lists[33].vals[5].val = 0
+                __mem.lists[33].vals[5].allocated = 0
+                __mem.lists[33].vals[6].val = 0
+                __mem.lists[33].vals[6].allocated = 0
+                __mem.lists[33].vals[7].val = 0
+                __mem.lists[33].vals[7].allocated = 0
+                __mem.lists[33].vals[8].val = 0
+                __mem.lists[33].vals[8].allocated = 0
+                __mem.lists[33].vals[9].val = 0
+                __mem.lists[33].vals[9].allocated = 0
+                __mem.lists[33].allocated = 0
+                __mem.lists[34].vals[0].val = 0
+                __mem.lists[34].vals[0].allocated = 0
+                __mem.lists[34].vals[1].val = 0
+                __mem.lists[34].vals[1].allocated = 0
+                __mem.lists[34].vals[2].val = 0
+                __mem.lists[34].vals[2].allocated = 0
+                __mem.lists[34].vals[3].val = 0
+                __mem.lists[34].vals[3].allocated = 0
+                __mem.lists[34].vals[4].val = 0
+                __mem.lists[34].vals[4].allocated = 0
+                __mem.lists[34].vals[5].val = 0
+                __mem.lists[34].vals[5].allocated = 0
+                __mem.lists[34].vals[6].val = 0
+                __mem.lists[34].vals[6].allocated = 0
+                __mem.lists[34].vals[7].val = 0
+                __mem.lists[34].vals[7].allocated = 0
+                __mem.lists[34].vals[8].val = 0
+                __mem.lists[34].vals[8].allocated = 0
+                __mem.lists[34].vals[9].val = 0
+                __mem.lists[34].vals[9].allocated = 0
+                __mem.lists[34].allocated = 0
+                __mem.lists[35].vals[0].val = 0
+                __mem.lists[35].vals[0].allocated = 0
+                __mem.lists[35].vals[1].val = 0
+                __mem.lists[35].vals[1].allocated = 0
+                __mem.lists[35].vals[2].val = 0
+                __mem.lists[35].vals[2].allocated = 0
+                __mem.lists[35].vals[3].val = 0
+                __mem.lists[35].vals[3].allocated = 0
+                __mem.lists[35].vals[4].val = 0
+                __mem.lists[35].vals[4].allocated = 0
+                __mem.lists[35].vals[5].val = 0
+                __mem.lists[35].vals[5].allocated = 0
+                __mem.lists[35].vals[6].val = 0
+                __mem.lists[35].vals[6].allocated = 0
+                __mem.lists[35].vals[7].val = 0
+                __mem.lists[35].vals[7].allocated = 0
+                __mem.lists[35].vals[8].val = 0
+                __mem.lists[35].vals[8].allocated = 0
+                __mem.lists[35].vals[9].val = 0
+                __mem.lists[35].vals[9].allocated = 0
+                __mem.lists[35].allocated = 0
+                __mem.lists[36].vals[0].val = 0
+                __mem.lists[36].vals[0].allocated = 0
+                __mem.lists[36].vals[1].val = 0
+                __mem.lists[36].vals[1].allocated = 0
+                __mem.lists[36].vals[2].val = 0
+                __mem.lists[36].vals[2].allocated = 0
+                __mem.lists[36].vals[3].val = 0
+                __mem.lists[36].vals[3].allocated = 0
+                __mem.lists[36].vals[4].val = 0
+                __mem.lists[36].vals[4].allocated = 0
+                __mem.lists[36].vals[5].val = 0
+                __mem.lists[36].vals[5].allocated = 0
+                __mem.lists[36].vals[6].val = 0
+                __mem.lists[36].vals[6].allocated = 0
+                __mem.lists[36].vals[7].val = 0
+                __mem.lists[36].vals[7].allocated = 0
+                __mem.lists[36].vals[8].val = 0
+                __mem.lists[36].vals[8].allocated = 0
+                __mem.lists[36].vals[9].val = 0
+                __mem.lists[36].vals[9].allocated = 0
+                __mem.lists[36].allocated = 0
+                __mem.lists[37].vals[0].val = 0
+                __mem.lists[37].vals[0].allocated = 0
+                __mem.lists[37].vals[1].val = 0
+                __mem.lists[37].vals[1].allocated = 0
+                __mem.lists[37].vals[2].val = 0
+                __mem.lists[37].vals[2].allocated = 0
+                __mem.lists[37].vals[3].val = 0
+                __mem.lists[37].vals[3].allocated = 0
+                __mem.lists[37].vals[4].val = 0
+                __mem.lists[37].vals[4].allocated = 0
+                __mem.lists[37].vals[5].val = 0
+                __mem.lists[37].vals[5].allocated = 0
+                __mem.lists[37].vals[6].val = 0
+                __mem.lists[37].vals[6].allocated = 0
+                __mem.lists[37].vals[7].val = 0
+                __mem.lists[37].vals[7].allocated = 0
+                __mem.lists[37].vals[8].val = 0
+                __mem.lists[37].vals[8].allocated = 0
+                __mem.lists[37].vals[9].val = 0
+                __mem.lists[37].vals[9].allocated = 0
+                __mem.lists[37].allocated = 0
+                __mem.lists[38].vals[0].val = 0
+                __mem.lists[38].vals[0].allocated = 0
+                __mem.lists[38].vals[1].val = 0
+                __mem.lists[38].vals[1].allocated = 0
+                __mem.lists[38].vals[2].val = 0
+                __mem.lists[38].vals[2].allocated = 0
+                __mem.lists[38].vals[3].val = 0
+                __mem.lists[38].vals[3].allocated = 0
+                __mem.lists[38].vals[4].val = 0
+                __mem.lists[38].vals[4].allocated = 0
+                __mem.lists[38].vals[5].val = 0
+                __mem.lists[38].vals[5].allocated = 0
+                __mem.lists[38].vals[6].val = 0
+                __mem.lists[38].vals[6].allocated = 0
+                __mem.lists[38].vals[7].val = 0
+                __mem.lists[38].vals[7].allocated = 0
+                __mem.lists[38].vals[8].val = 0
+                __mem.lists[38].vals[8].allocated = 0
+                __mem.lists[38].vals[9].val = 0
+                __mem.lists[38].vals[9].allocated = 0
+                __mem.lists[38].allocated = 0
+                __mem.lists[39].vals[0].val = 0
+                __mem.lists[39].vals[0].allocated = 0
+                __mem.lists[39].vals[1].val = 0
+                __mem.lists[39].vals[1].allocated = 0
+                __mem.lists[39].vals[2].val = 0
+                __mem.lists[39].vals[2].allocated = 0
+                __mem.lists[39].vals[3].val = 0
+                __mem.lists[39].vals[3].allocated = 0
+                __mem.lists[39].vals[4].val = 0
+                __mem.lists[39].vals[4].allocated = 0
+                __mem.lists[39].vals[5].val = 0
+                __mem.lists[39].vals[5].allocated = 0
+                __mem.lists[39].vals[6].val = 0
+                __mem.lists[39].vals[6].allocated = 0
+                __mem.lists[39].vals[7].val = 0
+                __mem.lists[39].vals[7].allocated = 0
+                __mem.lists[39].vals[8].val = 0
+                __mem.lists[39].vals[8].allocated = 0
+                __mem.lists[39].vals[9].val = 0
+                __mem.lists[39].vals[9].allocated = 0
+                __mem.lists[39].allocated = 0
+392:    proc 37 (wait:1) test_out.pml:414 (state 11)
+392:    proc 36 (wait:1) test_out.pml:414 (state 11)
+392:    proc 35 (fork_loop:1) test_out.pml:500 (state 48)
+392:    proc 34 (wait:1) test_out.pml:414 (state 11)
+392:    proc 33 (fork_loop:1) test_out.pml:500 (state 48)
+392:    proc 32 (wait:1) test_out.pml:414 (state 11)
+392:    proc 31 (fork_loop:1) test_out.pml:500 (state 48)
+392:    proc 30 (wait:1) test_out.pml:424 (state 21) <valid end state>
+392:    proc 29 (table_loop:1) test_out.pml:268 (state 30)
+392:    proc 28 (fork_loop:1) test_out.pml:500 (state 48)
+392:    proc 27 (wait:1) test_out.pml:424 (state 21) <valid end state>
+392:    proc 26 (fork_loop:1) test_out.pml:484 (state 19)
+392:    proc 25 (wait:1) test_out.pml:424 (state 21) <valid end state>
+392:    proc 24 (fork_loop:1) test_out.pml:484 (state 19)
+392:    proc 23 (wait:1) test_out.pml:424 (state 21) <valid end state>
+392:    proc 22 (fork_loop:1) test_out.pml:484 (state 19)
+392:    proc 21 (phil_loop:1) test_out.pml:368 (state 29)
+392:    proc 20 (table_loop:1) test_out.pml:278 (state 17)
+392:    proc 19 (wait:1) test_out.pml:424 (state 21) <valid end state>
+392:    proc 18 (wait:1) test_out.pml:424 (state 21) <valid end state>
+392:    proc 17 (phil_loop:1) test_out.pml:368 (state 29)
+392:    proc 16 (table_loop:1) test_out.pml:278 (state 17)
+392:    proc 15 (table_loop:1) test_out.pml:278 (state 17)
+392:    proc 14 (fork_loop:1) test_out.pml:484 (state 19)
+392:    proc 13 (wait:1) test_out.pml:424 (state 21) <valid end state>
+392:    proc 12 (phil_loop:1) test_out.pml:368 (state 29)
+392:    proc 11 (wait:1) test_out.pml:424 (state 21) <valid end state>
+392:    proc 10 (phil_loop:1) test_out.pml:368 (state 29)
+392:    proc  9 (start_phil:1) test_out.pml:320 (state 18)
+392:    proc  8 (start_phil:1) test_out.pml:320 (state 18)
+392:    proc  7 (start_phil:1) test_out.pml:320 (state 18)
+392:    proc  6 (start_phil:1) test_out.pml:320 (state 18)
+392:    proc  5 (start_fork:1) test_out.pml:446 (state 18)
+392:    proc  4 (start_fork:1) test_out.pml:446 (state 18)
+392:    proc  3 (start_fork:1) test_out.pml:446 (state 18)
+392:    proc  2 (start_fork:1) test_out.pml:446 (state 18)
+392:    proc  1 (table_loop:1) test_out.pml:278 (state 17)
+392:    proc  0 (start:1) test_out.pml:589 (state 146)
+38 processes created

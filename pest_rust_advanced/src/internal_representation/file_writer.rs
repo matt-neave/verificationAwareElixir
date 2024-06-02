@@ -195,7 +195,7 @@ impl FileWriter {
             let formatted_args = Self::format_arguments(&string_args , &sym_table);
             self.function_channels.last_mut().unwrap().push_str(&format!("proctype {} ({}; chan ret; int __pid; int __ret_f) {{\n", func_name, &*formatted_args));
         }
-        self.function_body.last_mut().unwrap().push_str("if\n::__pid==-1 -> __pid = _pid;\n::else->skip;\nfi;\n");
+        self.function_body.last_mut().unwrap().push_str("atomic{\nif\n::__pid==-1 -> __pid = _pid;\n::else->skip;\nfi;\n}\n");
 
         // Only create a new symbol table if the function is not an anonymous function
         if self.function_body.len() == 1 {
@@ -210,7 +210,7 @@ impl FileWriter {
         // }
 
         if !self.returning_function && !self.init {
-            self.function_body.last_mut().unwrap().push_str("if\n:: __ret_f -> ret ! 0;\n:: else -> skip;\nfi;\n");
+            self.function_body.last_mut().unwrap().push_str("atomic{\nif\n:: __ret_f -> ret ! 0;\n:: else -> skip;\nfi;\n}\n");
         }
         self.content.push_str(&self.function_channels.pop().unwrap());
         self.content.push_str(&self.function_metabody.pop().unwrap());
@@ -609,7 +609,7 @@ impl FileWriter {
                 }
             }
         }
-        self.function_body.last_mut().unwrap().push_str(&format!("MessageList msg_{}; /*{}*/\n", self.function_messages, line_number));
+        self.function_body.last_mut().unwrap().push_str(&format!("atomic {{\nMessageList msg_{}; /*{}*/\n", self.function_messages, line_number));
         for mut arg in args {
             // TODO: replace third argument with type
             if arg.starts_with("{:self,") {
@@ -629,14 +629,14 @@ impl FileWriter {
         }
         if mailbox == -1 {
             if self.skip_bounded {
-                self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}) -> __{} !! {},{}, msg_{}; /*{}*/\n:: full(__{}) -> skip; /*{}*/\nfi /*{}*/\n", line_number, target, target, mtype, target, self.function_messages, line_number, mtype, line_number, line_number));
+                self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}) -> __{} !! {},{}, msg_{}; /*{}*/\n:: full(__{}) -> skip; /*{}*/\nfi /*{}*/\n}}\n", line_number, target, target, mtype, target, self.function_messages, line_number, mtype, line_number, line_number));
             } else {
-                self.function_body.last_mut().unwrap().push_str(&format!("__{} !! {},{}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
+                self.function_body.last_mut().unwrap().push_str(&format!("__{} !! {},{}, msg_{}; /*{}*/\n}}\n", mtype, target, mtype, self.function_messages, line_number));
             }
         } else if self.skip_bounded {
-            self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}) -> __{} !! {},{}, msg_{}; /*{}*/\n:: full(__{}) -> skip; /*{}*/\nfi /*{}*/\n", line_number, mtype, mtype, mailbox, mtype, self.function_messages, line_number, mtype, line_number, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("if /*{}*/\n:: nfull(__{}) -> __{} !! {},{}, msg_{}; /*{}*/\n:: full(__{}) -> skip; /*{}*/\nfi /*{}*/\n}}\n", line_number, mtype, mtype, mailbox, mtype, self.function_messages, line_number, mtype, line_number, line_number));
         } else {
-            self.function_body.last_mut().unwrap().push_str(&format!("__{} !! {},{}, msg_{}; /*{}*/\n", mtype, target, mtype, self.function_messages, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("__{} !! {},{}, msg_{}; /*{}*/\n}}\n", mtype, target, mtype, self.function_messages, line_number));
         }
         self.function_messages += 1;
     }

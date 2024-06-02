@@ -147,13 +147,59 @@ send [7, TRANSACTION_ABORT, ...]
 ...
 \end{lstlisting}
 Listing \ref{lst:2pc_violation} shows a reduced version of the message log produced. We can see the first broadcast of $prepare$ messages send to all participants\footnote{The numbers 1, 3 and 5 are the process identifiers assigned to the participants by Verlixir. Although this reveals some of the internals Verlixir uses to model programs, being aware of what these are can help understanding errors. They do not have any significance in the actual program.}. and subsequently the participants replying with $prepared$ messages. The coordinator then broadcasts a $commit$ message, which is received by all participants. However, in the response to $commit$ we notice that one participant sends an unexpected $transaction\_abort$ message. This explains the violation of LR1, as well as gives an indication as to where in the execution it was violated.
+\subsection{Dining Philosophers} \label{sec:dp}
+The dining philosophers problem is a classic concurrency problem used to illustrate the challenges of concurrent programming. The problem involves a group of philosophers sitting at a table in a circle. Between each philosopher is a fork. A philosopher can either be thinking or eating. To eat, a philosopher must first pick up both the fork on their left and right side.
+\par
+There are many flavors of this algorithm with increasing complexity to handle the concurrency primitives. To evaluate the expressiveness of Verlixir, we will specify the system with a naive approach:
+\begin{itemize}
+    \item A philosopher will ask to be sat at the table.
+    \item A philosopher will attempt to pick up the to their left.
+    \item A philosopher will attempt to pick up the fork to their right.
+    \item A philosopher will eat for some time.
+    \item A philosopher will put down the left fork, right fork and then leave the table.
+\end{itemize}
+In particular, the process algebra for a philosopher, $P$ is as follows:
+\[
+\begin{aligned}
+    & \text{P} = ( \text{sit} \rightarrow \text{pickupLeft} \rightarrow \text{pickupRight} \rightarrow \text{eat} \rightarrow \text{putdownLeft} \rightarrow \text{putdownRight} \rightarrow \text{leave} \rightarrow \text{SKIP}) \\
+\end{aligned}
+\]
+The issue with this approach is that if all the philosophers pick up the fork to their left, then they will all be waiting for the fork to their right. This is a known deadlock, and we would expect Verlixir to be expressive enough to detect this. When we run Verlixir on the dining philosopher specification, it reports a violation of the safety property that a deadlock should not occur. We can read the trail produced by Verlixir, to determine our understanding of how a deadlock may arise in this naive implementation is correct.
+\par
+To summarise the trail produced by Verlixir, we will demonstrate a process composition for two philosophers, $Phil_0$ and $Phil_1$ that results in a deadlock. We denote the fork on the philosopher's left as as $Fork_{i}$ and on the right as $Fork_{(i+1)\%n}$ for philosopher $Phil_i$, where $n$ is the number of philosophers (similarly for a fork, the philosophers are located at $i$ and $(i-1)\%n$) We will use $L$ and $R$ interchangeably to express left and right. 
+\[
+\begin{aligned}
+    & \text{Phil}_i = (\text{sit}_{i} \rightarrow \text{pickup}_{iL} \rightarrow \text{pickup}_{iR}\rightarrow \text{eat}_{i} \rightarrow \text{putdown}_{iL} \rightarrow \text{putdown}_{iR}\rightarrow \text{leave}_i \rightarrow \text{SKIP}) \\
+    & \text{Fork}_i = (\text{pickup}_{Li} \rightarrow \text{putdown}_{Li} \rightarrow \text{Fork}_{i}) \ | \ (\text{pickup}_{Ri} \rightarrow \text{putdown}_{Ri} \rightarrow \text{Fork}_i) \\
+    & \text{DiningPhilosophers}(2) = \text{Phil}_0 \ || \ \text{Phil}_1 \ || \ \text{Fork}_0 \ || \ \text{Fork}_1 \\
+\end{aligned}
+\]
+Which when ran using Verlixir, produces the violating trace:
+\[
+    \text{sit}_0 \rightarrow \text{sit}_1 \rightarrow \text{pickup}_{00} \rightarrow \text{pickup}_{11} \rightarrow \text{STOP} \\
+\]
+We can observe that even without explicitly specifying system properties, Verlixir is capable of detecting a deadlock in systems. We can now look at a shortened version of the message log produced by Verlixir to reason the counterexample produced aligns with the intuition we provided.
+\begin{lstlisting}[xleftmargin=.01\linewidth, xrightmargin=0.01\linewidth, caption={Message log produced by counterexample of a Dining Philosophers deadlock.}, label={lst:dp_deadlock}]
+    The program likely reached a deadlock. Generating trace.
+    <<<Message Events>>>
+    send [2,PICKUP,4]
+    send [4, OK]
+    send [3,PICKUP,5]
+    send [5, OK]
+    send [2,PICKUP,5]
+    send [3,PICKUP,4]
+    <<<Deadlock>>>
+\end{lstlisting}
+The trace in listing \ref{lst:dp_deadlock} shows four $pickup$ messages being sent. The values in these messages do not necessarily directly correspond to anything in the Elixir program, however we can use some intuition to workout what is going on. For any message log, the first element will be the intended receiver. Hence, the first message shows a philosopher with process identifier 4 sending a $pickup$ message to a fork with process identifier 2. Continuing this logic, we can see the interleaving results in the philosophers with identifiers 4 and 5 both attempting to pickup the fork to their left. We see the forks confirming they have been acquired, before the philosophers attempt to pickup the fork to their right. This is where the trace ends, as Verlixir reports a non-terminating state has been reached and the system has deadlocked.
+\par
+We can see that if we map the process identifiers for philosophers and forks to the numbering system we used in the process algebra, that the trace aligns with our operational semantics for the system. This gives us confidence that Verlixir is correctly identifying deadlocks in the system.
+
 \subsection{Raft Consensus} \label{sec:raft}
 The final algorithm we will use in the evaluation of Verlixir's expressiveness is raft \cite{raft}. The raft consensus algorithm was introduced to be a simpler consensus algorithm than paxos. It is a consensus algorithm for managing a replicated log. The result produced is similar to multi-paxos and is as efficient as paxos. Unlike paxos, raft explicitly coordinates through a leader.
 \par
 We split the design of raft into two components: leader election and log replication. We will primarily be focusing on leader election in this evaluation. The raft design involves four process types: clients, followers, candidates and leaders. Clients communicates directly with leaders to propose log entries for replication. Leaders will commit these log messages and forward them onto followers. There can be multiple leaders at any moment, however, the raft algorithm is divided into `terms'. If multiple leaders forward log entries to a follower, it will only respect the leader elected for the highest term. If a follower does not receive a message from a leader within a certain time frame, it will mark itself as a candidate and initiate a new leader election.
 \par
 Leader election involves selecting a new term number and asking all followers to vote for the candidate. If a candidate receives a majority of votes, it marks itself as the leader for the term. The consensus algorithm is designed such that only one leader can be elected per term, in the case of a split vote then no leader is elected.
-\subsection{Dining Philosophers}
 
 \section{Verlixir vs. Existing Work} \label{sec:vs}
 We will now compare Verlixir to existing state-of-the-art work in verification-aware languages and modern programming language verification tools. We believe Verlixir is the first tool to support a pure message-passing model of computation, and hence much of the design has introduced novel techniques to support this. We will first discuss some of these techniques that differentiate Verlixir from exiting work. We will then provide a direct comparison between Verlixir and existing tools, before discussing the future of Verlixir.

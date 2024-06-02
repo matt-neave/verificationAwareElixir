@@ -28,13 +28,13 @@ defmodule Philosopher do
     wait()
 
     # ... sitting ... #
-    IO.puts "lfork"
     send lfork, {:pickup, self()}
     wait()
-    IO.puts "rfork"
+    IO.puts "lfork"
 
     send rfork, {:pickup, self()}
     wait()
+    IO.puts "rfork"
 
     # ... eating ... #
     send table, {:leave, self()}

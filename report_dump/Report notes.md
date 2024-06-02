@@ -67,7 +67,7 @@ Talk about all the capabilities of Verlixir. Construct a TABLE comparing to othe
 
 How easy would it be to extend Verlixir / LTLixir. Evaluate the futureproofing of introducing new features. Talk about extending to other frontends like a more general CSP notation. Perhaps the natural form for specifications should be predicate logic and CSP
 
-How easy would it be to change backends?
+How easy would it be to change backends? ✅
 
 Case studies need to highlight the verificaiton properties more. Put the code in the eval relevant. Explain the english definitions of the predicates and SR, LR ect.. Place comments next to LTL and predicats in code to explain
 
@@ -75,9 +75,9 @@ Use colour / boxes to highlight VAE cmonstructs.
 
 Indendt promela.
 
-Quantitive analyisis: compelation accuracy. talk about the optimisations applied to mailboxes aswell as the future work for optimistaions (for example why i had to re-write the mailboxes three times) and other optimisations.
-What makes the compilation / translation good / fast.
-Future extensionability / reusability -> adding macros / features / integrating with error messages -> mapping of elixir lines ect.
+Quantitive analyisis: compelation accuracy. talk about the optimisations applied to mailboxes aswell as the future work for optimistaions (for example why i had to re-write the mailboxes three times) and other optimisations.✅
+What makes the compilation / translation good / fast.✅
+Future extensionability / reusability -> adding macros / features / integrating with error messages -> mapping of elixir lines ect. 
 
 
 
