@@ -20,7 +20,7 @@ use log::LevelFilter;
 use env_logger::fmt::Color;
 
 mod internal_representation;
-use internal_representation::{formatted_condition, sym_table, model_runner, model_generator};
+use internal_representation::{formatted_condition, sym_table, model_runner, model_generator, output_handler};
 
 #[path = "macros/parse_macros.rs"]
 #[macro_use]
@@ -48,6 +48,8 @@ fn main() {
     let weak_fairness = args.contains(&"--fair".to_string()) || args.contains(&"-f".to_string());
     // Reduce the state-space exploration
     let reduce_state_space = args.contains(&"--reduce".to_string()) || args.contains(&"-r".to_string());
+    // Produce Elixir lines alongside the model
+    let source_lines = args.contains(&"--lines".to_string()) || args.contains(&"-l".to_string());
 
     let mut param_n = 3;
     if gen_params {
@@ -91,6 +93,8 @@ fn main() {
     unsafe {
         final_params = PARAMS.clone();
     }
+
+
     if simulate_flag {
         model_runner::simulate_model(model_path);
     }
@@ -101,6 +105,9 @@ fn main() {
         model_generator::generate_models(model_path, final_params, param_n);
     }
 
+    if source_lines {
+        let _ = output_handler::append_source_lines(model_path, elixir_dir.to_str().unwrap());
+    }
 }
 
 fn extract_elixir_ast(out_file: &str, silent: bool) {

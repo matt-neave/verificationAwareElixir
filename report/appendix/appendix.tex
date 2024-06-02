@@ -1549,374 +1549,371 @@ end
 \end{lstlisting}
 
 \subsubsection{Promela Translation of Dining Philosophers}
-\begin{lstlisting}[xleftmargin=.01\linewidth, xrightmargin=0.01\linewidth, caption={Dining Philosophers Promela translation.}, label={lst:promela_dp}]
-proctype table_loop (chan ret;int __pid;int __ret_f) {
-chan ret1 = [1] of { int };/* 7*/ 
-chan ret2 = [1] of { int };/* 10*/ 
-	atomic{
-		if
-		:: __pid == - 1 -> __pid = _pid;
-		:: else -> skip;
-		fi;
-	}
-	MessageList rec_v_0;/* 4*/ 
-	do/* 4*/ 
-	:: __SIT??eval(__pid),SIT,rec_v_0 -> /* 0*/ 
-		int phil;/* 0*/ 
-		phil = rec_v_0.m1.data2;/* 0*/ 
-		atomic {
-			MessageList msg_0;/* 6*/ 
-			__OK!!phil,OK,msg_0;/* 6*/ 
-		}
-		int __ret_placeholder_1;/* 7*/ 
-		run table_loop(ret1,__pid,1);/* 7*/ 
-		ret1?__ret_placeholder_1;/* 7*/ 
-		break;
-	:: __LEAVE??eval(__pid),LEAVE,rec_v_0 -> /* 0*/ 
-		phil = rec_v_0.m1.data2;/* 0*/ 
-		atomic {
-			MessageList msg_1;/* 9*/ 
-			__OK!!phil,OK,msg_1;/* 9*/ 
-		}
-		int __ret_placeholder_2;/* 10*/ 
-		run table_loop(ret2,__pid,1);/* 10*/ 
-		ret2?__ret_placeholder_2;/* 10*/ 
-		break;
-	:: __TERMINATE??eval(__pid),TERMINATE,rec_v_0 -> /* 11*/ 
-		break;
-	od;
-	atomic{
-		if
-		:: __ret_f -> ret!0;
-		:: else -> skip;
-		fi;
-	}
-}
-
-proctype start_phil (int coordinator;chan ret;int __pid;int __ret_f) {
-chan ret1 = [1] of { int };/* 20*/ 
-	atomic{
-		if
-		:: __pid == - 1 -> __pid = _pid;
-		:: else -> skip;
-		fi;
-	}
-	MessageList rec_v_1;/* 19*/ 
-	do/* 19*/ 
-	:: __BIND??eval(__pid),BIND,rec_v_1 -> /* 20*/ 
-		int table;/* 20*/ 
-		table = rec_v_1.m1.data2;/* 20*/ 
-		int lfork;/* 20*/ 
-		lfork = rec_v_1.m2.data2;/* 20*/ 
-		int rfork;/* 20*/ 
-		rfork = rec_v_1.m3.data2;/* 20*/ 
-		int __ret_placeholder_1;/* 20*/ 
-		run phil_loop(coordinator,table,lfork,rfork,ret1,__pid,1);/* 20*/ 
-		ret1?__ret_placeholder_1;/* 20*/ 
-		break;
-	od;
-	atomic{
-		if
-		:: __ret_f -> ret!0;
-		:: else -> skip;
-		fi;
-	}
-}
-
-proctype phil_loop (int coordinator;int table;int lfork;int rfork;chan ret;int __pid;int __ret_f) {
-chan ret1 = [1] of { int };/* 28*/ 
-chan ret2 = [1] of { int };/* 32*/ 
-chan ret3 = [1] of { int };/* 36*/ 
-chan ret4 = [1] of { int };/* 41*/ 
-chan ret5 = [1] of { int };/* 43*/ 
-chan ret6 = [1] of { int };/* 45*/ 
-	atomic{
-		if
-		:: __pid == - 1 -> __pid = _pid;
-		:: else -> skip;
-		fi;
-	}
-	atomic {
-		MessageList msg_0;/* 27*/ 
-		msg_0.m1.data2 = __pid;/* 27*/ 
-		__SIT!!table,SIT,msg_0;/* 27*/ 
-	}
-	int __ret_placeholder_1;/* 28*/ 
-	run wait(ret1,__pid,1);/* 28*/ 
-	ret1?__ret_placeholder_1;/* 28*/ 
-	atomic {
-		MessageList msg_1;/* 31*/ 
-		msg_1.m1.data2 = __pid;/* 31*/ 
-		__PICKUP!!lfork,PICKUP,msg_1;/* 31*/ 
-	}
-	int __ret_placeholder_2;/* 32*/ 
-	run wait(ret2,__pid,1);/* 32*/ 
-	ret2?__ret_placeholder_2;/* 32*/ 
-	printf("lfork\n");
-	atomic {
-		MessageList msg_2;/* 35*/ 
-		msg_2.m1.data2 = __pid;/* 35*/ 
-		__PICKUP!!rfork,PICKUP,msg_2;/* 35*/ 
-	}
-	int __ret_placeholder_3;/* 36*/ 
-	run wait(ret3,__pid,1);/* 36*/ 
-	ret3?__ret_placeholder_3;/* 36*/ 
-	printf("rfork\n");
-	atomic {
-		MessageList msg_3;/* 40*/ 
-		msg_3.m1.data2 = __pid;/* 40*/ 
-		__LEAVE!!table,LEAVE,msg_3;/* 40*/ 
-	}
-	int __ret_placeholder_4;/* 41*/ 
-	run wait(ret4,__pid,1);/* 41*/ 
-	ret4?__ret_placeholder_4;/* 41*/ 
-	atomic {
-		MessageList msg_4;/* 42*/ 
-		msg_4.m1.data2 = __pid;/* 42*/ 
-		__PUTDOWN!!lfork,PUTDOWN,msg_4;/* 42*/ 
-	}
-	int __ret_placeholder_5;/* 43*/ 
-	run wait(ret5,__pid,1);/* 43*/ 
-	ret5?__ret_placeholder_5;/* 43*/ 
-	atomic {
-		MessageList msg_5;/* 44*/ 
-		msg_5.m1.data2 = __pid;/* 44*/ 
-		__PUTDOWN!!rfork,PUTDOWN,msg_5;/* 44*/ 
-	}
-	int __ret_placeholder_6;/* 45*/ 
-	run wait(ret6,__pid,1);/* 45*/ 
-	ret6?__ret_placeholder_6;/* 45*/ 
-	atomic {
-		MessageList msg_6;/* 47*/ 
-		__DONE!!coordinator,DONE,msg_6;/* 47*/ 
-	}
-	atomic{
-		if
-		:: __ret_f -> ret!0;
-		:: else -> skip;
-		fi;
-	}
-}
-
-proctype wait (chan ret;int __pid;int __ret_f) {
-	atomic{
-		if
-		:: __pid == - 1 -> __pid = _pid;
-		:: else -> skip;
-		fi;
-	}
-	MessageList rec_v_2;/* 52*/ 
-	do/* 52*/ 
-	:: __OK??eval(__pid),OK,rec_v_2 -> /* 53*/ 
-		break;
-	od;
-	atomic{
-		if
-		:: __ret_f -> ret!0;
-		:: else -> skip;
-		fi;
-	}
-}
-
-proctype start_fork (chan ret;int __pid;int __ret_f) {
-chan ret1 = [1] of { int };/* 64*/ 
-	atomic{
-		if
-		:: __pid == - 1 -> __pid = _pid;
-		:: else -> skip;
-		fi;
-	}
-	MessageList rec_v_3;/* 61*/ 
-	do/* 61*/ 
-	:: __LPHIL??eval(__pid),LPHIL,rec_v_3 -> /* 0*/ 
-		int lphil;/* 0*/ 
-		lphil = rec_v_3.m1.data2;/* 0*/ 
-		MessageList rec_v_4;/* 63*/ 
-		do/* 63*/ 
-		:: __RPHIL??eval(__pid),RPHIL,rec_v_4 -> /* 0*/ 
-			int rphil;/* 0*/ 
-			rphil = rec_v_4.m1.data2;/* 0*/ 
-			int __ret_placeholder_1;/* 64*/ 
-			run fork_loop(0,lphil,rphil,ret1,__pid,1);/* 64*/ 
-			ret1?__ret_placeholder_1;/* 64*/ 
-			break;
-		od;
-		break;
-	od;
-	atomic{
-		if
-		:: __ret_f -> ret!0;
-		:: else -> skip;
-		fi;
-	}
-}
-
-proctype fork_loop (int allocated;int lphil;int rphil;chan ret;int __pid;int __ret_f) {
-chan ret1 = [1] of { int };/* 77*/ 
-chan ret2 = [1] of { int };/* 80*/ 
-chan ret3 = [1] of { int };/* 89*/ 
-	atomic{
-		if
-		:: __pid == - 1 -> __pid = _pid;
-		:: else -> skip;
-		fi;
-	}
-	if
-	:: (allocated == 0) -> /* 0*/ 
-		MessageList rec_v_5;/* 73*/ 
-		do/* 73*/ 
-		:: __PICKUP??eval(__pid),PICKUP,rec_v_5 -> /* 0*/ 
-			int phil;/* 0*/ 
-			phil = rec_v_5.m1.data2;/* 0*/ 
-			if
-			:: (phil == lphil) -> /* 0*/ 
-				atomic {
-					MessageList msg_0;/* 76*/ 
-					__OK!!phil,OK,msg_0;/* 76*/ 
-				}
-				int __ret_placeholder_1;/* 77*/ 
-				run fork_loop(1,lphil,rphil,ret1,__pid,1);/* 77*/ 
-				ret1?__ret_placeholder_1;/* 77*/ 
-			:: else -> 
-				atomic {
-					MessageList msg_1;/* 79*/ 
-					__OK!!phil,OK,msg_1;/* 79*/ 
-				}
-				int __ret_placeholder_2;/* 80*/ 
-				run fork_loop(2,lphil,rphil,ret2,__pid,1);/* 80*/ 
-				ret2?__ret_placeholder_2;/* 80*/ 
-			fi;
-			break;
-		:: __TERMINATE??eval(__pid),TERMINATE,rec_v_5 -> /* 82*/ 
-			break;
-		od;
-	:: else -> 
-		MessageList rec_v_6;/* 86*/ 
-		do/* 86*/ 
-		:: __PUTDOWN??eval(__pid),PUTDOWN,rec_v_6 -> /* 0*/ 
-			phil = rec_v_6.m1.data2;/* 0*/ 
-			atomic {
-				MessageList msg_2;/* 88*/ 
-				__OK!!phil,OK,msg_2;/* 88*/ 
-			}
-			int __ret_placeholder_3;/* 89*/ 
-			run fork_loop(0,lphil,rphil,ret3,__pid,1);/* 89*/ 
-			ret3?__ret_placeholder_3;/* 89*/ 
-			break;
-		:: __TERMINATE??eval(__pid),TERMINATE,rec_v_6 -> /* 90*/ 
-			break;
-		od;
-	fi;
-	atomic{
-		if
-		:: __ret_f -> ret!0;
-		:: else -> skip;
-		fi;
-	}
-}
-
-active proctype start () {
-chan ret1 = [1] of { int };
-chan ret2 = [1] of { int };
-chan ret3 = [1] of { int };
-	int __pid = 0;
-	atomic{
-		if
-		:: __pid == - 1 -> __pid = _pid;
-		:: else -> skip;
-		fi;
-	}
-	int n = 4;
-	int table;
-	atomic {
-		table = run table_loop(ret1,- 1,0);/* 104*/ 
-	}
-	int forks;
-	__get_next_memory_allocation(forks);
-	for(__dummy_iterator : 1 .. n) {/* 106*/ 
-		int __tmp;
-		atomic {
-			__tmp = run start_fork(ret2,- 1,0);/* 107*/ 
-		}
-		__list_append(forks,__tmp);
-	}
-	int phils;
-	__get_next_memory_allocation(phils);
-	int i;
-	for(i : 1 .. n) {/* 110*/ 
-		int __tmp;
-		atomic {
-			__tmp = run start_phil(__pid,ret3,- 1,0);/* 111*/ 
-		}
-		__list_append(phils,__tmp);
-	}
-	int j;
-	j = n - 1;
-	for(i : 0 .. j) {/* 115*/ 
-		int phil;
-		phil = __list_at(phils,i)
-		int lfork;
-		lfork = __list_at(forks,i)
-		int r_i;
-		r_i = (i + 1) % (n);/* 118*/ 
-		int rfork;
-		rfork = __list_at(forks,r_i)
-		atomic {
-			MessageList msg_0;/* 120*/ 
-			msg_0.m1.data2 = table;/* 120*/ 
-			msg_0.m2.data2 = lfork;/* 120*/ 
-			msg_0.m3.data2 = rfork;/* 120*/ 
-			__BIND!!phil,BIND,msg_0;/* 120*/ 
-		}
-		atomic {
-			MessageList msg_1;/* 121*/ 
-			msg_1.m1.data2 = phil;/* 121*/ 
-			__LPHIL!!lfork,LPHIL,msg_1;/* 121*/ 
-		}
-		atomic {
-			MessageList msg_2;/* 122*/ 
-			msg_2.m1.data2 = phil;/* 122*/ 
-			__RPHIL!!rfork,RPHIL,msg_2;/* 122*/ 
-		}
-	}
-	for(i : 1 .. n) {/* 125*/ 
-		MessageList rec_v_7;/* 126*/ 
-		do/* 126*/ 
-		:: __DONE??eval(__pid),DONE,rec_v_7 -> /* 127*/ 
-			break;
-		od;
-	}
-	printf("All philosophers have finished eating!\n");
-	atomic {
-		__list_ptr_old = __list_ptr;
-		__list_ptr = 0;
-		__list_ptr_new = 0;
-		do
-		:: __list_ptr >= LIST_LIMIT || __list_ptr_new >= LIST_LIMIT -> 
-			__list_ptr = __list_ptr_old;
-			break;
-		:: else -> 
-			if
-			:: LIST_ALLOCATED(forks,__list_ptr) -> 
-				int fork;
-				fork = LIST_VAL(forks,__list_ptr);
-				atomic {
-					MessageList msg_3;/* 133*/ 
-					__TERMINATE!!fork,TERMINATE,msg_3;/* 133*/ 
-				}
-				;
-				__list_ptr_new++;
-				__list_ptr++;
-			:: else -> __list_ptr++;
-			fi
-		od
-	}
-	atomic {
-		MessageList msg_4;/* 135*/ 
-		__TERMINATE!!table,TERMINATE,msg_4;/* 135*/ 
-	}
-}
-
-
-
+\begin{lstlisting}[xleftmargin=.001\linewidth, xrightmargin=0.001\linewidth, caption={Dining Philosophers Promela translation.}, label={lst:promela_dp}]
+  proctype table_loop (chan ret;int __pid;int __ret_f) {
+    chan ret1 = [1] of { int };/* 7*/ /* table_loop()*/ 
+    chan ret2 = [1] of { int };/* 10*/ /* table_loop()*/ 
+        atomic{
+            if
+            :: __pid == - 1 -> __pid = _pid;
+            :: else -> skip;
+            fi;
+        }
+        MessageList rec_v_0;/* 4*/ /* receive do*/ 
+        do/* 4*/ /* receive do*/ 
+        :: __SIT??eval(__pid),SIT,rec_v_0 -> /* 0*/ 
+            int phil;/* 0*/ 
+            phil = rec_v_0.m1.data2;/* 0*/ 
+            atomic {
+            MessageList msg_0;/* 6*/ /* send phil,{:ok}*/ 
+            __OK!!phil,OK,msg_0;/* 6*/ /* send phil,{:ok}*/ 
+            }
+            int __ret_placeholder_1;/* 7*/ /* table_loop()*/ 
+            run table_loop(ret1,__pid,1);/* 7*/ /* table_loop()*/ 
+            ret1?__ret_placeholder_1;/* 7*/ /* table_loop()*/ 
+            break;
+        :: __LEAVE??eval(__pid),LEAVE,rec_v_0 -> /* 0*/ 
+            phil = rec_v_0.m1.data2;/* 0*/ 
+            atomic {
+            MessageList msg_1;/* 9*/ /* send phil,{:ok}*/ 
+            __OK!!phil,OK,msg_1;/* 9*/ /* send phil,{:ok}*/ 
+            }
+            int __ret_placeholder_2;/* 10*/ /* table_loop()*/ 
+            run table_loop(ret2,__pid,1);/* 10*/ /* table_loop()*/ 
+            ret2?__ret_placeholder_2;/* 10*/ /* table_loop()*/ 
+            break;
+        :: __TERMINATE??eval(__pid),TERMINATE,rec_v_0 -> /* 11*/ /* {:terminate} -> :ok*/ 
+            break;
+        od;
+        atomic{
+            if
+            :: __ret_f -> ret!0;
+            :: else -> skip;
+            fi;
+        }
+    }
+    
+    proctype start_phil (int coordinator;chan ret;int __pid;int __ret_f) {
+    chan ret1 = [1] of { int };/* 20*/ /* {:bind,table,lfork,rfork} -> phil_loop(coordinator,table,lfork,rfork)*/ 
+        atomic{
+            if
+            :: __pid == - 1 -> __pid = _pid;
+            :: else -> skip;
+            fi;
+        }
+        MessageList rec_v_1;/* 19*/ /* receive do*/ 
+        do/* 19*/ /* receive do*/ 
+          :: __BIND??eval(__pid),BIND,rec_v_1 -> /* 20*/ /* {:bind,table,lfork,rfork} -> phil_loop(coordinator,table,lfork,rfork)*/ 
+            int table;/* 20*/ /* {:bind,table,lfork,rfork} -> phil_loop(coordinator,table,lfork,rfork)*/ 
+            table = rec_v_1.m1.data2;/* 20*/ /* {:bind,table,lfork,rfork} -> phil_loop(coordinator,table,lfork,rfork)*/ 
+            int lfork;/* 20*/ /* {:bind,table,lfork,rfork} -> phil_loop(coordinator,table,lfork,rfork)*/ 
+            lfork = rec_v_1.m2.data2;/* 20*/ /* {:bind,table,lfork,rfork} -> phil_loop(coordinator,table,lfork,rfork)*/ 
+            int rfork;/* 20*/ /* {:bind,table,lfork,rfork} -> phil_loop(coordinator,table,lfork,rfork)*/ 
+            rfork = rec_v_1.m3.data2;/* 20*/ /* {:bind,table,lfork,rfork} -> phil_loop(coordinator,table,lfork,rfork)*/ 
+            int __ret_placeholder_1;/* 20*/ /* {:bind,table,lfork,rfork} -> phil_loop(coordinator,table,lfork,rfork)*/ 
+            run phil_loop(coordinator,table,lfork,rfork,ret1,__pid,1);/* 20*/ /* {:bind,table,lfork,rfork} -> phil_loop(coordinator,table,lfork,rfork)*/ 
+            ret1?__ret_placeholder_1;/* 20*/ /* {:bind,table,lfork,rfork} -> phil_loop(coordinator,table,lfork,rfork)*/ 
+            break;
+        od;
+        atomic{
+            if
+            :: __ret_f -> ret!0;
+            :: else -> skip;
+            fi;
+        }
+    }
+    
+    proctype phil_loop (int coordinator;int table;int lfork;int rfork;chan ret;int __pid;int __ret_f) {
+    chan ret1 = [1] of { int };/* 28*/ /* wait()*/ 
+    chan ret2 = [1] of { int };/* 32*/ /* wait()*/ 
+    chan ret3 = [1] of { int };/* 36*/ /* wait()*/ 
+    chan ret4 = [1] of { int };/* 41*/ /* wait()*/ 
+    chan ret5 = [1] of { int };/* 43*/ /* wait()*/ 
+    chan ret6 = [1] of { int };/* 45*/ /* wait()*/ 
+        atomic{
+            if
+            :: __pid == - 1 -> __pid = _pid;
+            :: else -> skip;
+            fi;
+        }
+        atomic {
+        MessageList msg_0;/* 27*/ /* send table,{:sit,self()}*/ 
+        msg_0.m1.data2 = __pid;/* 27*/ /* send table,{:sit,self()}*/ 
+        __SIT!!table,SIT,msg_0;/* 27*/ /* send table,{:sit,self()}*/ 
+        }
+        int __ret_placeholder_1;/* 28*/ /* wait()*/ 
+        run wait(ret1,__pid,1);/* 28*/ /* wait()*/ 
+        ret1?__ret_placeholder_1;/* 28*/ /* wait()*/ 
+        atomic {
+        MessageList msg_1;/* 31*/ /* send lfork,{:pickup,self()}*/ 
+        msg_1.m1.data2 = __pid;/* 31*/ /* send lfork,{:pickup,self()}*/ 
+        __PICKUP!!lfork,PICKUP,msg_1;/* 31*/ /* send lfork,{:pickup,self()}*/ 
+        }
+        int __ret_placeholder_2;/* 32*/ /* wait()*/ 
+        run wait(ret2,__pid,1);/* 32*/ /* wait()*/ 
+        ret2?__ret_placeholder_2;/* 32*/ /* wait()*/ 
+        printf("lfork\n");
+        atomic {
+        MessageList msg_2;/* 35*/ /* send rfork,{:pickup,self()}*/ 
+        msg_2.m1.data2 = __pid;/* 35*/ /* send rfork,{:pickup,self()}*/ 
+        __PICKUP!!rfork,PICKUP,msg_2;/* 35*/ /* send rfork,{:pickup,self()}*/ 
+        }
+        int __ret_placeholder_3;/* 36*/ /* wait()*/ 
+        run wait(ret3,__pid,1);/* 36*/ /* wait()*/ 
+        ret3?__ret_placeholder_3;/* 36*/ /* wait()*/ 
+        printf("rfork\n");
+        atomic {
+        MessageList msg_3;/* 40*/ /* send table,{:leave,self()}*/ 
+        msg_3.m1.data2 = __pid;/* 40*/ /* send table,{:leave,self()}*/ 
+        __LEAVE!!table,LEAVE,msg_3;/* 40*/ /* send table,{:leave,self()}*/ 
+        }
+        int __ret_placeholder_4;/* 41*/ /* wait()*/ 
+        run wait(ret4,__pid,1);/* 41*/ /* wait()*/ 
+        ret4?__ret_placeholder_4;/* 41*/ /* wait()*/ 
+        atomic {
+        MessageList msg_4;/* 42*/ /* send lfork,{:putdown,self()}*/ 
+        msg_4.m1.data2 = __pid;/* 42*/ /* send lfork,{:putdown,self()}*/ 
+        __PUTDOWN!!lfork,PUTDOWN,msg_4;/* 42*/ /* send lfork,{:putdown,self()}*/ 
+        }
+        int __ret_placeholder_5;/* 43*/ /* wait()*/ 
+        run wait(ret5,__pid,1);/* 43*/ /* wait()*/ 
+        ret5?__ret_placeholder_5;/* 43*/ /* wait()*/ 
+        atomic {
+        MessageList msg_5;/* 44*/ /* send rfork,{:putdown,self()}*/ 
+        msg_5.m1.data2 = __pid;/* 44*/ /* send rfork,{:putdown,self()}*/ 
+        __PUTDOWN!!rfork,PUTDOWN,msg_5;/* 44*/ /* send rfork,{:putdown,self()}*/ 
+        }
+        int __ret_placeholder_6;/* 45*/ /* wait()*/ 
+        run wait(ret6,__pid,1);/* 45*/ /* wait()*/ 
+        ret6?__ret_placeholder_6;/* 45*/ /* wait()*/ 
+        atomic {
+        MessageList msg_6;/* 47*/ /* send coordinator,{:done}*/ 
+        __DONE!!coordinator,DONE,msg_6;/* 47*/ /* send coordinator,{:done}*/ 
+        }
+        atomic{
+            if
+            :: __ret_f -> ret!0;
+            :: else -> skip;
+            fi;
+        }
+    }
+    
+    proctype wait (chan ret;int __pid;int __ret_f) {
+        atomic{
+            if
+            :: __pid == - 1 -> __pid = _pid;
+            :: else -> skip;
+            fi;
+        }
+        MessageList rec_v_2;/* 52*/ /* receive do*/ 
+        do/* 52*/ /* receive do*/ 
+          :: __OK??eval(__pid),OK,rec_v_2 -> /* 53*/ /* {:ok} -> :ok*/ 
+            break;
+        od;
+        atomic{
+            if
+            :: __ret_f -> ret!0;
+            :: else -> skip;
+            fi;
+        }
+    }
+    
+    proctype start_fork (chan ret;int __pid;int __ret_f) {
+    chan ret1 = [1] of { int };/* 64*/ /* {:rphil,rphil} -> fork_loop(0,lphil,rphil)*/ 
+        atomic{
+            if
+            :: __pid == - 1 -> __pid = _pid;
+            :: else -> skip;
+            fi;
+        }
+        MessageList rec_v_3;/* 61*/ /* receive do*/ 
+        do/* 61*/ /* receive do*/ 
+          :: __LPHIL??eval(__pid),LPHIL,rec_v_3 -> /* 0*/ 
+            int lphil;/* 0*/ 
+            lphil = rec_v_3.m1.data2;/* 0*/ 
+            MessageList rec_v_4;/* 63*/ /* receive do*/ 
+            do/* 63*/ /* receive do*/ 
+              :: __RPHIL??eval(__pid),RPHIL,rec_v_4 -> /* 0*/ 
+                int rphil;/* 0*/ 
+                rphil = rec_v_4.m1.data2;/* 0*/ 
+                int __ret_placeholder_1;/* 64*/ /* {:rphil,rphil} -> fork_loop(0,lphil,rphil)*/ 
+                run fork_loop(0,lphil,rphil,ret1,__pid,1);/* 64*/ /* {:rphil,rphil} -> fork_loop(0,lphil,rphil)*/ 
+                ret1?__ret_placeholder_1;/* 64*/ /* {:rphil,rphil} -> fork_loop(0,lphil,rphil)*/ 
+                break;
+            od;
+            break;
+          od;
+        atomic{
+            if
+            :: __ret_f -> ret!0;
+            :: else -> skip;
+            fi;
+        }
+    }
+    
+    proctype fork_loop (int allocated;int lphil;int rphil;chan ret;int __pid;int __ret_f) {
+    chan ret1 = [1] of { int };/* 77*/ /* fork_loop(1,lphil,rphil)*/ 
+    chan ret2 = [1] of { int };/* 80*/ /* fork_loop(2,lphil,rphil)*/ 
+    chan ret3 = [1] of { int };/* 89*/ /* fork_loop(0,lphil,rphil)*/ 
+        atomic{
+            if
+            :: __pid == - 1 -> __pid = _pid;
+            :: else -> skip;
+            fi;
+        }
+        if
+        :: (allocated == 0) -> /* 0*/ 
+            MessageList rec_v_5;/* 73*/ /* receive do*/ 
+            do/* 73*/ /* receive do*/ 
+            :: __PICKUP??eval(__pid),PICKUP,rec_v_5 -> /* 0*/ 
+                int phil;/* 0*/ 
+                phil = rec_v_5.m1.data2;/* 0*/ 
+                if
+                :: (phil == lphil) -> /* 0*/ 
+                    atomic {
+                    MessageList msg_0;/* 76*/ /* send phil,{:ok}*/ 
+                    __OK!!phil,OK,msg_0;/* 76*/ /* send phil,{:ok}*/ 
+                    }
+                    int __ret_placeholder_1;/* 77*/ /* fork_loop(1,lphil,rphil)*/ 
+                    run fork_loop(1,lphil,rphil,ret1,__pid,1);/* 77*/ /* fork_loop(1,lphil,rphil)*/ 
+                    ret1?__ret_placeholder_1;/* 77*/ /* fork_loop(1,lphil,rphil)*/ 
+                :: else -> 
+                    atomic {
+                    MessageList msg_1;/* 79*/ /* send phil,{:ok}*/ 
+                    __OK!!phil,OK,msg_1;/* 79*/ /* send phil,{:ok}*/ 
+                    }
+                    int __ret_placeholder_2;/* 80*/ /* fork_loop(2,lphil,rphil)*/ 
+                    run fork_loop(2,lphil,rphil,ret2,__pid,1);/* 80*/ /* fork_loop(2,lphil,rphil)*/ 
+                    ret2?__ret_placeholder_2;/* 80*/ /* fork_loop(2,lphil,rphil)*/ 
+                fi;
+                break;
+              :: __TERMINATE??eval(__pid),TERMINATE,rec_v_5 -> /* 82*/ /* {:terminate} -> */ 
+                break;
+            od;
+        :: else -> 
+            MessageList rec_v_6;/* 86*/ /* receive do*/ 
+            do/* 86*/ /* receive do*/ 
+            :: __PUTDOWN??eval(__pid),PUTDOWN,rec_v_6 -> /* 0*/ 
+                phil = rec_v_6.m1.data2;/* 0*/ 
+                atomic {
+                MessageList msg_2;/* 88*/ /* send phil,{:ok}*/ 
+                __OK!!phil,OK,msg_2;/* 88*/ /* send phil,{:ok}*/ 
+                }
+                int __ret_placeholder_3;/* 89*/ /* fork_loop(0,lphil,rphil)*/ 
+                run fork_loop(0,lphil,rphil,ret3,__pid,1);/* 89*/ /* fork_loop(0,lphil,rphil)*/ 
+                ret3?__ret_placeholder_3;/* 89*/ /* fork_loop(0,lphil,rphil)*/ 
+                break;
+            :: __TERMINATE??eval(__pid),TERMINATE,rec_v_6 -> /* 90*/ /* {:terminate} -> */ 
+                break;
+            od;
+        fi;
+        atomic{
+            if
+            :: __ret_f -> ret!0;
+            :: else -> skip;
+            fi;
+        }
+    }
+    
+    active proctype start () {
+    chan ret1 = [1] of { int };
+    chan ret2 = [1] of { int };
+    chan ret3 = [1] of { int };
+        int __pid = 0;
+        atomic{
+            if
+            :: __pid == - 1 -> __pid = _pid;
+            :: else -> skip;
+            fi;
+        }
+        int n = 4;
+        int table;
+        atomic {
+            table = run table_loop(ret1,- 1,0);/* 104*/ /* table = spawn(Table,:table_loop,[])*/ 
+        }
+        int forks;
+        __get_next_memory_allocation(forks);
+        for(__dummy_iterator : 1 .. n) {/* 106*/ /* forks = for _ < - 1..n do*/ 
+            int __tmp;
+            atomic {
+                __tmp = run start_fork(ret2,- 1,0);/* 107*/ /* spawn(Fork,:start_fork,[])*/ 
+            }
+            __list_append(forks,__tmp);
+        }
+        int phils;
+        __get_next_memory_allocation(phils);
+        int i;
+        for(i : 1 .. n) {/* 110*/ /* phils = for i < - 1..n do*/ 
+            int __tmp;
+            atomic {
+                __tmp = run start_phil(__pid,ret3,- 1,0);/* 111*/ /* spawn(Philosopher,:start_phil,[self()])*/ 
+            }
+            __list_append(phils,__tmp);
+        }
+        int j;
+        j = n - 1;
+        for(i : 0 .. j) {/* 115*/ /* for i < - 0..j do*/ 
+            int phil;
+            phil = __list_at(phils,i)
+            int lfork;
+            lfork = __list_at(forks,i)
+            int r_i;
+            r_i = (i + 1) % (n);/* 118*/ /* r_i = rem(i + 1,n)*/ 
+            int rfork;
+            rfork = __list_at(forks,r_i)
+            atomic {
+            MessageList msg_0;/* 120*/ /* send phil,{:bind,table,lfork,rfork}*/ 
+            msg_0.m1.data2 = table;/* 120*/ /* send phil,{:bind,table,lfork,rfork}*/ 
+            msg_0.m2.data2 = lfork;/* 120*/ /* send phil,{:bind,table,lfork,rfork}*/ 
+            msg_0.m3.data2 = rfork;/* 120*/ /* send phil,{:bind,table,lfork,rfork}*/ 
+            __BIND!!phil,BIND,msg_0;/* 120*/ /* send phil,{:bind,table,lfork,rfork}*/ 
+            }
+            atomic {
+            MessageList msg_1;/* 121*/ /* send lfork,{:lphil,phil}*/ 
+            msg_1.m1.data2 = phil;/* 121*/ /* send lfork,{:lphil,phil}*/ 
+            __LPHIL!!lfork,LPHIL,msg_1;/* 121*/ /* send lfork,{:lphil,phil}*/ 
+            }
+            atomic {
+            MessageList msg_2;/* 122*/ /* send rfork,{:rphil,phil}*/ 
+            msg_2.m1.data2 = phil;/* 122*/ /* send rfork,{:rphil,phil}*/ 
+            __RPHIL!!rfork,RPHIL,msg_2;/* 122*/ /* send rfork,{:rphil,phil}*/ 
+            }
+        }
+        for(i : 1 .. n) {/* 125*/ /* for i < - 1..n do*/ 
+            MessageList rec_v_7;/* 126*/ /* receive do*/ 
+            do/* 126*/ /* receive do*/ 
+            :: __DONE??eval(__pid),DONE,rec_v_7 -> /* 127*/ /* {:done} -> :ok*/ 
+                break;
+            od;
+        }
+        printf("All philosophers have finished eating!\n");
+        atomic {
+            __list_ptr_old = __list_ptr;
+            __list_ptr = 0;
+            __list_ptr_new = 0;
+            do
+            :: __list_ptr >= LIST_LIMIT || __list_ptr_new >= LIST_LIMIT -> 
+                __list_ptr = __list_ptr_old;
+                break;
+            :: else -> 
+                if
+                :: LIST_ALLOCATED(forks,__list_ptr) -> 
+                    int fork;
+                    fork = LIST_VAL(forks,__list_ptr);
+                    atomic {
+                    MessageList msg_3;/* 133*/ /* send fork,{:terminate}*/ 
+                    __TERMINATE!!fork,TERMINATE,msg_3;/* 133*/ /* send fork,{:terminate}*/ 
+                    }
+                    ;
+                    __list_ptr_new++;
+                    __list_ptr++;
+                :: else -> __list_ptr++;
+                fi
+            od
+        }
+        atomic {
+        MessageList msg_4;/* 135*/ /* send table,{:terminate}*/ 
+        __TERMINATE!!table,TERMINATE,msg_4;/* 135*/ /* send table,{:terminate}*/ 
+        }
+    }    
 \end{lstlisting}

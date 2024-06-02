@@ -4,3 +4,4 @@ pub mod sym_table;
 pub mod model_runner;
 pub mod model_generator;
 pub mod boilerplate;
+pub mod output_handler;

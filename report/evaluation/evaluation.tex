@@ -194,7 +194,7 @@ The trace in listing \ref{lst:dp_deadlock} shows four $pickup$ messages being se
 \par
 We can see that if we map the process identifiers for philosophers and forks to the numbering system we used in the process algebra, that the trace aligns with our operational semantics for the system. This gives us confidence that Verlixir is correctly identifying deadlocks in the system.
 
-\subsection{Raft Consensus} \label{sec:raft}
+\subsection{Raft Consensus TODO} \label{sec:raft}
 The final algorithm we will use in the evaluation of Verlixir's expressiveness is raft \cite{raft}. The raft consensus algorithm was introduced to be a simpler consensus algorithm than paxos. It is a consensus algorithm for managing a replicated log. The result produced is similar to multi-paxos and is as efficient as paxos. Unlike paxos, raft explicitly coordinates through a leader.
 \par
 We split the design of raft into two components: leader election and log replication. We will primarily be focusing on leader election in this evaluation. The raft design involves four process types: clients, followers, candidates and leaders. Clients communicates directly with leaders to propose log entries for replication. Leaders will commit these log messages and forward them onto followers. There can be multiple leaders at any moment, however, the raft algorithm is divided into `terms'. If multiple leaders forward log entries to a follower, it will only respect the leader elected for the highest term. If a follower does not receive a message from a leader within a certain time frame, it will mark itself as a candidate and initiate a new leader election.
