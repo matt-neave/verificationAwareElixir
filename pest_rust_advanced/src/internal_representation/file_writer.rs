@@ -647,6 +647,14 @@ impl FileWriter {
         self.receive_count += 1;
     }
 
+    pub fn write_timeout(&mut self, line_number: u32) {
+        self.function_body.last_mut().unwrap().push_str(&format!(":: timeout -> /*{}*/\n", line_number));
+    }
+
+    pub fn commit_timeout(&mut self) {
+        self.function_body.last_mut().unwrap().push_str("break;\n");
+    }
+
     pub fn commit_receive(&mut self, _line_number: u32) {
         self.function_body.last_mut().unwrap().push_str("od;\n");
         

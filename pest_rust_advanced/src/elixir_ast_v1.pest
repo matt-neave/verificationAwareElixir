@@ -218,7 +218,9 @@ send_argument = { atom | number | string | self_pid | binary_operation | assigne
 // TODO, self_pid is just a special case of a function call!
 self_pid = { "{:self, " ~ metadata ~ ", []}" }
 
-receive = { "{:receive, " ~ metadata ~ ", [[do: " ~ (receive_statements) ~ "]]}" }
+receive = { "{:receive, " ~ metadata ~ ", [[do: " ~ (receive_statements) ~ (", " ~ timeout)* ~ "]]}" }
+
+timeout = { "after: [{:->, " ~ metadata ~ ", [[" ~ number ~ "], " ~ (block | block_statement) ~ "]}]" }
 
 receive_statements = { "[" ~ (receive_statement ~ ", ")* ~ receive_statement ~ "]" }
 

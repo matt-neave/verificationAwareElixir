@@ -408,6 +408,19 @@ fn parse_receive(
             _ => parse_warn!("receive", pair.as_rule()),
         }
     }
+    let timeout = ast_node.clone().into_inner().find(|x| x.as_rule() == Rule::timeout);
+    if let Some(x) = timeout {
+        let line_number = get_line_number(x.clone());
+        file_writer.write_timeout(line_number);
+        for pair in x.into_inner() {
+            match pair.as_rule() {
+                Rule::block_statement => parse_block_statement(pair, file_writer, ret, func_def),
+                Rule::block           => parse_block(pair, file_writer, ret, func_def),
+                _                     => (),
+            }
+        }
+        file_writer.commit_timeout();
+    }
     file_writer.commit_receive(line_number);
 }
 
