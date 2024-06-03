@@ -40,7 +40,7 @@ Alternatively, we can use the $-v$ flag to run the verifier on the specification
     The verifier terminated with no errors.
 \end{lstlisting}
 \subsection{Detecting a Deadlock} \label{sec:deadlock}
-Now we have a basic understanding of what is required to write a specification, we will use Verlixir to detect a deadlock in the system. By default, the verifier will detect the presence of deadlocks and livelocks in the system. Deadlocks in Elixir programs can be introduced by circular waits, where two simultaneously executing processes are both waiting for a message from the other. To demonstrate this, we modify the existing client and server by introducing a circular wait. The server will now spawn the process, and expect to receive a message from the client, meanwhile, the client will expect to receive a message from the server. The resulting server and client processes are modeled below.
+Now we have a basic understanding of what is required to write a specification, we will use Verlixir to detect a deadlock in the system. By default, the verifier will detect the presence of deadlocks and livelocks in the system. Deadlocks in Elixir programs can be introduced by circular waits, where two simultaneously executing processes are both waiting for a message from the other. To demonstrate this, we modify the existing client and server by introducing a circular wait. The server will now spawn the process, and expect to receive a message from the client, meanwhile, the client will expect to receive a message from the server. The resulting server and client processes are modelled below.
 \begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={A simple Elixir system with a deadlock}.]
     defmodule Server do
     (*@\fbox{@vae\_init true}@*)
