@@ -61,7 +61,7 @@ Show lots of examples, introduce artificial bugs
 
 ---
 ## Evaluation
-Argue the solution is distinct. What is unique to VAE from dafny. i.e. we need to support mailboxes, actors ect.  unique instrumentation of the elixir AST. ✅
+Argue the solution is distinct. What is unique to VAE from dafny. i.e. we need to support ✅mailboxes, actors ect.  unique instrumentation of the elixir AST. ✅
 Talk about how we extend SPIN too i.e. mailboxes and other concepts spin doesnt have✅
 Talk about all the capabilities of Verlixir. Construct a TABLE comparing to other tools on i.e. concurrency/message passing/predicate logic/temporal logic/quantification/faults/. Specify where verlixir is better / same / worse i.e. to dafny/lean/gomela/java pathfinder ✅
 
@@ -87,9 +87,9 @@ Couldn't find a verification aware concurrent language - should be mentioned in 
 Argue the projects feasability
 
 ## Changes
-Timeouts so important
+Timeouts so important ✅
 Quantification (just create multiple formulas) 
 Option to put elixir lines of code in the promela files ✅
 Killing proecsses (faults)
-Multiline ltl / predicates at top of file (should be possible with macros by setting the variables to -1)
+Multiline ltl / predicates at top of file (should be possible with macros by setting the variables to -1) ✅
 Dining philosophers ✅

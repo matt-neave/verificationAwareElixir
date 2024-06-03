@@ -1,6 +1,6 @@
 \chapter{Evaluation}
-In this chapter, we aim to evaluate the expressiveness of Verlixir's design. First, we perform a qualatitive analysis of modeling classical distributed algorithms such as basic paxos in section \ref{sec:paxos} and the alternating-bit protocol in section \ref{sec:ab}. Section \ref{sec:vs} will delve into a comparison against current state-of-the-art model checking techniques for modern-day programming languages. Finally, we will explore the performance of Verlixir in a growing sytem in section \ref{sec:perf}.
-\section{Analysing Distributed Systems}
+In this chapter, we aim to evaluate the expressiveness of Verlixir's design. First, we perform a qualitative analysis of modeling classical distributed algorithms such as basic paxos in section \ref{sec:ds}. Then section \ref{sec:vs} will delve into a comparison against current state-of-the-art model checking techniques for modern-day programming languages and verification-aware languages.
+\section{Analysing Distributed Systems} \label{sec:ds}
 Verifying the correctness of real-world distributed systems is a major motivation for this project. Critical real-time systems (such as in air-traffic control or healthcare  \cite{airlines,healthcare}) should not fail and should rely on rigerous verification techniques to guarantee production code is correct.  
 \subsection{Basic Paxos} \label{sec:paxos}
 Paxos is an example of a distributed algorithm \cite{paxos_simple}. It is a consensus algorithm, where many processes are tasked to agree on a value. Processes may propose what this value should be, but only one value should be agreed upon. The safety requirements (SR)s for consensus are:
@@ -28,11 +28,23 @@ With our implementation complete, we introduce the three safety requirements est
 \end{array}
 \]
 We can now use the predicates to simplify the formulation of the safety requirements.
-\begin{itemize}
-    \item \textbf{SR1}: $\lozenge r$
-    \item \textbf{SR2}: $\square ( ( p \rightarrow \neg \lozenge q ) \land ( q \rightarrow \neg \lozenge p ) )$ 
-    \item \textbf{SR3}: $\square s$
-\end{itemize}
+\begin{multicols}{2}
+    \[
+    \begin{aligned}
+    &\textbf{SR1}: \lozenge r \\
+    &\textbf{SR2}: \square \left( p \rightarrow \neg \lozenge q \right) \land \left( q \rightarrow \neg \lozenge p \right) \\
+    &\textbf{SR3}: \square s \\
+    \end{aligned}
+    \]
+    \vline
+    \[
+    \begin{aligned}
+    &\text{Only a proposed value is chosen} \\
+    &\text{Only a single value is chosen} \\
+    &\text{Only proposed values are learned} \\
+    \end{aligned}
+    \]
+\end{multicols}
 We now have a complete specification of the basic paxos algorithm in LTLixir. Note that SR1 could be considered a liveness requirement, this is a result of slight modifications on the original SRs to align with our specific implementation decisions. We can run Verlixir on the model to verify the safety requirements. When we run the verification mode, we see that no SRs are violated. This justifies that both the informal paxos specification we defined is correct regarding our SRs and that the implementation of the specification is also correct.
 \begin{lstlisting}[language=bash, xleftmargin=.3\linewidth]
     Model ran successfully. 0 error(s) found.
@@ -66,14 +78,26 @@ To model the system, we are primarily concerned with one liveness property. Ever
     \end{aligned}
 \]
 These predicates $p_i$ specify assignments of a value to a node in the ring and $r_j$ specify the next request to be processed by the ring manager. We can now introduce our liveness property, which we do so by breaking into components to capture specific details of the system.
-\[
+
+\begin{multicols}{2}
+    \[
+        \begin{aligned}
+        & \phi_1: \square ( r1 \rightarrow \lozenge p1 ) \\
+        & \phi_2: \square ( r2 \rightarrow \lozenge p3 ) \\
+        & \phi_3: \square ( r3 \land n\_nodes == 3 \rightarrow \lozenge p1 ) \\
+        & \phi_4: \square ( r3 \land n\_nodes == 4 \rightarrow \lozenge p4 ) \\
+        \end{aligned}
+    \]
+    \vline
+    \[
     \begin{aligned}
-    & \phi_1: \square ( r1 \rightarrow \lozenge p1 ) \\
-    & \phi_2: \square ( r2 \rightarrow \lozenge p3 ) \\
-    & \phi_3: \square ( r3 \land n\_nodes == 3 \rightarrow \lozenge p1 ) \\
-    & \phi_4: \square ( r3 \land n\_nodes == 4 \rightarrow \lozenge p4 ) \\
+    &\text{Node 1 assigned values in range} \\
+    &\text{Node 3 assigned values in range} \\
+    &\text{Hashing wrap-around semantics} \\
+    &\text{Hashing for ring resizing}
     \end{aligned}
-\]
+    \]
+\end{multicols}
 We use these properties to ensure the correctness of the system, by using an understanding of how the system hashes requests to enable verification of evolving behaviour. For example, we use the variable $n\_nodes$ to distinguish between different behaviour patterns depending on the loads of the system. In particular, $\phi_1$ and $\phi_2$ ensure that the ring manager assigns requests to the next sequential node in the ring. $\phi_3$ is responsible for ensuring the wrap-around semantics, when the hash value of a request is larger than the last node's range, it should be assigned to the first node. $\phi_4$ is responsible for ensuring that as the ring grows, the ring manager adjusts its assignment of requests so that the new node now receives its relevant load.
 \par
 We can attach these LTL properties to the handler model, $S$, to determine that our incoming requests are being handled as expected. We can run them with Verlixir, which determines there are no violations of the properties, and our hashing is performing as intended.
@@ -107,11 +131,23 @@ We informally specify the system with a safety and liveness property. The safety
 \end{array}
 \]
 The $commit\_count$ is the number of participants that have committed the transaction and similarly, the $abort\_count$ is the number of participants that have aborted the transaction. The $participant\_count$ is a property specified by the system, we will reason about the protocol using a system with three participants. We can now introduce the LTL formulae to specify the system.
-\begin{itemize}
-    \item \textbf{SR1}: $ \square ( p \rightarrow \neg \lozenge q ) $
-    \item \textbf{SR2}: $ \square ( q \rightarrow \neg \lozenge p ) $
-    \item \textbf{LR1}: $ \lozenge \square p \lor \lozenge \square q $
-\end{itemize}
+\begin{multicols}{2}
+    \[
+    \begin{aligned}
+    &\textbf{SR1}: \square \left( p \rightarrow \neg \lozenge q \right) \\
+    &\textbf{SR2}: \square \left( q \rightarrow \neg \lozenge p \right) \\
+    &\textbf{LR1}: \lozenge \square p \lor \lozenge \square q \\
+    \end{aligned}
+    \]
+    \vline
+    \[
+    \begin{aligned}
+    &\text{Mutual exclusion} \\
+    &\text{Mutual exclusion} \\
+    &\text{Eventual agreement on commit or abort} \\
+    \end{aligned}
+    \]
+\end{multicols}
 Verlixir verifies the model is correct under these properties. We can now introduce a bug into the system. As we have mainly looked at safety properties so far, we will introduce a bug that may trigger a violation of LR1. To do this, we randomly make a participator `faulty'. Faulty participators will always abort the transaction, regardless of the coordinator's request and even if they agree to commit. We can now run the Verlixir on the updated model to see if the system violates the specification. Verlixir reports that the system violates LR1, and provides a counterexample of an execution that violates the specification. We can again use a diagram to represent the violating execution, as shown in figure \ref{fig:2pc}.
 \par
 \begin{figure}[h]
@@ -158,10 +194,10 @@ There are many flavors of this algorithm with increasing complexity to handle th
     \item A philosopher will eat for some time.
     \item A philosopher will put down the left fork, right fork and then leave the table.
 \end{itemize}
-In particular, the process algebra for a philosopher, $P$ is as follows:
+In particular, the process algebra for a philosopher, $Phil$ is as follows:
 \[
 \begin{aligned}
-    & \text{P} = ( \text{sit} \rightarrow \text{pickupLeft} \rightarrow \text{pickupRight} \rightarrow \text{eat} \rightarrow \text{putdownLeft} \rightarrow \text{putdownRight} \rightarrow \text{leave} \rightarrow \text{SKIP}) \\
+    & \text{Phil} = ( \text{sit} \rightarrow \text{pickupLeft} \rightarrow \text{pickupRight} \rightarrow \text{eat} \rightarrow \text{putdownLeft} \rightarrow \text{putdownRight} \rightarrow \text{leave} \rightarrow \text{SKIP}) \\
 \end{aligned}
 \]
 The issue with this approach is that if all the philosophers pick up the fork to their left, then they will all be waiting for the fork to their right. This is a known deadlock, and we would expect Verlixir to be expressive enough to detect this. When we run Verlixir on the dining philosopher specification, it reports a violation of the safety property that a deadlock should not occur. We can read the trail produced by Verlixir, to determine our understanding of how a deadlock may arise in this naive implementation is correct.
@@ -194,13 +230,48 @@ The trace in listing \ref{lst:dp_deadlock} shows four $pickup$ messages being se
 \par
 We can see that if we map the process identifiers for philosophers and forks to the numbering system we used in the process algebra, that the trace aligns with our operational semantics for the system. This gives us confidence that Verlixir is correctly identifying deadlocks in the system.
 
-\subsection{Raft Consensus TODO} \label{sec:raft}
+\subsection{Raft Consensus} \label{sec:raft}
 The final algorithm we will use in the evaluation of Verlixir's expressiveness is raft \cite{raft}. The raft consensus algorithm was introduced to be a simpler consensus algorithm than paxos. It is a consensus algorithm for managing a replicated log. The result produced is similar to multi-paxos and is as efficient as paxos. Unlike paxos, raft explicitly coordinates through a leader.
 \par
 We split the design of raft into two components: leader election and log replication. We will primarily be focusing on leader election in this evaluation. The raft design involves four process types: clients, followers, candidates and leaders. Clients communicates directly with leaders to propose log entries for replication. Leaders will commit these log messages and forward them onto followers. There can be multiple leaders at any moment, however, the raft algorithm is divided into `terms'. If multiple leaders forward log entries to a follower, it will only respect the leader elected for the highest term. If a follower does not receive a message from a leader within a certain time frame, it will mark itself as a candidate and initiate a new leader election.
 \par
 Leader election involves selecting a new term number and asking all followers to vote for the candidate. If a candidate receives a majority of votes, it marks itself as the leader for the term. The consensus algorithm is designed such that only one leader can be elected per term, in the case of a split vote then no leader is elected.
-
+\par
+\subsubsection{Instrumenting Raft}
+We first use Verlixir to determine we can reach consensus on a round of leader election. To do this, we configure our implementation by introducing a coordinator to initiate the first round of leader election. The coordinator does the following:
+\begin{itemize}
+    \item Set $n\_nodes$ = 3
+    \item Set $n\_rounds$ = 1
+    \item Spawn 3 followers
+    \item Bind a unique new term number to each follower
+    \item Broadcast a $start\_election$ message to all followers
+    \item Await an $elected$ message from a leader
+\end{itemize} 
+We instrument the program in such a way that we enforce an election to take place, and with our intuition of the Raft algorithm, as all the followers have unique term numbers, we expect one of them to be elected as the leader (the follower with the highest unique term number). With the system instrumented in such a way, the only liveness requirement we are interested in is the eventual termination of the program (considering the program will only terminate when the coordinator receives an elected message). When we run Verlixir on the instrumented program, we observe every execution is a terminating one. This gives us confidence the Raft specification is able to reach consensus on a leader.
+\par
+\subsubsection{Introducing Timeouts}
+Next, we slowly expand our system requirements and incrementally test correctness as we go. Instead of instrumenting the system with a coordinator to begin an election, a true Raft system will automatically begin rounds of leader election. Raft does this using timeouts. Every participant in the system is able to initiate an election if they fail to receive a message from the leader within a specified time frame. We can now introduce this behaviour into our system. The coordinator no longer broadcasts a $start\_election$ message, instead the followers will rely on the timeout to initiate elections. We again run Verlixir on the updated model, and observe that the system is still able to reach consensus on a leader (as determined by termination).
+\par
+\subsubsection{Safety Requirements}
+To complete our consensus specification, we are interested in the following safety requirement:
+\begin{itemize}
+    \item \textbf{SR}: Only a single leader is elected per term.
+\end{itemize}
+Although up to this point we have shown the liveness property, that the system eventually terminates with a leader holds, this is not actually a guaranteed requirement of the system. Due to split-votes, we cannot always guarantee election. What we can guarantee is that if a leader is elected, it is the only leader for that term.
+\par
+We introduce the SR into our system by increasing $n\_rounds$ so that we can observe multiple participants being elected as leaders. We can then introduce the SR formally with LTL:
+\[
+\text{SR} = \square ( \text{elected\_term} \neq \text{previously\_elected\_term} )
+\]
+LTLixir does not explicitly support the ($\neq$) operator, so we can rewrite the SR in LTLixir as:
+\begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth]
+@ltl """
+!<>[](elected_term == previously_elected_term)
+"""
+\end{lstlisting}
+This is a more implementation-specific approach. We can run the system with $n\_rounds$ as 2, then the variables will be set to the values of the two rounds. The LTL will hence ensure that we never always have an execution where the elected terms were equivalent.
+\par
+We can finally verify the system with this property and determine the system is correct with respect to our specification.
 \section{Verlixir vs. Existing Work} \label{sec:vs}
 We will now compare Verlixir to existing state-of-the-art work in verification-aware languages and modern programming language verification tools. We believe Verlixir is the first tool to support a pure message-passing model of computation, and hence much of the design has introduced novel techniques to support this. We will first discuss some of these techniques that differentiate Verlixir from exiting work. We will then provide a direct comparison between Verlixir and existing tools, before discussing the future of Verlixir.
 \subsection{Difference in Approach}

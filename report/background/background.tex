@@ -263,19 +263,22 @@ init {
 \end{lstlisting}
 \subsubsection{Summary}
 We have discussed a selection of model-checkers and what their primary focus is. Many existing model-checkers have been originally designed to prove specifications over sequential models. Some have taken this further and applied model checking directly over programming languages, such as BLAST. Other model-checkers have introduced some primitives for reasoning about concurrency. TLC allows for the specification of processes and using structures can begin to specify shared memory. Similarly, SPIN allows processes to be specified and supports the creation of channels for communication. Despite this, none of the model checkers discussed include message-passing as a first-class construct. To reason about message-passing models, such as the actor model, work has to be done to formalise actor-based constructs. This makes specifying actor-based systems, such as systems written in Elixir a non-trivial task.
-\subsection{Theorem Proving}
+\subsection{Additional Verification Techniques}
+Alongside model checking, there are other techniques that can be used in system verification, which are worth briefly mentioning. 
+\subsubsection{Theorem Proving}
 Theorem proving is another process to verify programs. In theorem proving, axioms are applied to a set of statements to determine if a particular statement holds. For example, Z3 \cite{z3} is a satisfiability modulo theories (SMT) solver developed by Microsoft that can verify propositional logic assertions.
-\subsection{Hoare Logic}
+\subsubsection{Hoare Logic}
 Hoare Logic was discovered in 1969 by Tony Hoare \cite{hoare_logic}. Hoare Logic defines the Hoare Triple, an essential idea in describing how code execution changes the state of a computation. A Hoare Triple is composed of a pre-condition assertion $P$, a post-condition assertion $Q$, and a command $C$.
 \[
 \{P\} C \{Q\}
 \]
-Note how the postcondition is the same as the precondition for this command.
 \par
 Hoare Logic provides axioms and inference rules required to construct a simple imperative programming language. If $P$ holds in the given state and $C$ terminates, then $Q$ will hold after. Below is an example of a simple Hoare Triple for the \texttt{skip} command, which leaves the program state unchanged.
 \[
-\{P\} \text{skip} \{P\}
+    \{P\} \text{skip} \{P\}
 \]
+Note how the postcondition is the same as the precondition for this command.
+\par
 Hoare describes many more rules that allow for assignment, composition, consequence and so forth. These rules have led to the development of modern-day theorem provers, such as Z3, which will detailed more later.
 \par
 To help understand, we show a concrete example of a Hoare Triple. In this example, the pre-condition $P$ and post-condition $Q$ represent the known program state for a variable, $x$. We informally describe a command $C$ as an assignment to $x$ that modifies the known state of the program.
