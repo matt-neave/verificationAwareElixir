@@ -29,4 +29,10 @@ To accomplish the objectives set out in this report, the following contributions
     \item The primary contribution of this report is Verlixir. Verlixir is an analysis tool that parses Elixir programs and translates them into Promela \cite{promela} for model checking using the SPIN \cite{spin} model checker. Verlixir is capable of verifying multiple properties of highly concurrent Elixir programs and reporting back counterexamples in an Elixir-friendly format. Chapter \ref{chap:verlixir} provides an overview of what Verlixir is and how it can be used. We then provide a detailed explanation of the design and implementation of Verlixir in chapter \ref{chap:design}.
     \item The secondary contribution is LTLixir. LTLixir is a reduced subset of the standard Elixir language that has been extended to introduce linear temporal logic, predicate logic and a Floyd-Hoare style logic for specifying the behavior of a system alongside its implementation. Temporal properties specified in LTLixir can be verified using Verlixir. LTLixir is first introduced in section \ref{sec:ltlixir} and the design is discussed in section \ref{sec:specification_language}.
 \end{itemize}
-TODO HIGH LEVEL DIAGRAM
+Figure \ref{fig:overview_dig} shows where these components fit into the existing Elixir toolchain.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/high_level_system.png}
+    \caption{High-level diagram of the verification-aware Elixir toolchain.}
+    \label{fig:overview_dig}
+\end{figure}

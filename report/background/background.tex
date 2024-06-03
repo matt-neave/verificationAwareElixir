@@ -81,7 +81,7 @@ That concludes a brief overview of the process algebra proposed by Tony Hoare. W
 \section{Concurrency} \label{sec:concurrency}
 Concurrency introduces the ability for multiple components of a program to execute out-of-order. We saw in the previous section how multiple processes can be composed and treated as a single execution. For example, given two processes with distinct alphabets, the parallel composition can result in any interleaving. This section aims to explore further in-depth the principles of concurrency, moving away from a mathematical representation and looking at higher-level concepts such as consistency models and temporal logic. 
 \par
-Concurrency is a core concept in classical distributed algorithms, such as the Paxos algorithm \cite{paxos}, Raft \cite{Raft} and Dining Philosophers \cite{dining_philosophers}. The capability for concurrency has grown with better hardware. Concurrency introduces the idea of consistency models \cite{art_of_multiprocessor_programming} to help reason about executions of multi-threaded systems. Lamport introduced sequential consistency \cite{sc} as a strong safety property for concurrent systems. Sequential consistency can be informally reasoned about by considering a single-core processor: if multiple threads are executed in parallel on a single-core processor, only one instruction can be executed at a time. This means that the result of any execution forms a total order, consistent with the order of operations on each individual process. For example, consider a new composition where a sequence of events has been executed by a teacher, \((teach \rightarrow teach \rightarrow)\), and a student is scheduled to execute next. Under the sequential consistency model the student must observe the same order of events as the teacher.
+Concurrency is a core concept in classical distributed algorithms, such as the Paxos algorithm \cite{basic_paxos}, Raft \cite{raft} and Dining Philosophers \cite{dining_philosophers}. The capability for concurrency has grown with better hardware. Concurrency introduces the idea of consistency models \cite{art_of_multiprocessor_programming} to help reason about executions of multi-threaded systems. Lamport introduced sequential consistency \cite{sc} as a strong safety property for concurrent systems. Sequential consistency can be informally reasoned about by considering a single-core processor: if multiple threads are executed in parallel on a single-core processor, only one instruction can be executed at a time. This means that the result of any execution forms a total order, consistent with the order of operations on each individual process. For example, consider a new composition where a sequence of events has been executed by a teacher, \((teach \rightarrow teach \rightarrow)\), and a student is scheduled to execute next. Under the sequential consistency model the student must observe the same order of events as the teacher.
 \par
 Weaker memory models exist, which allow us to model systems that do not guarantee sequential consistency (for example, systems running on multi-core processors). Under these models, the instructions of a thread may be reordered (i.e. execute out-of-order) which introduces weak behaviors that we would not observe under sequential consistency. For example, total store ordering is a weaker memory model that allows the reordering of write-read operations on different memory locations within a single thread. For the examples discussed in this report, we will assume a sequentially consistent model.
 \subsection{Temporal Logic}
@@ -104,8 +104,6 @@ To reason formally about what it means for $A$ to hold in state $s$ Kripke provi
 \par
 We finally extend this understanding of temporal logic to linear temporal logic (LTL), or sometimes written as linear-time temporal logic. LTL allows us to reason about the time and change of a model. Before we provide some examples, we introduce a final temporal operator, $U$, which reads until. The formula $\phi U \psi$ defines the truth of $\phi$ until $\psi$ holds. We call this `strong until' as there must exist a state where $\psi$ becomes true, `weak until' $W$ can also be defined, which loosens the restrictions such that $\phi$ could hold for the entire execution.
 \par
-TODO DIAGRAM OF GLOBALLY, EVENTUALLY, UNTIL
-\par
 We can now explore a few basic examples of LTL formulas as well as provide some intuition behind them. We define a set of atomic propositions, $AP = \{study, sleep, tired, exam\}$.
 \begin{multicols}{2}
     \[
@@ -126,10 +124,6 @@ We can now explore a few basic examples of LTL formulas as well as provide some 
     \end{aligned}
     \]
     \end{multicols}
-\par
-We can also explore what it means for the formula to hold in a given state of a model.
-\par
-TODO DIAGRAM OF MODEL, WITH SOME FORMULA FROM ABOVE, COMPARING THE TRUTH IN A STATE AND VALIDITY IN A MODEL
 \par
 Alongside LTL, other forms of temporal logic exist, such as Computation Tree Logic (CTL) \cite{temporal_and_modal_logic} and Alternating-time Temporal Logic (ATL) \cite{atl}. CTL introduces path quantifiers to reason about specific traces through a model, and ATL introduces the idea of agents, where agents can work in coalitions to achieve a goal in the system. Temporal logic is an important concept in the model checking of systems \cite{principles_of_model_checking}, see chapter \ref{sec:model_checking}. 
 \subsection{Safety and Liveness}

@@ -21,6 +21,9 @@
 \usepackage{geometry}
 \usepackage{longtable}
 \usepackage{array}
+\usepackage{tcolorbox}
+\usepackage{fancyvrb}
+\usepackage{framed}
 \usepackage{pifont}
 \newcommand{\cmark}{\ding{51}}%
 \newcommand{\xmark}{\ding{55}}%
@@ -76,7 +79,8 @@
 	basicstyle=\ttfamily,
 	breaklines,
 	showstringspaces=false,
-	frame=none
+	frame=none,
+    escapeinside={(*@}{@*)}
 }
 
 \lstdefinelanguage{dafny}{
