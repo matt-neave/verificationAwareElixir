@@ -85,7 +85,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Report notes.md",
+                "file": "Limitations.md",
                 "mode": "source",
                 "source": false
               }
@@ -218,7 +218,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Report notes.md",
+                "file": "Limitations.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -235,7 +235,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Report notes.md",
+                "file": "Limitations.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -258,7 +258,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Report notes.md"
+                "file": "Limitations.md"
               }
             }
           }
@@ -281,21 +281,21 @@
   },
   "active": "3708f643b2bb01c4",
   "lastOpenFiles": [
-    "Pasted image 20240601113235.png",
+    "error.md",
+    "Gomela analysis, comparison and inspiration.md",
+    "Limitations.md",
+    "message passing exploration.md",
+    "Potential todos.md",
+    "Question for Naranker.md",
+    "Random notes.md",
+    "Report notes.md",
     "Report plan.md",
     "Verification of Elixir paper.md",
     "state space exploration.md",
-    "Random notes.md",
-    "Question for Naranker.md",
-    "Potential todos.md",
-    "error.md",
-    "Report notes.md",
     "Report Todos.md",
-    "Limitations.md",
+    "Pasted image 20240601113235.png",
     "Pasted image 20240527104552.png",
     "Pasted image 20240527104042.png",
-    "message passing exploration.md",
-    "Gomela analysis, comparison and inspiration.md",
     "Pasted image 20240514102955.png",
     "Pasted image 20240515174608.png",
     "Pasted image 20240514115017.png",

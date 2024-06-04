@@ -22,10 +22,10 @@
 \contentsline {lstlisting}{\numberline {5.5}Memory intermediate representation.}{40}{lstlisting.5.5}%
 \contentsline {lstlisting}{\numberline {6.1}Message log produced by counterexample violating LR1.}{49}{lstlisting.6.1}%
 \contentsline {lstlisting}{\numberline {6.2}Message log produced by counterexample of a Dining Philosophers deadlock.}{50}{lstlisting.6.2}%
-\contentsline {lstlisting}{\numberline {A.1}Message passing caused by the proposer's protocol bug.}{62}{lstlisting.A.1}%
-\contentsline {lstlisting}{\numberline {A.2}Message passing caused by the proposer's protocol bug.}{68}{lstlisting.A.2}%
-\contentsline {lstlisting}{\numberline {A.3}Promela of consistent hash table}{73}{lstlisting.A.3}%
-\contentsline {lstlisting}{\numberline {A.4}Message passing caused by the proposer's protocol bug.}{80}{lstlisting.A.4}%
-\contentsline {lstlisting}{\numberline {A.5}Message passing caused by the proposer's protocol bug.}{85}{lstlisting.A.5}%
-\contentsline {lstlisting}{\numberline {A.6}Dining Philosophers Verlixir Report.}{86}{lstlisting.A.6}%
-\contentsline {lstlisting}{\numberline {A.7}Dining Philosophers Promela translation.}{90}{lstlisting.A.7}%
+\contentsline {lstlisting}{\numberline {A.1}Message passing caused by the proposer's protocol bug.}{64}{lstlisting.A.1}%
+\contentsline {lstlisting}{\numberline {A.2}Message passing caused by the proposer's protocol bug.}{70}{lstlisting.A.2}%
+\contentsline {lstlisting}{\numberline {A.3}Promela of consistent hash table}{75}{lstlisting.A.3}%
+\contentsline {lstlisting}{\numberline {A.4}Message passing caused by the proposer's protocol bug.}{82}{lstlisting.A.4}%
+\contentsline {lstlisting}{\numberline {A.5}Message passing caused by the proposer's protocol bug.}{87}{lstlisting.A.5}%
+\contentsline {lstlisting}{\numberline {A.6}Dining Philosophers Verlixir Report.}{88}{lstlisting.A.6}%
+\contentsline {lstlisting}{\numberline {A.7}Dining Philosophers Promela translation.}{92}{lstlisting.A.7}%
