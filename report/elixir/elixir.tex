@@ -1,5 +1,5 @@
-\chapter{Elixir TODO refactor }
-Elixir is a dynamic, functional language for building scalable and maintainable applications \cite{elixir}. Elixir programs run on the BEAM virtual machine\cite{beam}, which is also used to run the Erlang programming language \cite{erlang}. Elixir was designed by José Valim and first released in 2012. Elixir is built on top of Erlang and hence inherits many of the abstractions designed for building distributed systems. This chapter aims to give a brief overview of Elixir, it is not a complete guide but rather aims to give non-Elixir programmers a basic understanding of the language.
+\chapter{Elixir}
+Elixir is a dynamic, functional language for building scalable and maintainable applications \cite{elixir}. Elixir programs run on the BEAM virtual machine \cite{beam}, which is also used to run the Erlang programming language \cite{erlang}. Elixir was designed by José Valim and first released in 2012. Elixir is built on top of Erlang and hence inherits many of the abstractions designed for building distributed systems. This chapter aims to give a brief overview of Elixir, it is not a complete guide but rather aims to give non-Elixir programmers a basic understanding of the language.
 \par
 BEAM is a virtual machine that executes user programs in the Erlang Runtime System (ERTS). BEAM is a register machine where all instructions operate on named registers containing Erlang terms such as integers or tuples.
 \par
@@ -40,46 +40,19 @@ In Elixir, a receive statement is used to read messages in the mailbox. The rece
         {:hello, msg} -> IO.puts msg
     end
 \end{lstlisting}
-\section{Quote and Unquote}
-The quote and unquote constructs in Elixir give us a deeper insight into how the programming language is implemented. Elixir is fundamentally made of tuples with three elements consisting of an atom\footnote{In Elixir, atoms are named constants, whose values are their own name. They can be identified by a preceding colon, for example, \texttt{:hello}.} that identifies the tuple, an array of metadata and finally the data. For example, the function call \texttt{sum(1, 2)} would be represented by the tuple \texttt{(:sum, [], [1, 2])} and similarly, the variable \texttt{total} would be represented by the tuple \texttt{(:total, [], Elixir)}. Using these building blocks, Elixir can begin to build what is known as a quoted expression, which is a nesting of tuples in a tree-like structure. In many other programming languages, this tree-like structure is referred to as an abstract syntax tree (AST).
+\section{Verifiable Feature Set} \label{sec:verifiable_feature_set}
+In chapter \ref{chap:verlixir}, we will introduce Verlixir. Verlixir is designed to support a reduced set of core Elixir constructs. We will introduce these constructs here to give an overview of what the tool is capable of supporting.
 \par
-The quote and unquote constructs allow us to transition between Elixir syntax and quoted expressions. Using the \texttt{quote/2}\footnote{In Elixir, it is common to name functions or macros alongside their number of arguments. The function \texttt{spawn/1} refers to the function spawn, with 1 argument.} macro on an Elixir block, such as \texttt{quote do: sum(1, 2)} will return the quoted expression representing the block, in this case, \texttt{(:sum, [], [1, 2])}. Similarly, the \texttt{unquote/1} macro can be used within a quoted expression to inject code directly into the underlying expression. Figure \ref{fig:quote_unquote} shows a small example of how unquote can be applied within a quoted expression to inject a variable.
-\begin{lstlisting}[language=Elixir, xleftmargin=.4\linewidth, caption={Elixir example of \texttt{quote/2} and \texttt{unquote/1}.}, label={fig:quote_unquote}]
-    x = 2
-    quote do: sum(1, unquote(x))
-\end{lstlisting}
-For ease of reading, we will use the terms quoted-expression and AST interchangeably for the remainder of the report.
-\par
-
-\section{Metaprogramming}
-Metaprogramming is a technique that allows developers to write a program that outputs another program. It means a program can be designed to read or transform other programs. In Elixir, metaprogramming is often used to extend the language by directly modifying the generated quoted expressions by a program. This is achieved through the quote and unquote constructs alongside macros. Macros allow for transforming code and expanding a module.
-\par
-In Elixir, \texttt{defmacro/2} is used to define new macros, which itself is a macro. Macros receive quoted expressions as arguments and typically inject these expressions into code before returning another quoted expression. Listing \ref{fig:unless} introduces how \texttt{defmacro/2} can be used to define the \texttt{unless/2} macro used in the standard library. Unless is the opposite of an \texttt{if/2} statement, it will execute an expression if a conditional check evaluates to false.
-\begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={Elixir example of the \texttt{unless/2} macro as defined in the standard library \cite{defmacro}}., label={fig:unless}]
-defmacro unless(clause, do: expression) do
-  quote do
-    if(!unquote(clause), do: unquote(expression))
-  end
-end
-\end{lstlisting}
-\par
-Macros are both lexical and explicit. That means it is impossible to inject macros globally and it is impossible to run macros without explicit invocation. By leveraging the use of functions, quoted expressions and macros, we can begin to develop a domain-specific language (DSL). For example, constructing a DSL that overrides the standard implementations for many Elixir constructs in a style that makes verifying the correctness of Elixir programs more trivial. By default, Elixir is very difficult to verify. Elixir provides an ExUnit module, with an \texttt{assert/1} macro which could be used for loop invariants, preconditions and postconditions but doesn't support an approach that favours writing verification-aware code. As many Elixir programs are concurrent, and as Elixir uses the actor model, verifying an arbitrary Elixir program that has not been restricted or extended using macros is a challenge.
-\par
-Another useful feature often associated with the development of DSLs in Elixir is attributes. Attributes can be used to store additional information, as a temporary storage. Attributes also work as constants, or simply to annotate code which can be useful for other developers or the virtual machine. Listing \ref{fig:attributes} shows a basic example of annotating a function with an attribute.
-\begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={Example use of attributes in Elixir}., label={fig:attributes}]
-    @doc "Calculate the sum of two numbers, x and y"
-    def sum(x, y) do
-        x + y
-    end
-\end{lstlisting}
-
-\section{Additional Contructs}
-Various other constructs in Elixir are useful to be aware of to understand the format of quoted expressions.
-\subsection{Return Values and Types}
-Elixir is a dynamically typed language, hence any introduced type specifications are never used by the compiler in optimisations or type-checks, however, using annotations\footnote{Annotations are used to add additional metadata to code. They are prefixed with an asperand, for example, \texttt{@type} or \texttt{@doc}.} Elixir does support type specification which can be relevant for documentation and additional tooling. Unlike many imperative programming languages where function return values must be explicitly defined using a keyword such as \texttt{return}, Elixir functions simply return the evaluation of a statement. This could also be the final statement if many statements are sequentially executed in a block.
-
-\subsection{Charlists}
-Elixir introduces linked lists as a data structure to store elements. Elixir lists are similar to other programming languages, where they are displayed as comma-separated values enclosed in square braces. If a list is made exclusively of non-negative integers, where every integer has a Unicode code point, then the list may be interpreted as a charlist. If the list contains only printable ASCII characters, then it is often stored and displayed in ASCII format. For example, the list \texttt{[97, 98, 99]} would be stored in the AST as \texttt{'abc'}.
-
+Everything in Elixir is an expression. This means that every piece of code returns a value. For example, an $if$ statement will return a value dependent on the branch taken. This means that any expression can be matched on, using Elixir's match (=) operator. We can use pattern matching to match on the shape of an expression's evaluation. The set of expressions supported by Verlixir are:
+\begin{itemize}
+    \item \textbf{Values}: any value of a basic, primitive type such as integers and booleans. Elixir also has a concept of $atoms$. An atom is identified by a preceding colon (:), and is followed by letters, digits, `\_', `@' or a string.
+    \item \textbf{Variables}: Elixir is dynamically, strongly typed. Variables are bound to using the match operator. Variable names start with lowercase letters. The `\_' character can be used to match an expression of any shape.
+    \item \textbf{Data structures}: structures such as lists and tuples are treated as values. Lists are dynamic, whereas tuples are fixed in size. Lists are written as [1, 2, 3] and tuples are written as \{1, 2, 3\}. We can match on the shape of these data structures using pattern matching.
+    \item \textbf{Pattern matching}: pattern matching can be used to match on the shape of an expression. In the context of a conditional guard, values can be used to evaluate the shape of an expression, where as variables can be used to bind to the value of an expression. For example, the pattern ${:ok, value}$, can be used to assign to the variable $value$ if the expression is a tuple shape, with an atom $ok$ as the first element.
+    \item \textbf{Functions}: functions are defined using the $def$ keyword. Functions can group multiple sequentially executable expressions. Any function can be called or spawned as a new process or node.
+    \item \textbf{Modules}: functions are grouped into modules.
+    \item \textbf{Message passing}: Elixir's actor model supports message passing. Messages are sent and received between actors and their mailboxes.
+    \item \textbf{Control flow structures}: Elixir supports many control flow expressions. For example, $if$, $case$, $unless$ and $for$. All of these introduce a new scope. They are expressions and can be matched on.
+\end{itemize}
 \section{Summary}
 In this chapter, we learned about Elixir, the programming language built on top of Erlang and we explored so basic approaches to designing concurrent systems with it. The next section will explore how these core tools can be used in tandem to provide developers guarantees over large-scale, distributed Elixir-based systems.
