@@ -82,7 +82,19 @@
 	frame=none,
     escapeinside={(*@}{@*)}
 }
-
+\lstdefinestyle{promela}{
+    language=C,
+    morekeywords={proctype, init, chan},
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{orange},
+    basicstyle=\ttfamily\footnotesize,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    captionpos=b,
+    tabsize=2
+}
 \lstdefinelanguage{dafny}{
     morekeywords={method, function, class, var, assert, ensures, requires, modifies, decreases, new, if, else, while, break, return, ghost, forall, exists, invariant, axiom, datatype},
     sensitive=true,

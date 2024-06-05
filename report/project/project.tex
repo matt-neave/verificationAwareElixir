@@ -214,7 +214,7 @@ Up to this point, we have declared various system properties such as \texttt{cli
 \par
 To mark a variable as a parameter, we again make use of attributes. The \texttt{@params} attribute takes a tuple of atoms referencing variables in the function scope. For example, \texttt{@params {:x, :y}} declares that $x$ and $y$ are configurable parameters that the verifier will explore. We can apply this definition to our existing server process.
 \begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={Example of declaring concurrency parameters in specification.}]
-    (*@\fbox{@params {:client\_n, :number\_of\_rounds}}@*)
+    (*@\fbox{@params \{:client\_n, :number\_of\_rounds\}}@*)
     def start_server do
       client_n = 3
       number_of_rounds = 2

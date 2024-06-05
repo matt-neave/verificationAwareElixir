@@ -100,7 +100,7 @@ Saul Kripke introduced Kripke semantics \cite{kripke} for reasoning about tempor
 \[
 (M, s) \models A
 \]
-To reason formally about what it means for $A$ to hold in state $s$ Kripke provided formal definitions for the base and inductive definitions of $A$.
+To reason formally about what it means for $A$ to hold in state $s$, Kripke provided formal definitions for the base and inductive definitions of $A$.
 \par
 We finally extend this understanding of temporal logic to linear temporal logic (LTL), or sometimes written as linear-time temporal logic. LTL allows us to reason about the time and change of a model. Before we provide some examples, we introduce a final temporal operator, $U$, which reads until. The formula $\phi U \psi$ defines the truth of $\phi$ until $\psi$ holds. We call this `strong until' as there must exist a state where $\psi$ becomes true, `weak until' $W$ can also be defined, which loosens the restrictions such that $\phi$ could hold for the entire execution.
 \par
@@ -108,10 +108,10 @@ We can now explore a few basic examples of LTL formulas as well as provide some 
 \begin{multicols}{2}
     \[
     \begin{aligned}
-    &\square \text{sleep} \\
+    &\square \ \text{sleep} \\
     &\text{tired} \, U \, \text{sleep} \\
     &\square (\text{study} \Rightarrow \text{tired}) \\
-    &\square \text{study} \Rightarrow \lozenge \text{exam}
+    &\square \ \text{study} \Rightarrow \lozenge \ \text{exam}
     \end{aligned}
     \]
     \vline

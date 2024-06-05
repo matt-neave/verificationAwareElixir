@@ -289,31 +289,23 @@ To give a higher level overview of where Verlixir differentiates itself from exi
     \centering
     \begin{tabular}{|>{\raggedright\arraybackslash}p{4cm}|c|c|c|c|c|}
         \hline
-        \textbf{} & \textbf{Verlixir} & \textbf{Dafny} & \textbf{Gomela} & \textbf{Lean} & \textbf{Java PathFinder} \\
+        \textbf{} & \textbf{Verlixir} & \textbf{Java PathFinder} & \textbf{Gomela} & \textbf{Dafny} & \textbf{Lean} \\
         \hline
-        Concurrency & \cmark & \xmark & \cmark & \xmark & \cmark \\
+        Concurrency & Actor-based & Shared-memory & Channel-based & \xmark & \xmark \\
         \hline
-        Shared-memory & \xmark & \xmark & \xmark & \xmark & \cmark \\
+        Propositional logic & \cmark & \text{Limited} & \xmark & \cmark & \cmark \\
         \hline
-        Message-passing & \text{Actor-based} & \xmark & \text{Channel-based} & \xmark & \xmark \\
-        \hline
-        Predicate logic & \cmark & \cmark & \xmark & \cmark & \text{Limited} \\
-        \hline
-        Quantification & \xmark & \cmark & \xmark & \cmark & \xmark \\
+        Predicate logic & \xmark & \xmark & \xmark & \cmark & \cmark \\
         \hline
         Temporal logic & \cmark & \xmark & \xmark & \xmark & \xmark \\
         \hline
-        Model checking & \text{SPIN} & \xmark & \text{SPIN} & \xmark & \text{SPIN \footnote{The original Java PathFinder (JPF) design modelled programs in SPIN \cite{jpf}.}} \\
+        Model checking & \text{SPIN} & \text{SPIN \footnote{The original Java PathFinder (JPF) design modelled programs in SPIN \cite{jpf}.}} & \text{SPIN} & \xmark & \xmark \\
         \hline
-        Theorem proving & \xmark & \text{Z3} & \xmark & \text{Built in} & \xmark \\
+        Theorem proving & \xmark & \xmark & \xmark & \text{Z3} & \text{Built in} \\
         \hline
         LTL & \cmark & \xmark & \xmark & \xmark & \xmark \\
         \hline
-        CTL & \xmark & \xmark & \xmark & \xmark & \xmark \\
-        \hline
-        Fault injection & \xmark & \xmark & \xmark & \xmark & \xmark \\
-        \hline
-        Safety & \cmark & \xmark & \text{Deadlock} & \xmark & \text{Deadlock} \\
+        Safety & \cmark & \text{Deadlock} & \text{Deadlock} & \xmark & \xmark \\
         \hline
         Liveness & \cmark & \xmark & \xmark & \xmark & \xmark \\
         \hline

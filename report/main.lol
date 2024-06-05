@@ -16,16 +16,21 @@
 \contentsline {lstlisting}{\numberline {4.6}Example usage of pre- and post-conditions in LTLixir}{29}{lstlisting.4.6}%
 \contentsline {lstlisting}{\numberline {4.7}Example of declaring concurrency parameters in specification.}{30}{lstlisting.4.7}%
 \contentsline {lstlisting}{\numberline {5.1}{Example of the \texttt {defv} syntax}.}{34}{lstlisting.5.1}%
-\contentsline {lstlisting}{\numberline {5.2}{Representing variable declarations using the match operator}.}{36}{lstlisting.5.2}%
-\contentsline {lstlisting}{\numberline {5.3}{The structure of a list}.}{39}{lstlisting.5.3}%
-\contentsline {lstlisting}{\numberline {5.4}Example of a list node typed `int'.}{39}{lstlisting.5.4}%
-\contentsline {lstlisting}{\numberline {5.5}Memory intermediate representation.}{40}{lstlisting.5.5}%
-\contentsline {lstlisting}{\numberline {6.1}Message log produced by counterexample violating LR1.}{49}{lstlisting.6.1}%
-\contentsline {lstlisting}{\numberline {6.2}Message log produced by counterexample of a Dining Philosophers deadlock.}{50}{lstlisting.6.2}%
-\contentsline {lstlisting}{\numberline {A.1}Message passing caused by the proposer's protocol bug.}{64}{lstlisting.A.1}%
-\contentsline {lstlisting}{\numberline {A.2}Message passing caused by the proposer's protocol bug.}{70}{lstlisting.A.2}%
-\contentsline {lstlisting}{\numberline {A.3}Promela of consistent hash table}{75}{lstlisting.A.3}%
-\contentsline {lstlisting}{\numberline {A.4}Message passing caused by the proposer's protocol bug.}{82}{lstlisting.A.4}%
-\contentsline {lstlisting}{\numberline {A.5}Message passing caused by the proposer's protocol bug.}{87}{lstlisting.A.5}%
-\contentsline {lstlisting}{\numberline {A.6}Dining Philosophers Verlixir Report.}{88}{lstlisting.A.6}%
-\contentsline {lstlisting}{\numberline {A.7}Dining Philosophers Promela translation.}{92}{lstlisting.A.7}%
+\contentsline {lstlisting}{\numberline {5.2}{Representing variable declarations using the match operator}.}{37}{lstlisting.5.2}%
+\contentsline {lstlisting}{\numberline {5.3}{The structure of a list}.}{40}{lstlisting.5.3}%
+\contentsline {lstlisting}{\numberline {5.4}Example of a list node typed `int'.}{40}{lstlisting.5.4}%
+\contentsline {lstlisting}{\numberline {5.5}Memory intermediate representation.}{41}{lstlisting.5.5}%
+\contentsline {lstlisting}{\numberline {5.6}{A function from the $learner$ module}.}{44}{lstlisting.5.6}%
+\contentsline {lstlisting}{\numberline {5.7}{Promela function definition}.}{45}{lstlisting.5.7}%
+\contentsline {lstlisting}{\numberline {5.8}{Promela if statement and for comprehension}.}{45}{lstlisting.5.8}%
+\contentsline {lstlisting}{\numberline {5.9}{Promela receive and recursion}.}{46}{lstlisting.5.9}%
+\contentsline {lstlisting}{\numberline {5.10}{Example of the \texttt {defv} syntax}.}{47}{lstlisting.5.10}%
+\contentsline {lstlisting}{\numberline {6.1}Message log produced by counterexample violating LR1.}{53}{lstlisting.6.1}%
+\contentsline {lstlisting}{\numberline {6.2}Message log produced by counterexample of a Dining Philosophers deadlock.}{54}{lstlisting.6.2}%
+\contentsline {lstlisting}{\numberline {A.1}Message passing caused by the proposer's protocol bug.}{68}{lstlisting.A.1}%
+\contentsline {lstlisting}{\numberline {A.2}Message passing caused by the proposer's protocol bug.}{74}{lstlisting.A.2}%
+\contentsline {lstlisting}{\numberline {A.3}Promela of consistent hash table}{79}{lstlisting.A.3}%
+\contentsline {lstlisting}{\numberline {A.4}Message passing caused by the proposer's protocol bug.}{86}{lstlisting.A.4}%
+\contentsline {lstlisting}{\numberline {A.5}Message passing caused by the proposer's protocol bug.}{91}{lstlisting.A.5}%
+\contentsline {lstlisting}{\numberline {A.6}Dining Philosophers Verlixir Report.}{92}{lstlisting.A.6}%
+\contentsline {lstlisting}{\numberline {A.7}Dining Philosophers Promela translation.}{96}{lstlisting.A.7}%
