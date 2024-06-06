@@ -378,7 +378,7 @@ We next create a value to store the returned value from the recursive call. Actu
 We then wait to read on $ret1$ to rendezvous with the callee.
 \par
 Let's finally look at the remaining translated code.
-\begin{lstlisting}[language=Promela, xleftmargin=.1\linewidth, caption={Example of the \texttt{defv} syntax}., label={lst:final}]
+\begin{lstlisting}[language=Promela, xleftmargin=.1\linewidth, caption={Translation of LTL properties}., label={lst:final}]
     atomic{
         if
         :: __ret_f -> ret!0;

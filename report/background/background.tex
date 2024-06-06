@@ -135,7 +135,7 @@ To help understand why this is a liveness property, consider two states, $s_1$ a
 \par
 We use the same assignment of study to reason about a new property.
 \[
-\square \text{study}
+\square \ \text{study}
 \]
 We can understand intuitively why this property is a safety property by considering $s_2$. As $s_2$ is not in the assignment of study (i.e. $study$ is false in $s_2$), any execution that passes through $s_2$ will violate the property. As we can determine the truth of the property with a finite execution, we can deem the property a safety property.
 \par
@@ -226,34 +226,11 @@ PRISM is a probabilistic model checker, a tool for formal modelling and analysis
 In 1980, Leslie Lamport discovered the Temporal Logic of Action (TLA) \cite{tla}. TLA is a logic system for specifying and reasoning about concurrent systems. Both the systems and their properties are represented in the same logic so that the assertion that a system meets its specification can be expressed by a logical implication.
 \par
 TLA is capable of specifying complex systems but in a typically verbose manner. Leslie Lamport introduced TLA+ \cite{tlaplus}, combining mathematical ideas with concepts from programming languages to create a specification language that would allow mathematicians to write specifications in 20 lines as opposed to 20 pages.
-\begin{figure}[H]
-    \begin{verbatim}
-    ---------------------- MODULE HourClock ----------------------
-    EXTENDS Naturals
-    VARIABLE hr
-    HCini == hr \in (1 .. 12)
-    HCnxt == hr' = IF hr # 12 THEN hr + 1 ELSE 1
-    HC == HCini /\ [][HCnxt]_hr
-    --------------------------------------------------------------
-    THEOREM HC => []HCini
-    ==============================================================
-    \end{verbatim}
-    \caption{An example TLA+ Specification for an HourClock \cite{tlaplus}}
-    \label{fig:hourclock_spec}
-\end{figure}
 \par
 Furthering on from Leslie Lamport's discovery of these specification languages, Lamport created TLC \cite{tlc}, a model checker for the verification of TLA+ specifications. Similarly to BLAST, TLC builds a finite-state machine from the specification so the model checker can verify and debug invariance properties over it. TLC has been used to verify many large-scale, real-world systems specified in TLA+. Not only does it verify temporal properties of TLA+ specifications, but it can also model check PlusCal \cite{pluscal} algorithms. PlusCal is an algorithm language aimed to resemble that of pseudocode, but PlusCal algorithms can be automatically translated to TLA+ specifications to be reasoned about formally with TLC. We have already come across the concept of model-checking algorithms as opposed to specifications with BLAST, but instead of being strictly bound to the C programming language, PlusCal provides a more general framework agnostic of a choice of programming language allowing developers to separate reasoning about algorithms from their respective programs.
 
 \subsubsection*{\textbf{SPIN}}
 SPIN is an efficient verification system for models of distributed software systems. It has been used to detect design errors in applications ranging from high-level descriptions of distributed algorithms to detailed code \cite{spin}. Spin has a specification language, Process Meta Language (Promela), which the model checker uses to prove the correctness of asynchronous process interactions. Spin supports asynchronous process communication through channels, where processes can send and receive messages. Spin constructs labeled transition systems for respective processes from Promela specifications which it goes on to use for scheduling and to reason about properties of the model. Because many programming languages, such as GO \cite{go} rely on the creation of channels for asynchronous communication between processes, Promela becomes a natural solution to modelling these systems.
-\begin{lstlisting}[caption={Example of a Promela specification that enqueues a message in a channel}]
-mtype = { HELLO };
-chan channel = [10] of { mtype };
-
-init {
-    channel ! HELLO;
-}
-\end{lstlisting}
 \subsubsection{Summary}
 We have discussed a selection of model-checkers and what their primary focus is. Many existing model-checkers have been originally designed to prove specifications over sequential models. Some have taken this further and applied model checking directly over programming languages, such as BLAST. Other model-checkers have introduced some primitives for reasoning about concurrency. TLC allows for the specification of processes and using structures can begin to specify shared memory. Similarly, SPIN allows processes to be specified and supports the creation of channels for communication. Despite this, none of the model checkers discussed include message-passing as a first-class construct. To reason about message-passing models, such as the actor model, work has to be done to formalise actor-based constructs. This makes specifying actor-based systems, such as systems written in Elixir a non-trivial task.
 \subsection{Additional Verification Techniques}
@@ -328,65 +305,12 @@ procedure add(a: int, b: int) returns (c: int)
 }
 \end{lstlisting}
 
-\subsection{Promela} \label{sec:promela}
-Promela is the verification modelling language used by the Spin model checker, to specify concurrent processes modelling distributed systems \cite{spin}. This section will discuss some of the core features that allow systems to be modelled and verified with Spin. This section aims to give an overview of the syntax and control of Promela, so any specifications in later sections or the code artifact can be read.
-\subsubsection[]{Types and Variables}
-Promela is statically typed. Variables can be declared once within the current scope and then re-assigned throughout. Variables can be declared locally within the context of a process, or in the global scope, where memory is shared. The types available in Promela, and assignment to variables of these types if similar to many imperative programming languages. Promela supports the types bit, bool, byte, pid, short, int and unsigned. Variable declaration and assignment then naturally follows.
-\[
-\begin{aligned}
-\text{int a} = 2;
-\end{aligned}
-\]
-\subsubsection[]{Control Flow}
-Promela supports some basic control flow concepts. Firstly, the \texttt{skip} expression can be used with no effect when executed, other than possibly changing the control of an executing process. The selection construct \texttt{if} can be used to evaluate expressions and execute sequences based on the evaluation of these expressions. The syntax of an if statement is unique in comparison to a typical programming language.
-\[
-\begin{aligned}
-& \text{if} \\
-& :: \text{exp\_1 ->} \dots \\
-& :: \text{exp\_2 ->} \dots \\
-& \text{fi} \\
-\end{aligned}    
-\]
-Repetition can be achieved either through the \texttt{do} construct, through the use of labels or with \texttt{for} loops.
-\subsubsection[]{Processes}
-An imperative component of understanding the power of the Spin model checker is understanding how processes can run concurrently. Every Promela model requires an initial process that is spawned in the initial system state and determines the control of the program from the initial state. The \texttt{init} keyword is reserved for this purpose. Other processes can be defined using the \texttt{proctype} keyword and then spawned with \texttt{run}. Each process is assigned a process id (pid) which can be accessed within the context of a process using globally defined read-only variable \texttt{\_pid}. We can now define two processes, a process active in the initial state and a second process that is spawned.
-\begin{lstlisting}[language=promela, xleftmargin=.3\linewidth, caption={Defining and spawning processes in Promela}., label={fig:promela_processes}]
-    proctype SomeProcess(int a) {
-        printf("Do something with %d\n", a);
-    }
-    
-    init {
-        int p1;
-        p1 = run SomeProcess(10);
-
-        printf("Init process spawned at %d\n", _pid);
-        printf("Process 1 spawned at %d\n", p1);
-    }
-\end{lstlisting}
-Multiple processes can be declared to run in the initial state by marking them as \texttt{active} processes. Processes run independently of one another, so a parent process terminating will not necessarily result in the termination of a child. Spin sets a limit of 255 concurrently executing processes. Multiple processes can be spawned in a single transition by using the \texttt{atomic} construct, which will ensure that no spawning process is scheduled until all atomic processes have been scheduled. Similarly to atomicity, \texttt{d\_step} can be used to enforce multiple statements are treated as a single indivisible step. Unlike \texttt{atomic}, \texttt{d\_step} cannot block or jump.
-\subsubsection[]{Channels}
-The final concept to briefly discuss is the asynchronous communication primitive, channels. Recall Hoare's definition of channels \ref{csp_section}, defining a channel $c$ that can input and output values. Promela echos this definition, allowing channels to be specified using the predefined data type \texttt{chan}. To correctly specify communication, we often need to allow messages of multiple types to be written to channels, for this purpose Promela introduces \texttt{mtype} that allows for the introduction of symbolic names for constant values.
-\[
-\text{mtype = \{ BROADCAST \};}
-\]
-Now, we can define a channel that expects a message to contain multiple fields and is bound to contain a maximum of 10 messages at any time.
-\[
-\text{chan global\_broadcast = [10] of \{ mtype, int \};}
-\]
-We now input messages to the channel using the (!) operator.
-\[
-\text{global\_broadcast ! BROADCAST, 1;}
-\]
-Similarly, we read messages from the channel in a first-in, first-out (FIFO) order.
-\[
-\begin{aligned}
-& \text{int x;} \\
-& \text{global\_broadcast ? BROADCAST, x;}
-\end{aligned}
-\]
-Where the variable $x$ stores the resulting \texttt{int} assuming the first message in the channel is of type \texttt{BROADCAST}.
-\subsubsection[]{Summary}
-This basic introduction to the syntax of the Promela modelling language aims to make the reader familiar with the syntax and control involved in writing Promela specifications. It is not an exhaustive guide but should form a basis for understanding specifications present in a later section or the code artifact.
+\subsection{Deadlock Detection}
+Alongside research into verification-aware languages, there has been work into detecting deadlocks in concurrent systems. These approaches typically involve the use of model checkers to determine if a system can reach a deadlock state. For example, Java Pathfinder \cite{jpf} is a model checker for Java programs. It can be used to detect deadlocks and data races. The initial version of Java Pathfinder was a translator from Java to Promela. Since, Java Pathfinder now uses a Java Virtual Machine (JVM) implementation directly to model check Java programs.
+\par
+There has also been work into detecting deadlocks in GO programs. Gomela \cite{gomela} was proven to catch more deadlocks than GCatch \cite{gcatch} and Godel2 \cite{godel2}. Gomela focuses on channeled communication between goroutines. Similarly, deadlock detection has been researched for C programs \cite{c_to_promela}. 
+\par
+None of these approaches capture the semantics involved in a pure message-based, actor model. They also do not provide guarantees about the liveness properties of a system. This is a limitation in existing research of verification tools concerning modern programming languages.
 \section{Summary}
-This chapter has provided an overview of core concepts related to concurrent programs and verification of them. We saw process algebra that can be used to model and reason about concurrent processes, as well as Hoare Logic and its definition of the Hoare Triple as a fundamental property in verification. We also looked at applications based on this theory, such as model checkers, theorem provers and programming languages. Much work related to the topic of verifying programming languages was explored, but importantly, we learned about SPIN, and how concurrent programs can be modelled in Promela to be model-checked for deadlocks, race conditions and incompleteness. We also learned about Boogie, the intermediate verification language that can verify programmatic assumptions using Z3. This chapter also discussed some of the limitations in existing research, such as a need for new techniques to verify the liveness properties of real-world systems. The next chapter will discuss the Elixir programming language.
+This chapter has provided an overview of core concepts related to concurrent programs and verification of them. We saw process algebra that can be used to model and reason about concurrent processes, as well as Hoare Logic and its definition of the Hoare Triple as a fundamental property in verification. We also looked at applications based on this theory, such as model checkers, theorem provers and programming languages. Much work related to the topic of verifying programming languages was explored, but importantly, we learned about SPIN. We also learned about Boogie, the intermediate verification language that can verify programmatic assumptions using Z3. This chapter also discussed some of the limitations in existing research, such as a need for new techniques to verify the liveness properties of real-world systems. The next chapter will discuss the Elixir programming language.
 

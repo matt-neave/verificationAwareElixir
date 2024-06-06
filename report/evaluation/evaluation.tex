@@ -91,8 +91,8 @@ These predicates $p_i$ specify assignments of a value to a node in the ring and 
     \vline
     \[
     \begin{aligned}
-    &\text{Node 1 assigned values in range} \\
-    &\text{Node 3 assigned values in range} \\
+    &\text{Hashing assigns correctly} \\
+    &\text{Hashing assigns correctly} \\
     &\text{Hashing wrap-around semantics} \\
     &\text{Hashing for ring resizing}
     \end{aligned}
@@ -310,6 +310,7 @@ To give a higher level overview of where Verlixir differentiates itself from exi
         Liveness & \cmark & \xmark & \xmark & \xmark & \xmark \\
         \hline
         Weak Fairness & \cmark & \xmark & \xmark & \xmark & \xmark \\
+        \hline
     \end{tabular}
     \caption{Comparison of Verlixir to existing tools.}
     \label{table:vs}
@@ -323,6 +324,16 @@ Verlixir was primarily designed to suit any backend. In particular, concurrent m
     \item \textbf{Multiple Mailboxes}: we optimised this approach to reduce scanning by splitting the mailbox up such that each possible message type in the system has its own, per-process mailbox. This reduces the time required to search the state-space as channel orderings are more deterministic. 
     \item \textbf{Random read, sorted insert}: we further improve by moving from sequential select $?$ Promela's random select $??$ operator to match messages in the mailbox. We do this to reduce the number of process interleavings that need to be explored in the state-space. Finally, now we are using random select, we can also use sorted insert $!!$. Because we are reading randomly, the order of messages in the mailbox is not important, so by sorting the mailboxes we reduce the state-space. 
 \end{itemize}
+\subsubsection{Model Performance}
+We have avoided an in-depth analysis of the performance of the models produced by the translator as this was not an initial focus of the research. However, to provide some insight into the performance of the models produced, under the SPIN model checker, we can examine the results produced by the Dining Philosophers deadlock example.
+\par
+\begin{itemize}
+    \item \textbf{Depth}: the depth of the state-space explored is 198. SPIN explores using a depth-first search. 
+    \item \textbf{Process Count}: the number of processes spawned by the model is 18. This is due to the implementation of function calls relying on process spawning. SPIN only handles 255 concurrent processes, but no models we have produced so far have come close to this limit.
+    \item \textbf{Execution Time}: the execution time of the model for Dining Philosophers sits at 0.21 seconds. The state-space is being explored at a rate of 652 states per second.
+    \item \textbf{State Vector}: the state vector is 18168 bytes. This exceeds the default state vector SPIN uses (1024 bytes). Because of the available state vector compression techniques, increasing the limit by a large factor is no concern.
+\end{itemize}
+We did not perform analysis on alternative backends, so no direct comparison could be made. However, the results produced by SPIN are sufficient for our purposes.
 \subsubsection{Forward Optimisations}
 There is lots of scope to further optimise the translation process. The existing framework has been designed such that this is easy to achieve. For example, we currently translate all Elixir functions to Promela functions. This incurs an overhead that may not be strictly necessary. By statically analysing the behaviour of a recursive function, we could apply heuristics to unroll the recursion and inline the function using an imperative style loop.
 \par

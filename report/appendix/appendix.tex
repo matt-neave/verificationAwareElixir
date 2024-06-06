@@ -1,6 +1,67 @@
 \appendix
 \chapter{First Appendix}
+\section{Verlixir Example}
 
+\begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
+  import VaeLib
+
+  defmodule Server do
+    @vae_init true
+    @ltl "(q)U([]p)"
+    @spec start_server() :: :ok
+    @params {:number_of_rounds}
+    def start_server do
+      predicate p, alive_clients == client_n * number_of_rounds
+      predicate q, !p
+      client_n = 1
+      number_of_rounds = 2
+      alive_clients = 0
+      for _ <- 1..client_n do
+        client = spawn(Client, :start_client, [])
+        send(client, {:bind, self(), number_of_rounds})
+      end
+      alive_clients = if number_of_rounds > 1 do
+        check_clients(client_n * number_of_rounds, alive_clients)
+      else
+        0
+      end
+    end
+  
+    @spec check_clients(integer(), integer()) :: integer()
+    def check_clients(expected_clients, current_clients) do
+      if expected_clients == current_clients do
+        current_clients
+      else
+        receive do
+          {:im_alive} -> check_clients(expected_clients, current_clients + 1)
+        end
+      end
+    end
+  end
+  
+  defmodule Client do
+    @spec start_client() :: :ok
+    def start_client do
+      {server, rounds} = receive do
+        {:bind, sender, round_limit} -> {sender, round_limit}
+      end
+      next_round(server, rounds)
+    end
+  
+    @spec next_round(pid(), integer()) :: :ok
+    defv next_round(server, rounds), pre: rounds >= 0 do
+      if rounds == 0 do
+        :ok
+      else
+        send(server, {:im_alive})
+        next_round(server, rounds - 1)
+      end
+    end
+  end
+  
+\end{lstlisting}
+
+\section{Paxos}
 \subsubsection{First paxos implementation with a bug}
 \begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
 import VaeLib
@@ -480,6 +541,7 @@ spin: trail ends after 826 steps
     spin: trail ends after 820 steps
 \end{lstlisting}
 
+\section{Consistent Hash Table}
 \subsubsection{Working Consistent Hash Table}
 \begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
   import VaeLib
@@ -1096,6 +1158,7 @@ The program is livelocked, or an ltl property was violated. Generating trace.
 [54] (ring_handler:1) recv [1,TERMINATE,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 \end{lstlisting}
 
+\section{Two-Phase Commit}
 \subsubsection{LTLixir 2PC}
 \begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
   import VaeLib
@@ -1313,6 +1376,7 @@ The program is livelocked, or an ltl property was violated. Generating trace.
 [39] (await_transaction_result:1) recv [0,TRANSACTION_ABORT,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 \end{lstlisting}
 
+\section{Dining Philosophers}
 \subsubsection{Dining Philosophers Deadlock Logs}
 \begin{lstlisting}[xleftmargin=.01\linewidth, xrightmargin=0.01\linewidth, caption={Dining Philosophers Verlixir Report.}, label={lst:dp_bug}]
   The program likely reached a deadlock. Generating trace.
@@ -1919,4 +1983,93 @@ end
         __TERMINATE!!table,TERMINATE,msg_4;/* 135*/ /* send table,{:terminate}*/ 
         }
     }    
+\end{lstlisting}
+
+\section{Raft}
+
+\subsubsection{Raft Consensus in Elixir}
+\begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
+  defmodule RaftNode do
+  @spec start_node(integer(), integer(), integer()) :: :ok
+  def start_node(id, n_peers, client) do
+    peers = receive do
+      {:bind, peers} -> peers
+    end
+    term = 10 * id
+    node_handler(id, peers, n_peers, 0, term, 0, client)
+  end
+
+  @spec node_handler(integer(), list(), integer(), atom(), integer(), integer(), integer()) :: :ok
+  defp node_handler(id, peers, n_peers, state, term, vote_count, client) do
+    receive do
+      {:request_vote, candidate_term, candidate_id, reply_to} ->
+        if candidate_term > term do
+          send(reply_to, {:vote_granted, id})
+          node_handler(id, peers, n_peers, 0, candidate_term, vote_count, client)
+        else
+          node_handler(id, peers, n_peers, state, term, vote_count, client)
+        end
+
+      {:vote_granted, _voter_id} ->
+        new_vote_count = vote_count + 1
+        if state == 1 and new_vote_count >= n_peers / 2 + 1 do
+          send(client, {:elected, term})
+          for peer <- peers do
+            send(peer, {:append_entries, term, id}) # Send log here
+          end
+          node_handler(id, peers, n_peers, 2, term, new_vote_count, client)
+        else
+          node_handler(id, peers, n_peers, state, term, new_vote_count, client)
+        end
+
+      {:start_election} ->
+        for peer <- peers do
+          send(peer, {:request_vote, term + 1, id, self()})
+        end
+        node_handler(id, peers, n_peers, 1, term + 1, 0, client)
+
+      {:terminate} ->
+        IO.puts("Terminating node")
+
+      after 1000 ->
+        send self(), {:start_election}
+        node_handler(id, peers, n_peers, state, term, 0, client)
+    end
+  end
+end
+
+defmodule Client3 do
+  @vae_init true
+  @spec start() :: :ok
+  @ltl """
+  !<>[](elected_term == previously_elected_term)
+  """
+  def start do
+    # follower -> 0, candidate -> 1, leader -> 2
+    n_nodes = 3
+    n_peers = n_nodes - 1
+    rounds = 2
+    previously_elected_term = -1
+    elected_term = 0
+    nodes = for id <- 1..n_nodes do
+      spawn(RaftNode, :start_node, [id, n_peers, self()])
+    end
+
+    for p_id <- nodes do
+      send(p_id, {:bind, nodes})
+    end
+
+    for _ <- 1..rounds do
+      {elected_term, previously_elected_term} = receive do
+        {:elected, term} ->
+          IO.puts("Node elected")
+          {term, elected_term}
+      end
+    end
+
+    for p_id <- nodes do
+      send(p_id, {:terminate})
+    end
+  end
+end
 \end{lstlisting}
