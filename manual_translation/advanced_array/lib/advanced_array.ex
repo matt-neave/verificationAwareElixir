@@ -1,5 +1,5 @@
 defmodule AdvancedArray do
-  @vae_init true
+  @v_entry true
   def main do
     :world
   end

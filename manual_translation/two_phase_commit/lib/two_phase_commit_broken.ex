@@ -132,7 +132,7 @@ defmodule ParticipantB do
 end
 
 defmodule ClientB do
-  @vae_init true
+  @v_entry true
   @spec start() :: :ok
   def start do
     n_participants = 3

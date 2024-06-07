@@ -85,7 +85,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Limitations.md",
+                "file": "Report notes.md",
                 "mode": "source",
                 "source": false
               }
@@ -218,7 +218,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Limitations.md",
+                "file": "Report notes.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -235,7 +235,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Limitations.md",
+                "file": "Report notes.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -258,7 +258,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Limitations.md"
+                "file": "Report notes.md"
               }
             }
           }
@@ -280,18 +280,18 @@
   },
   "active": "3708f643b2bb01c4",
   "lastOpenFiles": [
+    "Report Todos.md",
+    "Random notes.md",
+    "Potential todos.md",
+    "Verification of Elixir paper.md",
+    "Limitations.md",
     "error.md",
     "Gomela analysis, comparison and inspiration.md",
-    "Limitations.md",
     "message passing exploration.md",
-    "Potential todos.md",
     "Question for Naranker.md",
-    "Random notes.md",
     "Report notes.md",
     "Report plan.md",
-    "Verification of Elixir paper.md",
     "state space exploration.md",
-    "Report Todos.md",
     "Pasted image 20240601113235.png",
     "Pasted image 20240527104552.png",
     "Pasted image 20240527104042.png",

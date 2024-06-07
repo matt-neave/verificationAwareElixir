@@ -1,5 +1,5 @@
 defmodule ForComprehension do
-  @vae_init true
+  @v_entry true
   def main do
     ls = [1,2,3]
     for x <- ls do

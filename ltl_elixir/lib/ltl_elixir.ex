@@ -1,6 +1,6 @@
 defmodule LtlElixir do
   @ltl "<>(x>3)"
-  @vae_init true
+  @v_entry true
   @spec main() :: integer()
   def main do
     x = 0

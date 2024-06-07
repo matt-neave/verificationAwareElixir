@@ -6,7 +6,7 @@ import VaeLib
 
 defmodule OneShotAlternatingBit do
 
-  @vae_init true
+  @v_entry true
   @spec start() :: :ok
   @ltl "<>[](finished==limit)"
   @params {:limit, :test}

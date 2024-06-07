@@ -65,7 +65,7 @@ end
 
 defmodule Client do
 
-  @vae_init true
+  @v_entry true
   @spec start() :: :ok
   @ltl "[](r1 -> <>(p1))"
   @ltl "[](r2 -> <>(p3))"

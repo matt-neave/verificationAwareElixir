@@ -1,5 +1,5 @@
 defmodule Server2 do
-  @vae_init true
+  @v_entry true
   def start_server do
     client = spawn(Client, :start_client, [])
     receive do

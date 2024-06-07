@@ -1,5 +1,5 @@
 defmodule Server4 do
-  @vae_init true
+  @v_entry true
   @spec start_server() :: :ok
   @ltl "<>(alive_clients==client_n)"
   def start_server do

@@ -1,6 +1,6 @@
 defmodule MatchExamples do
 
-  @vae_init true
+  @v_entry true
   @spec start() :: :ok
   def start do
     atm_balance = 1000

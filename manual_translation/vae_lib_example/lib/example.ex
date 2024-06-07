@@ -2,7 +2,7 @@ import VaeLib
 
 defmodule Example do
 
-  @vae_init true
+  @v_entry true
   @ltl "<>(result==22)"
   def start do
     result = add(10, 12);

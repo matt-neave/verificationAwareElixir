@@ -1,7 +1,7 @@
 import VaeLib
 
 defmodule Server8 do
-  @vae_init true
+  @v_entry true
   @ltl "(q)U([]p)"
   @spec start_server() :: :ok
   @params {:number_of_rounds}

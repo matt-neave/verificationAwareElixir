@@ -100,7 +100,7 @@ end
 defmodule Learner4 do
 
   @spec start() :: :ok
-  @vae_init true
+  @v_entry true
   def start do
     n_acceptors = 3
     quorum = 2

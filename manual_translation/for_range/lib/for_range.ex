@@ -1,5 +1,5 @@
 defmodule ForRange do
-  @vae_init true
+  @v_entry true
   def hello do
     for i <- 1..3 do
       IO.puts "Hello!"

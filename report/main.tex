@@ -133,9 +133,10 @@
 \input{title/title.tex}
 
 \begin{abstract}
-Your abstract goes here
+    Distributed algorithms are difficult to prove and reason about. With the rapid rise in cloud-based clusters the need for developing robust distributed algorithms is seen as a critical requirement by service providers and has sparked new interest in developing tools for reasoning about distributed algorithms. There are many languages and tools for specifications such systems. This report introduces Verlixir, a verification tool for message-passing systems written in Elixir.
+    \\ \\
+    A qualitative evaluation of Verlixir has shown, the tool is capable of detecting violations of safety and liveness properties in distributed algorithms such as Paxos and Two Phase Commit. Verlixir offers extending Elixir programs with linear temporal logic properties and predicates to specify the desired behaviour of the system. Property violations produce Elixir-friendly counterexamples that can be used to debug the system.
 \end{abstract}
-
 \renewcommand{\abstractname}{Acknowledgements}
 \begin{abstract}
 Thanks mum!

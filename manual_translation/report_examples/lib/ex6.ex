@@ -1,7 +1,7 @@
 import VaeLib
 
 defmodule Server6 do
-  @vae_init true
+  @v_entry true
   @spec start_server() :: :ok
   @ltl "(q)U([]p)"
   def start_server do

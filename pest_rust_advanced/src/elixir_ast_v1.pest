@@ -112,7 +112,7 @@ function_definition = {  function_annotation* ~ (( "{:defp" | "{:def") ~ ", " ~ 
 
 vae_function_definition = {  function_annotation* ~ ( "{:defv, " ~ metadata ~ ", " ~ "[{" ~ function_name ~ ", " ~ metadata ~ ", " ~ function_arguments ~ "}" ~ ", " ~ ( "[" ~ pre* ~ ", "* ~ post* ~ ", "* ~ pre*  ~ "], ")* ~ do ~ "]}") }
 
-function_annotation = { (ltl_spec | parameterization | vae_init | type_spec | ltl_spec) ~ ", " }
+function_annotation = { (ltl_spec | parameterization | v_entry | type_spec | ltl_spec) ~ ", " }
 
 pre = { "pre: " ~ boolean_operand }
 
@@ -122,7 +122,7 @@ ok = { ":ok" }
 
 type_spec = { "{:@, " ~ metadata ~ ", [{:spec, " ~ metadata ~ ", [{:\"::\", " ~ metadata ~ ", [" ~ function_arguments_type ~ ", " ~ argument_type ~"]}]}]}" } 
 
-vae_init = { "{:@, " ~ metadata ~ ", [{:vae_init, " ~ metadata ~ ", [true]}]}" }
+v_entry = { "{:@, " ~ metadata ~ ", [{:v_entry, " ~ metadata ~ ", [true]}]}" }
 
 ltl_spec = { "{:@, " ~ metadata ~ ", [{:ltl, " ~ metadata ~ ", [\"" ~ ltl ~ "\"]}]}" }
 

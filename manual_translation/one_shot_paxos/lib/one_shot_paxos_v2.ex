@@ -1,5 +1,5 @@
 defmodule OneShotPaxosV2 do
-  @vae_init true
+  @v_entry true
   @spec run_example() :: :ok
   def run_example do
     # Start acceptors

@@ -4,7 +4,7 @@ import VaeLib
 
 defmodule AlternatingBit do
 
-  @vae_init true
+  @v_entry true
   @spec start() :: :ok
   @ltl "<>(finished==1)"
   def start do

@@ -90,7 +90,7 @@ end
 
 
 defmodule Coordinator2 do
-  @vae_init true
+  @v_entry true
   @spec start() :: :ok
   def start do
     n = 4

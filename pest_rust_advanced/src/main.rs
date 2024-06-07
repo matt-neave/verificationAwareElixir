@@ -999,7 +999,7 @@ pub fn parse_function_definition(
     let mut func_body_node: Option<Pair<Rule>> = None;
     let mut func_arg_node: Option<Pair<Rule>> = None;
     let mut func_type_spec: Option<Pair<Rule>> = None;
-    let mut vae_init = false;
+    let mut v_entry = false;
     let mut ltl_spec: Vec<Pair<Rule>> = Vec::new();
     let mut _func_metadata_node: Option<Pair<Rule>> = None;
     for pair in ast_node.into_inner() {
@@ -1012,7 +1012,7 @@ pub fn parse_function_definition(
                 let annotation = pair.into_inner().next().unwrap();
                 match annotation.as_rule() {
                     Rule::type_spec          => func_type_spec = Some(annotation),
-                    Rule::vae_init           => vae_init = true,
+                    Rule::v_entry           => v_entry = true,
                     Rule::ltl_spec           => ltl_spec.push(annotation),
                     Rule::parameterization   => extract_params(annotation, file_writer),
                     _ => ()
@@ -1042,12 +1042,12 @@ pub fn parse_function_definition(
         sym_table = internal_representation::sym_table::SymbolTable::new();
         error!("Missing type spec for function {}.", func_name);
     }
-    file_writer.new_function(&func_name, args, sym_table, vae_init, arg_var_intersect, ltl_vars);
+    file_writer.new_function(&func_name, args, sym_table, v_entry, arg_var_intersect, ltl_vars);
     
     // Write the body 
     // Start by setting up the channels
     // Use predefiend code blocks for send and recv
-    parse_do(func_body_node.unwrap(), file_writer, false, !vae_init);
+    parse_do(func_body_node.unwrap(), file_writer, false, !v_entry);
 
     // Close the function 
     file_writer.commit_function();
@@ -1066,7 +1066,7 @@ pub fn parse_vae_function_definition(
     let mut func_body_node: Option<Pair<Rule>> = None;
     let mut func_arg_node: Option<Pair<Rule>> = None;
     let mut func_type_spec: Option<Pair<Rule>> = None;
-    let mut vae_init = false;
+    let mut v_entry = false;
     let mut ltl_spec: Option<Pair<Rule>> = None;
     let mut _func_metadata_node: Option<Pair<Rule>> = None;
     let mut pre = None;
@@ -1083,7 +1083,7 @@ pub fn parse_vae_function_definition(
                 let annotation = pair.into_inner().next().unwrap();
                 match annotation.as_rule() {
                     Rule::type_spec          => func_type_spec = Some(annotation),
-                    Rule::vae_init           => vae_init = true,
+                    Rule::v_entry           => v_entry = true,
                     Rule::ltl_spec           => ltl_spec = Some(annotation),
                     Rule::parameterization   => extract_params(annotation, file_writer),
                     _ => ()
@@ -1114,7 +1114,7 @@ pub fn parse_vae_function_definition(
         sym_table = internal_representation::sym_table::SymbolTable::new();
         error!("Missing type spec for function {}.", func_name);
     }
-    file_writer.new_function(&func_name, args, sym_table, vae_init, arg_var_intersect, ltl_vars);
+    file_writer.new_function(&func_name, args, sym_table, v_entry, arg_var_intersect, ltl_vars);
     
     if let Some(x) = pre {
         parse_pre_conditions(x, file_writer, line_number)
@@ -1125,7 +1125,7 @@ pub fn parse_vae_function_definition(
     // Write the body 
     // Start by setting up the channels
     // Use predefiend code blocks for send and recv
-    parse_do(func_body_node.unwrap(), file_writer, false, !vae_init);
+    parse_do(func_body_node.unwrap(), file_writer, false, !v_entry);
 
     // Close the function 
     file_writer.commit_function();

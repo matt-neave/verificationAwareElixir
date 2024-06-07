@@ -65,7 +65,7 @@ end
 
 defmodule ClientC do
 
-  @vae_init true
+  @v_entry true
   @spec start() :: :ok
   @ltl "[](sent_request -> <>assigned_node)"
   def start do

@@ -2,7 +2,7 @@ import Precondition
 
 defmodule Maths do
 
-  @vae_init true
+  @v_entry true
   def start do
     add 10, 12
   end

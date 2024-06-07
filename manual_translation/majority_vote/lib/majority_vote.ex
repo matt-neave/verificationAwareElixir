@@ -1,6 +1,6 @@
 defmodule MajorityVote do
 
-  @vae_init true
+  @v_entry true
   @spec start() :: :ok
   def start do
     run_consensus()

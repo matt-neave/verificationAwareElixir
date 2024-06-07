@@ -2,7 +2,7 @@
 
 defmodule Clock do
 
-  @vae_init true
+  @v_entry true
   def start do
     clock 0
   end

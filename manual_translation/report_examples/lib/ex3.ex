@@ -1,5 +1,5 @@
 defmodule Server3 do
-  @vae_init true
+  @v_entry true
   @spec start_server() :: :ok
   def start_server do
     client = spawn(Client, :start_client, [])
