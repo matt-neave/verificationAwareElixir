@@ -3,7 +3,7 @@ In chapter \ref{chap:verlixir}, we will introduce the Verlixir tool. Verlixir in
 \section{Promela} \label{sec:promela}
 Promela is the verification modelling language used by the Spin model checker, to specify concurrent processes modelling distributed systems \cite{spin}. This section will discuss some of the core features that allow systems to be modelled and verified with Spin. This section aims to give an overview of the syntax and control of Promela, so any specifications in later sections or the code artifact can be read.
 \subsection{Types and Variables}
-Promela is statically typed. Variables can be declared once within the current scope and then re-assigned throughout. Variables can be declared locally within the context of a process, or in the global scope, where memory is shared. The types available in Promela, and assignment to variables of these types if similar to many imperative programming languages. Promela supports the types bit, bool, byte, pid, short, int and unsigned. Variable declaration and assignment then naturally follows.
+Promela is statically typed. Variables can be declared once within the current scope and then re-assigned throughout. Variables can be declared locally within the context of a process, or in the global scope, where memory is shared. The types available in Promela, and assignment to variables of these types is similar to many imperative programming languages. Promela supports the types bit, bool, byte, pid, short, int and unsigned. Variable declaration and assignment then naturally follows.
 \[
 \begin{aligned}
 \text{int a} = 2;
@@ -35,9 +35,9 @@ An imperative component of understanding the power of the Spin model checker is 
         printf("Process 1 spawned at %d\n", p1);
     }
 \end{lstlisting}
-Multiple processes can be declared to run in the initial state by marking them as \texttt{active} processes. Processes run independently of one another, so a parent process terminating will not necessarily result in the termination of a child. Spin sets a limit of 255 concurrently executing processes. Multiple processes can be spawned in a single transition by using the \texttt{atomic} construct, which will ensure that no spawning process is scheduled until all atomic processes have been scheduled. Similarly to atomicity, \texttt{d\_step} can be used to enforce multiple statements are treated as a single indivisible step. Unlike \texttt{atomic}, \texttt{d\_step} cannot block or jump.
+Multiple processes can be declared to run in the initial state by marking them as \texttt{active} processes. Processes run independently of one another, so a parent process terminating will not necessarily result in the termination of a child. Spin sets a limit of 255 concurrently executing processes. Multiple processes can be spawned in a single transition by using the \texttt{atomic} construct, which will ensure that no spawning process is scheduled, until all atomic processes have been scheduled. Similarly to atomicity, \texttt{d\_step} can be used to enforce multiple statements are treated as a single indivisible step. Unlike \texttt{atomic}, \texttt{d\_step} cannot block or jump.
 \subsection{Channels}
-The final concept to briefly discuss is the asynchronous communication primitive, channels. Recall Hoare's definition of channels \ref{csp_section}, defining a channel $c$ that can input and output values. Promela echos this definition, allowing channels to be specified using the predefined data type \texttt{chan}. To correctly specify communication, we often need to allow messages of multiple types to be written to channels, for this purpose Promela introduces \texttt{mtype} that allows for the introduction of symbolic names for constant values.
+The final concept to briefly discuss, is the asynchronous communication primitive, channels. Recall Hoare's definition of channels \ref{csp_section}, defining a channel $c$ that can input and output values. Promela echos this definition, allowing channels to be specified using the predefined data type \texttt{chan}. To correctly specify communication, we often need to allow messages of multiple types to be written to channels. For this reason, Promela introduces \texttt{mtype} that allows for the introduction of symbolic names for constant values.
 \[
 \text{mtype = \{ BROADCAST \};}
 \]
@@ -56,7 +56,7 @@ Similarly, we read messages from the channel in a first-in, first-out (FIFO) ord
 & \text{global\_broadcast ? BROADCAST, x;}
 \end{aligned}
 \]
-Where the variable $x$ stores the resulting \texttt{int} assuming the first message in the channel is of type \texttt{BROADCAST}.
+Where the variable $x$ stores the resulting \texttt{int}, assuming the first message in the channel is of type \texttt{BROADCAST}.
 \subsection{Limitations}
 Promela is a powerful language for modelling concurrent systems, but it has limitations for capturing the full complexity of a real-world system. In general, hand-translations of a system into Promela can avoid some of these limitations with careful design. However, we are approaching this limits from an Elixir perspective, where features of Elixir may not be easily translated into Promela.
 \begin{itemize}
@@ -68,14 +68,14 @@ Promela is a powerful language for modelling concurrent systems, but it has limi
     \item \textbf{Time}: there is no notion of a system block, or related time properties in Promela. This means we cannot model sleeping threads.
 \end{itemize}
 \subsection{Summary}
-This basic introduction to the syntax of the Promela modelling language aims to make the reader familiar with the syntax and control involved in writing Promela specifications. It is not an exhaustive guide but should form a basis for understanding specifications present in a later section or the code artifact.
+This basic introduction to the syntax of the Promela modelling language, aims to make the reader familiar with the syntax involved in writing Promela specifications. It is not an exhaustive guide but should form a basis for understanding specifications present in a later section or the code artifact.
 
 \section{Elixir}
 Elixir is a dynamic, functional language for building scalable and maintainable applications \cite{elixir}. Elixir programs run on the BEAM virtual machine \cite{beam}, which is also used to run the Erlang programming language \cite{erlang}. Elixir was designed by José Valim and first released in 2012. Elixir is built on top of Erlang and hence inherits many of the abstractions designed for building distributed systems. This section aims to give a brief overview of Elixir, it is not a complete guide but rather aims to give non-Elixir programmers a basic understanding of the language.
 \\ \\
 BEAM is a virtual machine that executes user programs in the Erlang Runtime System (ERTS). BEAM is a register machine where all instructions operate on named registers containing Erlang terms such as integers or tuples.
 \\ \\
-Elixir has begun to see use in industry, in particular in domains such as telecoms and instant messaging. The Phoenix Framework \cite{phoenix} is a framework for building interactive web applications natively in Elixir that can take advantage of Elixir's multi-processing and fault tolerance to build scalable web applications. The audio and video communication application Discord \cite{discord} uses Elixir to manage its 11 million concurrent users and the Financial Times \cite{ft} have begun migrating from Java to Elixir to enjoy the much smaller memory usage by comparison.
+We have recently seen companies adopting Elixir in industry, in particular in domains such as telecoms and instant messaging. The Phoenix Framework \cite{phoenix} is a framework for building interactive web applications natively in Elixir, that can take advantage of Elixir's multi-processing and fault tolerance to build scalable web applications. The audio and video communication application Discord \cite{discord} uses Elixir to manage its 11 million concurrent users and the Financial Times \cite{ft} have begun migrating from Java to Elixir to enjoy the much smaller memory usage by comparison.
 \\ \\
 Elixir supports multi-processing in two key ways: nodes and processes. Each node is an instance of BEAM (a single operating system process), when an Elixir program is executed, a new instance of BEAM is instantiated for it to run on. In contrast, an Elixir process is not an operating system process. An Elixir process is lightweight in terms of memory and CPU usage (even in comparison to threads that many other programming languages favour). Elixir processes can run concurrently with one another and are completely isolated from one another. Elixir processes communicate via message passing.
 \begin{lstlisting}[language=Elixir, xleftmargin=.2\linewidth, caption={An example of spawn/1 and spawn/4 in Elixir for spawning a new lightweight process and a new Elixir node}]
@@ -94,14 +94,14 @@ Two key concepts in inter-process communication (IPC) are shared memory models a
     \label{fig:shared_memory}
 \end{figure}
 \\ \\
-Elixir instead uses a message-passing model for IPC. More specifically, Elixir uses an actor-based model, where each process (actor) has its state and a message box to receive messages from other actors. Actors are responsible for sending a finite number of messages to other actors, spawning new actors and changing their behaviour based on the handling of messages received in the mailbox. Figure \ref{fig:actor_model} shows an example of how actors behave. The mailbox is not necessarily first in, first out (FIFO) but often implementations tend to be.
+Elixir instead uses a message-passing model for IPC. More specifically, Elixir uses an actor-based model, where each process (actor) has its state and a message box to receive messages from other actors. Actors are responsible for sending a finite number of messages to other actors, spawning new actors and changing their behaviour, based on the handling of messages received in the mailbox. Figure \ref{fig:actor_model} shows an example of how actors behave. The mailbox is not necessarily first in, first out (FIFO) but often implementations tend to be.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.6\textwidth]{images/actor_model.png}
     \caption{An example of actors sending and receiving messages under the actor model}
     \label{fig:actor_model}
 \end{figure}
-In Elixir, a receive statement is used to read messages in the mailbox. The receive block looks through the mailbox for a message that matches a given pattern, if no messages match a given pattern, the process will block until one does.
+In Elixir, a receive statement is used to read messages in the mailbox. The receive block looks through the mailbox for a message that matches a given pattern. If no messages match the pattern, the process will block until one does.
 \begin{lstlisting}[language=Elixir, xleftmargin=.4\linewidth, caption={An example of spawn/1 and spawn/4 in Elixir for spawning a new lightweight process and a new Elixir node}]
     # Example send in Elixir
     send self(), {:hello, "world"}
@@ -126,4 +126,4 @@ Everything in Elixir is an expression. This means that every piece of code retur
     \item \textbf{Control flow structures}: Elixir supports many control flow expressions. For example, $if$, $case$, $unless$ and $for$. All of these introduce a new scope. They are expressions and can be matched on.
 \end{itemize}
 \subsection{Summary}
-In this chapter, we learned about Elixir, the programming language built on top of Erlang and we explored some basic approaches to designing concurrent systems with it. The next    section will explore how these core tools can be used in tandem to provide developers guarantees over large-scale, distributed Elixir-based systems.
+In this chapter, we learned about Elixir, the programming language built on top of Erlang and we explored some basic approaches to designing concurrent systems with it. The next section will explore how these core tools can be used in tandem, to provide developers guarantees over large-scale, distributed Elixir-based systems.
