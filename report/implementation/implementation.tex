@@ -389,7 +389,7 @@ We then wait to read on $ret1$ to rendezvous with the callee.
 \\ \\
 Let's finally look at the remaining translated code.
 \begin{lstlisting}[language=Promela, xleftmargin=.1\linewidth, caption={Translation of LTL properties}., label={lst:final}]
-    atomic{
+    atomic  {
         if
         :: __ret_f -> ret!0;
         :: else -> skip;
