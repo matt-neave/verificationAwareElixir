@@ -50,6 +50,8 @@ fn main() {
     let reduce_state_space = args.contains(&"--reduce".to_string()) || args.contains(&"-r".to_string());
     // Produce Elixir lines alongside the model
     let source_lines = args.contains(&"--lines".to_string()) || args.contains(&"-l".to_string());
+    // Verbose output
+    let verbose = args.contains(&"--verbose".to_string()) || args.contains(&"-V".to_string());
 
     let mut param_n = 3;
     if gen_params {
@@ -99,7 +101,7 @@ fn main() {
         model_runner::simulate_model(model_path);
     }
     else if model_check_flag {
-        model_runner::run_model(model_path, elixir_dir.to_str().unwrap(), weak_fairness, reduce_state_space, writer.ltl_count());
+        model_runner::run_model(model_path, elixir_dir.to_str().unwrap(), weak_fairness, reduce_state_space, writer.ltl_count(), verbose);
     }
     else if gen_params {
         model_generator::generate_models(model_path, final_params, param_n);

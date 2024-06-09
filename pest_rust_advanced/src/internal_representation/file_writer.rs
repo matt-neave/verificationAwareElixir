@@ -55,6 +55,7 @@ pub struct FileWriter {
     parameterized_model: bool,
     parameterized_function: bool,
     parameterized_vars: Vec<String>,
+    iterator_count: i32,
 }
 
 
@@ -101,6 +102,7 @@ impl FileWriter {
             parameterized_model: gen_params,
             parameterized_function: false,
             parameterized_vars: Vec::new(),
+            iterator_count: 0
         })
     }
 
@@ -876,10 +878,13 @@ impl FileWriter {
                 self.function_body.last_mut().unwrap().push_str(&format!("int {};\n", iterator));
                 self.function_sym_table.add_entry(iterator.to_string(), sym_table::SymbolType::Integer);
             }
+            self.function_body.last_mut().unwrap().push_str(&format!("for({} : {} .. {}) {{ /*{}*/\n", iterator, n1, n2, line_number));
         } else {
-            iterator = "__dummy_iterator";
+            self.function_body.last_mut().unwrap().push_str(&format!("int __dummy_iterator_{};\n", self.iterator_count));
+            let dummy_iterator = format!("__dummy_iterator_{}", self.iterator_count); 
+            self.iterator_count += 1;
+            self.function_body.last_mut().unwrap().push_str(&format!("for({} : {} .. {}) {{ /*{}*/\n", dummy_iterator, n1, n2, line_number));
         }
-        self.function_body.last_mut().unwrap().push_str(&format!("for({} : {} .. {}) {{ /*{}*/\n", iterator, n1, n2, line_number));
         if (self.block_assignment) {
             let var = self.array_var_stack.last().unwrap();
             self.function_sym_table.add_entry(var.clone(), SymbolType::Array(Box::from(SymbolType::Integer), 0));

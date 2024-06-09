@@ -14,7 +14,6 @@ const FAIRNESS_LIMIT: &str = "100";
 const _QUEUE_MEMORY: &str = "5000";
 const _PROESS_MEMORY: &str = "500";
 const _CHAN_MEMORY: &str = "500";
-const VERBOSE: bool = false;
 struct ErrorLine {
     process_num: u32,
     line_num: u32,
@@ -40,7 +39,7 @@ struct Message {
 //     cmd.arg(&format!("-DQMAX={}", CHAN_MEMORY));
 // }
 
-pub fn run_model(model_path: &str, elixir_dir: &str, fair: bool, reduce: bool, ltl_count: i32) {
+pub fn run_model(model_path: &str, elixir_dir: &str, fair: bool, reduce: bool, ltl_count: i32, verbose: bool) {
     let mut cmds = HashMap::new();
     
     if ltl_count > 0 {
@@ -81,7 +80,7 @@ pub fn run_model(model_path: &str, elixir_dir: &str, fair: bool, reduce: bool, l
         let stdout = String::from_utf8(output.stdout);
         error = match stdout {
             Ok(s) => {
-                profile_errors(&path, &s, &elixir_dir)
+                profile_errors(&path, &s, &elixir_dir, verbose)
             }
             Err(e) => {
                 panic!("Error: {}", e)
@@ -141,7 +140,7 @@ pub fn simulate_model(model_path: &str) {
         .expect("Failed to run simulation");
 }
 
-fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str) -> bool {
+fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str, verbose: bool) -> bool {
     // Parse the output and determine errors    
     let re = Regex::new(r"errors: (\d+)").unwrap();
 
@@ -160,7 +159,7 @@ fn profile_errors(model_path: &str, model_output: &str, elixir_dir: &str) -> boo
 
                 check_assertion_violation(model_path, model_output);
 
-                let (trace, messages) = generate_trace(model_path);
+                let (trace, messages) = generate_trace(model_path, verbose);
 
                 report_elixir_trace(model_path, trace, messages, elixir_dir);
                 true
@@ -219,7 +218,7 @@ fn check_too_many_queues(model_path: &str, model_output: &str) {
     }
 }
 
-fn generate_trace(model_path: &str) -> (Vec<ErrorLine>, Vec<Message>) {
+fn generate_trace(model_path: &str, verbose: bool) -> (Vec<ErrorLine>, Vec<Message>) {
     // Run the trace
     let mut trace_output = Command::new("spin");
 
@@ -234,7 +233,7 @@ fn generate_trace(model_path: &str) -> (Vec<ErrorLine>, Vec<Message>) {
         .arg("-r")
         .arg("-s");
 
-    if VERBOSE {
+    if verbose {
         trace_output.arg("-v"); // Verbose trace if VERBOSE is true
     }
 
@@ -263,6 +262,19 @@ fn generate_trace(model_path: &str) -> (Vec<ErrorLine>, Vec<Message>) {
                 start_of_cycle: true,
                 ltl_violation: false,
                 trail_ended: false,
+            };
+            trace.push(err);
+        }
+
+        if line.contains("spin: trail ends after") {
+            let err = ErrorLine {
+                process_num: 0,
+                line_num: 0,
+                valid_end_state: false,
+                function_name: "".to_string(),
+                start_of_cycle: false,
+                ltl_violation: false,
+                trail_ended: true,
             };
             trace.push(err);
         }
@@ -313,7 +325,9 @@ fn report_elixir_trace(model_path: &str, trace: Vec<ErrorLine>, messages: Vec<Me
     let elixir_file = std::fs::read_to_string(elixir_dir).expect("Failed to read the elixir file.");
 
     // First send all message events
-    println!("<<<Message Events>>>");
+    if messages.len() > 0 {
+        println!("<<<Message Events>>>");
+    }
     for (i, message) in messages.iter().enumerate() {
         println!(
             "[{}] ({}) {} [{}]",
