@@ -192,7 +192,7 @@ Before we can execute the block, we must assign all the remaining identifiers fr
 \\ \\
 Unlike Elixir actors, Verlixir bounds multiple communication primitives. This is to ensure state explosion in the model checker is less likely to occur. As mentioned, we are strict in the bounding of byte arrays that can be passed as message arguments. We also only supply a small number of mailboxes per message type, furthermore, we bound the number of messages that can buffer in a per-process mailbox.
 \subsubsection{Dynamic Memory Allocation}
-Although not a direct fallout of the Elixir concurrency prinicples, Promela does not support dynamic memory allocation such as memory allocations (malloc) or memory de-allocations (free). This lack of support has lead to design choices in the generation of Elixir lists that if mishandled could lead to a mis-representation of Elixir concurrency in the target specification language. Immutability is a core feature of the Elixir runtime, hence the Elixir list operations introduce behaviours that must be carefully handled. For example, the \texttt{++} operator can be used to append or prepend elements to a list. If this is used to prepend, the operation is constant time, however the IR will represent this (as well as most list operations) as an operation in linear time. Let's explore the memory model to understand why. 
+Although not a direct fallout of the Elixir concurrency prinicples, Promela does not support dynamic memory allocation such as memory allocations or memory de-allocations. This lack of support has lead to design choices in the generation of Elixir lists that if mishandled could lead to a mis-representation of Elixir concurrency in the target specification language. Immutability is a core feature of the Elixir runtime, hence the Elixir list operations introduce behaviours that must be carefully handled. For example, the \texttt{++} operator can be used to append or prepend elements to a list. If this is used to prepend, the operation is constant time, however the IR will represent this (as well as most list operations) as an operation in linear time. Let's explore the memory model to understand why. 
 \\ \\
 The IR introduces two structures to handle all list operations across the system. These structures are stored in the global scope context. The reason for this comes from Promela limitations. Promela supports statically sized arrays. These arrays cannot be passed to other processes. Hence, an array's lifetime is limited to its scope. To get around this limitation, the two structures we introduce are called \texttt{memory} and \texttt{linked\_list}.
 \\ \\
@@ -214,12 +214,12 @@ A \texttt{node} stores a single value in a list, as well as a flag to indicate i
 Given this representation, we now see why all operations are in linear time. For example, for insertion (prepend or append), we must assign a pointer to a node and iterate through all nodes to find an unallocated node to insert into.
 \\ \\
 We now extend this implementation of a dynamically sized list to introduce dynamic memory. The implementation is similar to how lists are implemented. We now introduce a new field to \texttt{linked\_list} called \texttt{allocated}. This represents the allocation of a list in memory. We now similarly introduce memory.
-\begin{lstlisting}[language=C, xleftmargin=.1\linewidth, caption={Memory intermediate representation.}]
+\begin{lstlisting}[language=C, xleftmargin=.1\linewidth, caption={Memory intermediate representation. Limit of M lists.}]
 typedef memory {
-    linked_list lists[10];
+    linked_list lists[M];
 }
 \end{lstlisting}
-With this structure, we introduce a single globally defined instance of this structure named \texttt{\_\_memory}. All processes share this singular memory for their list allocations. All list operations are treated as a single, indivisible step so this does not introduce concurrent execution concerns. If an Elixir process declares a new list, the IR will represent this as a memory allocation. The model runtime will iterate through all the lists in memory, to find an unallocated list and return this as a pointer to the process. As dynamic memory allocations are not supported in Promela, this $pointer$ is generated as an \texttt{int}, which indexes into memory. 
+With this structure, we introduce a single, globally defined instance of this structure named \texttt{\_\_memory}. All processes share this singular memory for their list allocations. All list operations are treated as a single, indivisible step so this does not introduce concurrent execution concerns. If an Elixir process declares a new list, the IR will represent this as a memory allocation. The model runtime will iterate through all the lists in memory, to find an unallocated list and return this as a pointer to the process. As dynamic memory allocations are not supported in Promela, this $pointer$ is generated as an \texttt{int}, which indexes into memory. 
 \\ \\
 Finally, with all these definitions in place we can finally support the passing of Elixir lists as function arguments. When we detect a function call, or \texttt{send} expression passing a list, we first allocate a pointer to a new location in memory. We then copy all the values from the list into the new allocation and then pass the pointer as an argument. With this mocked memory in place, we can now support Elixir lists and operations on them. We will discuss a few of these operations next.
 \\ \\
@@ -355,7 +355,7 @@ if
 \end{lstlisting}
 Listing \ref{lst:for} shows the translation for the $if$ statement. Each condition in the $if$ is determined with a (::) operator. In this listing, we just have the first condition, the $else$ will be seen in a later listing. 
 \\ \\
-Next, we have the translation of the for comprehension. This is wrapped in an atomic block, as it relies on accessing shared memory. It looks daunting, but all that is taking place is a linear scan through the list. We check each element, determine if it has been assigned to a value, and if it has, then the comprehension body (lines 14 through 19) is executed with the list element.
+Next, we have the translation of the for comprehension. This is wrapped in an atomic block, as it relies on accessing shared memory. It looks daunting, but all that is taking place is a linear scan through the list. We check each element, determine if it has been assigned and if it has, then the comprehension body (line 14 through 19) is executed with the list element.
 \\ \\
 In this case, the comprehension body is a $send$. To send, we pack the message elements into structure, and then send this data to the channel matching our $terminate$ atom, and the mailbox matching $acceptor$.
 \\ \\

@@ -99,7 +99,7 @@ defmodule Coordinator do
   @v_entry true
   @spec start() :: :ok
   def start do
-    n = 4
+    n = 2
 
     table = spawn(Table, :table_loop, [])
 

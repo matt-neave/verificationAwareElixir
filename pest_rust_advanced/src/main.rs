@@ -306,9 +306,10 @@ fn parse_io(
     _ret: bool
 ) {
     // Get the block_statement, and print it's string representation
+    let line_number = get_line_number(ast_node.clone());
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
-            Rule::block_statement => file_writer.write_io(&io_to_str(pair)),
+            Rule::block_statement => file_writer.write_io(&io_to_str(pair), line_number),
             _ => parse_warn!("io", pair.as_rule()),
         }
     }
@@ -732,6 +733,7 @@ fn parse_statement_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_r
     let mut assigned_variable = None;
     let mut block_statement = None;
     let mut tupled_vars = None;
+    let line_number = get_line_number(ast_node.clone());
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::assigned_variable   => assigned_variable = Some(pair),
@@ -746,7 +748,7 @@ fn parse_statement_assignment(ast_node: Pair<Rule>, file_writer: &mut internal_r
             // TODO only support integer for now
             let typ = sym_table::SymbolType::Integer;
             if x.clone().into_inner().next().unwrap().as_rule() == Rule::r#for {
-                file_writer.write_array_assignment(&variable_name, typ, true);
+                file_writer.write_array_assignment(&variable_name, typ, true, line_number);
             } else {
                 file_writer.write_assignment_variable(&variable_name, typ, true);
             }
@@ -780,6 +782,7 @@ fn parse_array_assignment(
 ) {
     let mut assigned_variable = None;
     let mut array = None;
+    let line_number = get_line_number(ast_node.clone());
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::assigned_variable => assigned_variable = Some(pair),
@@ -798,7 +801,7 @@ fn parse_array_assignment(
     if let Some(x) = assigned_variable {
         variable_name = get_variable_name(x);
         // TODO type the array
-        file_writer.write_array_assignment(&variable_name, typ, false);
+        file_writer.write_array_assignment(&variable_name, typ, false, line_number);
     } else {
         panic!("No variable name in array assignment expression");
     }
@@ -820,6 +823,7 @@ fn parse_array_read(
 ) {
     let mut array_assigned_variable = None;
     let mut expression_argument = None;
+    let line_number = get_line_number(ast_node.clone());
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::array_assigned_variable => array_assigned_variable = Some(pair),
@@ -846,7 +850,7 @@ fn parse_array_read(
             Rule::array => todo!(),
             _           => error!("Unexpected type in array read expression"),
         }
-        file_writer.write_array_read(vars, assignment);
+        file_writer.write_array_read(vars, assignment, line_number);
     } else {
         panic!("No array in array read expression");
     };
@@ -1519,6 +1523,7 @@ fn parse_array(
 ) {
     // Array is either primitive_array or cons
     let mut elements = Vec::new(); 
+    let line_number = get_line_number(ast_node.clone());
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::primitive_array => {
@@ -1558,7 +1563,7 @@ fn parse_array(
             _                     => parse_warn!("array", pair.as_rule()),
         }
     }
-    file_writer.write_array(elements);
+    file_writer.write_array(elements, line_number);
 }
 
 fn get_elements_from_primitive_array(
@@ -1596,9 +1601,10 @@ fn parse_if(
     ret: bool,
     func_def: bool,
 ) {
+    let line_number = get_line_number(ast_node.clone());
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
-            Rule::conditions => parse_conditions(pair, file_writer, ret, func_def),
+            Rule::conditions => parse_conditions(pair, file_writer, ret, func_def, line_number),
             _                => parse_warn!("if", pair.as_rule()),
         }
     }
@@ -1774,19 +1780,19 @@ fn parse_conditions(
     file_writer: &mut internal_representation::file_writer::FileWriter, 
     ret: bool,
     func_def: bool,
+    line_number: u32
 ) {
     // TODO write the translation for conditions
     let mut do_block: Option<Pair<Rule>> = None;
     let mut do_else_block: Option<Pair<Rule>> = None;
     let mut condition: Option<Pair<Rule>> = None;
-    let line_number = get_line_number(ast_node.clone());
     for pair in ast_node.into_inner() {
         match pair.as_rule() {
             Rule::boolean_operand      => condition = Some(pair), 
             Rule::r#do                 => do_block = Some(pair),
             Rule::do_else              => do_else_block = Some(pair),
             _                          => parse_warn!("conditions", pair.as_rule()),
-        }
+            }
     }
 
     // To do, reformat so that parse block returns the
@@ -1794,7 +1800,7 @@ fn parse_conditions(
     let condition = condition
         .unwrap_or_else(|| panic!("Unconditional if"));
 
-
+    
     // Write the if statement
     let formatted_condition = create_condition(condition);
     file_writer.write_if_condition(formatted_condition, line_number);

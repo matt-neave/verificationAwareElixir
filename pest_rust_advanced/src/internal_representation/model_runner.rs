@@ -349,7 +349,7 @@ fn report_elixir_trace(model_path: &str, trace: Vec<ErrorLine>, messages: Vec<Me
             println!("LTL PROPERTY VIOLATED");
             continue;
         } else if trace_line.trail_ended {
-            println!("<<< END OF TRAIL, FINAL STATES: >>>");
+            println!("\n<<<End of trail, final states>>>");
             eot = true;
             continue;
         }

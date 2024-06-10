@@ -15,7 +15,7 @@
 \contentsline {lstlisting}{\numberline {5.2}{Representing variable declarations using the match operator}.}{39}{lstlisting.5.2}%
 \contentsline {lstlisting}{\numberline {5.3}{The structure of a list}.}{43}{lstlisting.5.3}%
 \contentsline {lstlisting}{\numberline {5.4}Example of a list node typed `int'.}{43}{lstlisting.5.4}%
-\contentsline {lstlisting}{\numberline {5.5}Memory intermediate representation.}{43}{lstlisting.5.5}%
+\contentsline {lstlisting}{\numberline {5.5}Memory intermediate representation. Limit of M lists.}{43}{lstlisting.5.5}%
 \contentsline {lstlisting}{\numberline {5.6}{A function from the $learner$ module}.}{47}{lstlisting.5.6}%
 \contentsline {lstlisting}{\numberline {5.7}{Promela function definition}.}{48}{lstlisting.5.7}%
 \contentsline {lstlisting}{\numberline {5.8}{Promela if statement and for comprehension}.}{48}{lstlisting.5.8}%

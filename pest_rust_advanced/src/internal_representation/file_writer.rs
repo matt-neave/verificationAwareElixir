@@ -702,8 +702,8 @@ impl FileWriter {
         self.function_body.last_mut().unwrap().push_str("break;\n");
     }
 
-    pub fn write_io(&mut self, io_put: &str) {
-        self.function_body.last_mut().unwrap().push_str(&format!("printf(\"{}\\n\");\n", io_put));
+    pub fn write_io(&mut self, io_put: &str, line_number: u32) {
+        self.function_body.last_mut().unwrap().push_str(&format!("printf(\"{}\\n\"); /*{}*/\n", io_put, line_number));
     }
 
     pub fn start_unless(&mut self) {
@@ -773,10 +773,11 @@ impl FileWriter {
         &mut self,
         var: &str,
         typ: sym_table::SymbolType,
-        block_assignment: bool
+        block_assignment: bool,
+        line_number: u32,
     ) {
         self.block_assignment = block_assignment;
-        self.function_body.last_mut().unwrap().push_str(&format!("int {};\n__get_next_memory_allocation({});\n", var, var));
+        self.function_body.last_mut().unwrap().push_str(&format!("int {};\n__get_next_memory_allocation({}); /*{}*/\n", var, var, line_number));
         self.array_var_stack.push(var.to_string());
         self.function_sym_table.add_entry(var.to_string(), SymbolType::Array(Box::from(SymbolType::Integer), 0));
     }
@@ -784,6 +785,7 @@ impl FileWriter {
     pub fn write_array(
         &mut self,
         elements: Vec<String>,
+        line_number: u32,
     ) {
         // For an assignment, we can take the var off the stack
         if let Some(var) = self.array_var_stack.pop() {
@@ -791,11 +793,11 @@ impl FileWriter {
             for element in elements {
                 // Check if the element type is an array
                 if let Some(sym_table::SymbolType::Array(_, size)) = self.function_sym_table.safe_lookup(&element) {
-                    self.function_body.last_mut().unwrap().push_str(&format!("__list_append_list({}, {});\n", var, element));
+                    self.function_body.last_mut().unwrap().push_str(&format!("__list_append_list({}, {}); /*{}*/\n", var, element, line_number));
                     i += 1;
                 } else {
                     println!("{} is {:?}", element, self.function_sym_table.safe_lookup(&element));
-                    self.function_body.last_mut().unwrap().push_str(&format!("__list_append({}, {});\n", var, element));
+                    self.function_body.last_mut().unwrap().push_str(&format!("__list_append({}, {}); /*{}*/\n", var, element, line_number));
                     i += 1;
                 }
             };
@@ -808,10 +810,11 @@ impl FileWriter {
         &mut self,
         assignees: Vec<String>,
         assignment: String,
+        line_number: u32
     ) {
         for (i, assignee) in assignees.iter().enumerate() {
-            self.function_body.last_mut().unwrap().push_str(&format!("int {};\n", assignee));
-            self.function_body.last_mut().unwrap().push_str(&format!("{} = __list_at({}, {});\n", assignee, assignment, i));
+            self.function_body.last_mut().unwrap().push_str(&format!("int {}; /*{}*/\n", assignee, line_number));
+            self.function_body.last_mut().unwrap().push_str(&format!("{} = __list_at({}, {}); /*{}*/\n", assignee, assignment, i, line_number));
         }
     }
 
