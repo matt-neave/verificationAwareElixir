@@ -92,6 +92,28 @@
             }
           },
           {
+            "id": "917c06e6e4e112fe",
+            "type": "leaf",
+            "state": {
+              "type": "release-notes",
+              "state": {
+                "currentVersion": "1.6.3"
+              }
+            }
+          },
+          {
+            "id": "f475edbff1f142c9",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "last meeting.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
             "id": "69734acf416ddc2d",
             "type": "leaf",
             "state": {
@@ -152,7 +174,7 @@
             }
           }
         ],
-        "currentTab": 6
+        "currentTab": 8
       }
     ],
     "direction": "vertical"
@@ -202,7 +224,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 200
   },
   "right": {
     "id": "a99cf6c73c8f0def",
@@ -218,7 +240,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Report notes.md",
+                "file": "last meeting.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -235,7 +257,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Report notes.md",
+                "file": "last meeting.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -258,7 +280,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Report notes.md"
+                "file": "last meeting.md"
               }
             }
           }
@@ -266,7 +288,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 200
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -278,8 +300,9 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "3708f643b2bb01c4",
+  "active": "f475edbff1f142c9",
   "lastOpenFiles": [
+    "last meeting.md",
     "Report Todos.md",
     "Random notes.md",
     "Potential todos.md",

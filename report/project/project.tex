@@ -237,7 +237,7 @@ We can introduce a bug into our program that will cause a violation of the speci
 \end{lstlisting}
 This will now result in cases where the temporal property is violated, as $\texttt{alive\_clients} \equiv \texttt{client\_n} * \texttt{number\_of\_rounds}$ will not hold for all configurations. Note, that we have reduced the parameters down to just \texttt{\{number\_of\_rounds\}}. The system is theoretically capable of handling any number of parameters in its search. However, the computational cost of exploring the state-space grows exponentially with the number of parameters. Hence, in reality, we should use our understanding of the system to determine which parameters to test at a time.
 \begin{lstlisting}[language=bash, xleftmargin=.1\linewidth]
-$ ./verlixir -p 3 basic_example.ex`
+$ ./verlixir -p 3 basic_example.ex
 Generating models.
 Generated 3 models.
 Acceptance confidence: 0.6666666666666667.
