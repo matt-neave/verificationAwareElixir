@@ -25,14 +25,14 @@ It's overworded... between sequential nodes ... => sequential processes
 # Introduction
 - Why distributed ? because of the cloud based things. 
 - Naranker lecture slides, lecture 1 have examples of 'why distributed?'. Need to consider these factors ontop of functional correctness
-- 'Message passing can be more simple to reason about' -- find a reference. If someone asks me about it, need to be able to quote it.
+- 'Message passing can be more simple to reason about' -- find a reference. If someone asks me about it, need to be able to quote it.✅
 - Don't need to give the description of Elixir in the introduction. ✅
 - Instead, we want to introduce the project: "we are going to introduce a verification aware programming language for message passing". 
 - Currently, too much information. Introduction can instead explicitly say the problem statement.  
 - "We introduce Verlixir, an analysis tool"... is verlixir not actually a 'verification-aware language'. Don't flip between modes of phrasing. Just call verlixir a verificaiton-aware language. Even though it's elixir, we argue similar languages can be swapped out for elixir (i.e. Go, CSP). Clarity about what Verlixir is, keep the story around that. ✅
 #### Objectives
-- Think of goals in a much higher way. Capture the interesting and cool things. create a list of interesting things to talk about, pull from the list into the objectives. 
-- Remove the stuff about GO from the introduction. (move them later on)! What ElixirV supports could be interesting in the objectives (highlighted as an overview)
+- Think of goals in a much higher way. Capture the interesting and cool things. create a list of interesting things to talk about, pull from the list into the objectives. 🐿️
+- Remove the stuff about GO from the introduction. (move them later on)! What ElixirV supports could be interesting in the objectives (highlighted as an overview) ✅
 - If global shared memory is mentioned more than once, remove it (at least within a chapter).
 
 #### Contributions
