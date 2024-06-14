@@ -85,22 +85,7 @@ Elixir supports multi-processing in two key ways: nodes and processes. Each node
     # Create a new BEAM instance
     Node.spawn(:"node1@localhost", MyModule, :start, [])
 \end{lstlisting}
-\subsection{Shared Memory and Message Passing}
-Two key concepts in inter-process communication (IPC) are shared memory models and message-passing models. They are two techniques used to allow processes to send signals or share data between each other. In a shared memory model, a shared memory region is established in which multiple processes can read and write. Figure \ref{fig:shared_memory} shows a basic example of two processes that write to a shared in-memory array. Due to how often we see shared memory used in large-scale distributed systems, much work has been done in the verification of these systems using shared memory models. For example, Jon Mediero Iturrioz used Dafny \cite{dafny} to prove the correctness of concurrent programs that implement shared memory \cite{shared_memory_verification}. 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.4\textwidth]{images/shared_memory.png}
-    \caption{An example of two processes writing to a shared in-memory array}
-    \label{fig:shared_memory}
-\end{figure}
-\\ \\
-Elixir instead uses a message-passing model for IPC. More specifically, Elixir uses an actor-based model, where each process (actor) has its state and a message box to receive messages from other actors. Actors are responsible for sending a finite number of messages to other actors, spawning new actors and changing their behaviour, based on the handling of messages received in the mailbox. Figure \ref{fig:actor_model} shows an example of how actors behave. The mailbox is not necessarily first in, first out (FIFO) but often implementations tend to be.
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.6\textwidth]{images/actor_model.png}
-    \caption{An example of actors sending and receiving messages under the actor model}
-    \label{fig:actor_model}
-\end{figure}
+
 In Elixir, a receive statement is used to read messages in the mailbox. The receive block looks through the mailbox for a message that matches a given pattern. If no messages match the pattern, the process will block until one does.
 \begin{lstlisting}[language=Elixir, xleftmargin=.4\linewidth, caption={An example of spawn/1 and spawn/4 in Elixir for spawning a new lightweight process and a new Elixir node}]
     # Example send in Elixir
