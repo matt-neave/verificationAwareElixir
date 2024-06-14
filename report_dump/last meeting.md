@@ -1,33 +1,35 @@
 Abstract needs to be much stronger. Sell the achievements
-- Doesnt mind a verbose report, but highlight the key factors. Use more italics and bold -- dont overuse them -- but use them to highlight the key phrases!
-- ITS GOOD THAT PRE AND POST CONDITIONS WORK AT RUNTIME!!!!!!!!!!!!!!!!!
-- Remove all floyd-hoare logic with contract.. mention how floyd-hoare logic was an inspiration...
+- Doesnt mind a verbose report, but highlight the key factors. Use more italics and bold -- dont overuse them -- but use them to highlight the key phrases!  
+- ITS GOOD THAT PRE AND POST CONDITIONS WORK AT RUNTIME!!!!!!!!!!!!!!!!! ✅
+- Remove all floyd-hoare logic with contract.. mention how floyd-hoare logic was an inspiration... ✅
 - Use italics use italics use italics
-- @init => @init
+- @v_entry => @init ✅ 
 - give predicates names
-- use contracts going forward instead of floyd-hoare and verified function
+- use contracts going forward instead of floyd-hoare and verified function ✅
 - which big tools have been verified? CompSearch (C Compiler)
 # Abstract
-- not capturing the essence of whats in the project
-- promote the notion of distributed algorithms (prototyping..., replacing a specification modelling language with this framework.) 
-- Express using properties (safety, liveness)
+- not capturing the essence of whats in the project ✅
+- promote the notion of distributed algorithms (prototyping..., replacing a specification modelling language with this framework.)  ✅
+- Express using properties (safety, liveness) ✅
 - Concurrent normally means shared memory=> distributed can highlight message passing
-- want to be clear about making the claim on the LANGUAGE or the TOOL! which bit do you care about the most (naranker thinks the language, elixirv). say i touch nothing in the elixir program to make it verification aware - all we require is various bits of information. **Just use the one word (verlixir) for both.** Naranker thinks get rid of LTLixir naming, just run with verlixir.
-- "This project proposes and evaluates ElixirV,"
+- want to be clear about making the claim on the LANGUAGE or the TOOL! which bit do you care about the most (naranker thinks the language, elixirv). say i touch nothing in the elixir program to make it verification aware - all we require is various bits of information. **Just use the one word (verlixir) for both.** Naranker thinks get rid of LTLixir naming, just run with verlixir. ✅
+- "This project proposes and evaluates ElixirV," ✅
 
 Chapter titles:
 Verlixir / Design of Verlixir (4 and 5) could do with re-naming to help with the distinction. Some of the section titles are also more bland... be cooler (can use propose a question). Some best PHDs do: "the problem is the following...". 
 example: "Why verification-aware languages?" -- then explain this paradigm of why interlinking is better than separate. 
 
-Look at the wording: rigerous not vigerous!!!!
+Look at the wording: rigerous not vigerous!!!! ✅
 
 It's overworded... between sequential nodes ... => sequential processes
 # Introduction
 - Why distributed ? because of the cloud based things. 
 - Naranker lecture slides, lecture 1 have examples of 'why distributed?'. Need to consider these factors ontop of functional correctness
 - 'Message passing can be more simple to reason about' -- find a reference. If someone asks me about it, need to be able to quote it.
-- Don't need to give the description of Elixir in the introduction. Instead, we want to introduce the project: "we are going to introduce a verification aware programming language for message passing". Currently, too much information. Introduction can instead explicitly say the problem statement. 
-- "We introduce Verlixir, an analysis tool"... is verlixir not actually a 'verification-aware language'. Don't flip between modes of phrasing. Just call verlixir a verificaiton-aware language. Even though it's elixir, we argue similar languages can be swapped out for elixir (i.e. Go, CSP). Clarity about what Verlixir is, keep the story around that.
+- Don't need to give the description of Elixir in the introduction. ✅
+- Instead, we want to introduce the project: "we are going to introduce a verification aware programming language for message passing". 
+- Currently, too much information. Introduction can instead explicitly say the problem statement.  
+- "We introduce Verlixir, an analysis tool"... is verlixir not actually a 'verification-aware language'. Don't flip between modes of phrasing. Just call verlixir a verificaiton-aware language. Even though it's elixir, we argue similar languages can be swapped out for elixir (i.e. Go, CSP). Clarity about what Verlixir is, keep the story around that. ✅
 #### Objectives
 - Think of goals in a much higher way. Capture the interesting and cool things. create a list of interesting things to talk about, pull from the list into the objectives. 
 - Remove the stuff about GO from the introduction. (move them later on)! What ElixirV supports could be interesting in the objectives (highlighted as an overview)
@@ -140,12 +142,12 @@ REstructure:
 # Chapter 5
 - Sometimes wording was changed / heading was changes. some stuff referred to previous stuff ... sometimes things are repetititve... too much text
 - Just give intuition
-- Spec doesn't appear enough (i.e. is metaprogramming used?)
+- Spec doesn't appear enough (i.e. is metaprogramming used?) 
 - bigger picture stuff is ok
-- design diagrams should use boxes for the components labelled arrows for information passing
-- "The" Elixir Compiler, Include the VaeLib in The Elixir Compiler. "Verlixir Translator". Label promela model, elixir program... Verlixir gets COMMAND LINE INPUTS / ELIXIR FILE / SPECIFICATION .... SPIN gets MY PROMELA LIBRARY / PROMELA CODE ......
-- Label the SPIN MODEL CHECKER in diagram
-- diagrams should highlight the approach
+- design diagrams should use boxes for the components labelled arrows for information passing ✅
+- "The" Elixir Compiler, Include the VaeLib in The Elixir Compiler. "Verlixir Translator". Label promela model, elixir program... Verlixir gets COMMAND LINE INPUTS / ELIXIR FILE / SPECIFICATION .... SPIN gets MY PROMELA LIBRARY / PROMELA CODE ...... ✅
+- Label the SPIN MODEL CHECKER in diagram ✅
+- diagrams should highlight the approach ✅
 
 - Show less concrete side by sides of translations?
 - Can i add more diagrams / more fragments of code instead of lots of text
@@ -198,3 +200,5 @@ APPENDIX FOR EACH ALGORITHM!
 # TODOs
 Replace all Floyd-Hoare style => contracts
 name predicates everywhere 
+elixir chapter
+intro frontends

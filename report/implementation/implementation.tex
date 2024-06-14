@@ -4,14 +4,14 @@ This chapter provides an in-depth insight into the design decisions that were ma
 We will now introduce where the new tools fit into the grater toolchain. Figure \ref{fig:high_level} shows a high-level overview of the toolchain. Given an LTLixir specification, there are two main paths to be taken. Either, the underlying elixir program can be compiled and ran on the ERTS as normal, or the program can be modelled by Verlixir and verified with Spin.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{images/high_level_system.png}
+    \includegraphics[width=0.9\textwidth]{images/high_level_system_v2.drawio.png}
     \caption{High-level overview of the verifiable Elixir toolchain.}
     \label{fig:high_level}
 \end{figure}
 Figure \ref{fig:low_level} provides an in-depth insight into the architecture underlying Verlixir.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\textwidth]{images/low_level_system.png}
+    \includegraphics[width=1\textwidth]{images/detailed_diagram_v2.drawio.png}
     \caption{Verlixir design.}
     \label{fig:low_level}
 \end{figure}
