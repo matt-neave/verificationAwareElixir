@@ -39,61 +39,61 @@ It's overworded... between sequential nodes ... => sequential processes
 
 
 #### Background
-- Not sure why the CSP section is used. The notion of actors and message-passing is, but not the formal math. 
-- Could compare and contract shared memory and message passing styles (i.e. CSP to shared memory).
-- The formal math is never used.
-- Explain how Elixir and Go are inspired by CSP.
-- CSP should be mentioned, but not formally introduced?
-- CSP and Elixir are very different. 
+- Not sure why the CSP section is used. The notion of actors and message-passing is, but not the formal math.  ✅
+- Could compare and contract shared memory and message passing styles (i.e. CSP to shared memory). ✅
+- The formal math is never used. ✅
+- Explain how Elixir and Go are inspired by CSP. ✅
+- CSP should be mentioned, but not formally introduced? ✅
+- CSP and Elixir are very different.  ✅
 - Would rather focus on the title straight away... verification-awareness and actor based message passing. 
 
-- Solution is verification is typically model checking. But also proof assistants are a solution.
-- Concurrency ok. LTL ok. Safety and liveness ok. Fairness ok.
+- Solution is verification is typically model checking. But also proof assistants are a solution. 
+- Concurrency ok. LTL ok. Safety and liveness ok. Fairness ok. ✅
 
 - 'By using both safety and liveness properties, we can define a 'correct' system, through the evaluation of these temporal formulae.' could go at the start too!! very important to the definition of distributed algorithms.
 
 - Didnt explain what probabilistic and concurrent support mean in the model checking section. Explain before / after the table what they mean, why they are relevant.. why some systems care about them. Why the need and want them in wireless sensor networks for example
 - PRIMSM sub too short. Bulk it out
 - give an example of what PRISM and BLAST can give answers to
--  random distributed algorithms WRONG =>>> should say "randomised distributed algorithms".
-- Don't use X discovered Y... use formulate / create / designed ect..
+-  random distributed algorithms WRONG => should say "randomised distributed algorithms" ✅
+- Don't use X discovered Y... use formulate / create / designed ect.. ✅
 - Forget about TLA, only mention TLA+.
 - Say 'for example'!  
 - instead of 2.3.2, give it a title (i.e. proof assistants)
 - Hoare logic: naranker doesnt understand. Remove hoare logic. My PRE and POST conditions dont really mean the same as his... 
-- **Could argue the notion of defv as a CONTRACT like in the CONTRACT PARADIGM! 'design by contract' is the name!, early languages use eiffel by bertrand meyer.**
-- Use 'related work' instead of 'existing work'.
+- **Could argue the notion of defv as a CONTRACT like in the CONTRACT PARADIGM! 'design by contract' is the name!, early languages use eiffel by bertrand meyer.** ✅
+- Use 'related work' instead of 'existing work'. ✅
 - Remove the examples of dafny, lean ect.
 - Dont bother with the forall quantifer.... get rid of the listings....
 
 - Gomela deserves it's own section... move the introduction part on Gomela to it's own "related work" section.
 
-- Add design by contract to related work too. Add more about proof assitants to related work. We can remove 'Additional Verication Techniques' and push proof assisants and contracts to related.
+- Add design by contract to related work too. Add more about proof assitants to related work. We can remove 'Additional Verication Techniques' and push proof assisants and contracts to related. 
 
 # Chapter 3
-- Doesn't like the title. 
-- It's a primer on Elixir and Promela.
+- Doesn't like the title.  ✅
+- It's a primer on Elixir and Promela.✅
 - Mention parts of Elixir that aren't supported?
-- Call the chapter **'Elixir and Promela'**
+- Call the chapter **'Elixir and Promela'**✅
 - Talk about unsupported features for both tools. (Liven some interest).
-- Add more to the Promela chapter. Talk about arrays ect... talk about things it has and I won't use.
-- Control flow example is not good. Give a concrete example instead of the half baked one.
-- Add else to the if statement.
-- Show a DO too.
-- Talk about how else is a negation of all the truths of the other ifs.
-- Put both side by side! (if and do)
-- Put !! and ?? in the chapter.
-- Add active proctypes, atomic (don't need their own sections)
-- Mention what parts have been built into promela and what parts are pure limitations. At the end mention the key limitations that I have extended!
+- Add more to the Promela chapter. Talk about arrays ect... talk about things it has and I won't use. ✅
+- Control flow example is not good. Give a concrete example instead of the half baked one. ✅
+- Add else to the if statement. ✅
+- Show a DO too. ✅
+- Talk about how else is a negation of all the truths of the other ifs. ✅
+- Put both side by side! (if and do) ✅
+- Put !! and ?? in the chapter. ✅
+- Add active proctypes, atomic (don't need their own sections) ✅
+- Mention what parts have been built into promela and what parts are pure limitations. At the end mention the key limitations that I have extended! ✅
 
 - Go through the language first and then the implementation? (PUSH 3.2.2 FIRST!!!!!!!!!!!!!!!!!)
 - Swap the order of the 3.2.2 and the intro / 3.2.1!!! want language features!!!!!!!!!!! 
 - Mention extra unsupported features!!!!!!!!!!!!!!1
 - Node.spawn is not relevant???????? wtf (talk about the elixir toolchain)
-- **3.2.1 SHOULD be in the BACKGROUND!!!!!!!** 
+- **3.2.1 SHOULD be in the BACKGROUND!!!!!!!**  ✅
 - If the elixir chapter becomes short, it could move into the subsequent chapter or the background chapter.
 
-- **Give the example of a promela program from the Promela manual. (Not one I care about)**
+- **Give the example of a promela program from the Promela manual. (Not one I care about)** ✅
 - **Similar for Elixir, show an Elixir program (not one I care about) to give examples of what these things look like. (could put the client server one)... or one from a book / the website..... could show half a page example and mention a few things about it alongside some discussion.** 3/4s of a page for each example.
 # Chapter 4
 
@@ -192,3 +192,7 @@ Lots of stuff in conclusions... reference everything we aimed to do, what we hav
 
 
 APPENDIX FOR EACH ALGORITHM!
+
+
+# TODOs
+Replace all Floyd-Hoare style => contracts

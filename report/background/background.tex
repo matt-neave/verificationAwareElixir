@@ -184,10 +184,10 @@ Where BLAST differs from PAT, is that it no longer relies on process algebra. Th
 BLAST falls short when model-checking large C programs. More importantly, it is unable to provide any guarantees on concurrent programs. We are primarily concerned with concurrent systems in this report, as Elixir is a language that is designed for building concurrent systems.
 
 \subsubsection*{\textbf{PRISM}}
-PRISM is a probabilistic model checker, a tool for formal modelling and analysis of systems that exhibit random behaviour or probabilistic behaviour \cite{prism}. It has been used to analyse systems implementing random distributed algorithms.
+PRISM is a probabilistic model checker, a tool for formal modelling and analysis of systems that exhibit random behaviour or probabilistic behaviour \cite{prism}. It has been used to analyse systems implementing randomised distributed algorithms.
 
 \subsubsection*{\textbf{TLC}}
-In 1980, Leslie Lamport discovered the Temporal Logic of Action (TLA) \cite{tla}. TLA is a logic system for specifying and reasoning about concurrent systems. Both the systems and their properties are represented in the same logic, so that the assertion that a system meets its specification, can be expressed by a logical implication.
+In 1980, Leslie Lamport formulated the Temporal Logic of Action (TLA) \cite{tla}. TLA is a logic system for specifying and reasoning about concurrent systems. Both the systems and their properties are represented in the same logic, so that the assertion that a system meets its specification, can be expressed by a logical implication.
 \\ \\
 TLA is capable of specifying complex systems but in a typically verbose manner. Leslie Lamport introduced TLA+ \cite{tlaplus}, combining mathematical ideas with concepts from programming languages to create a specification language that would allow mathematicians to write specifications in 20 lines as opposed to 20 pages.
 \\ \\
@@ -197,34 +197,23 @@ Furthering on from Leslie Lamport's discovery of these specification languages, 
 Spin is an efficient verification system for models of distributed software systems. It has been used to detect design errors in applications ranging from high-level descriptions of distributed algorithms to detailed code \cite{spin}. Spin has a specification language, Process Meta Language (Promela), which the model checker uses to prove the correctness of asynchronous process interactions. Spin supports asynchronous process communication through channels, where processes can send and receive messages. Spin constructs labelled transition systems for respective processes from Promela specifications, which it goes on to use for scheduling and to reason about properties of the model. Because many programming languages, such as GO \cite{go} rely on the creation of channels for asynchronous communication between processes, Promela becomes a natural solution to modelling these systems.
 \subsubsection{Summary}
 We have discussed a selection of model-checkers and what their primary focus is. Many existing model-checkers have been originally designed to prove specifications over sequential models. Some have taken this further and applied model checking directly over programming languages, such as BLAST. Other model-checkers have introduced some primitives for reasoning about concurrency. TLC allows for the specification of processes and using structures can begin to specify shared memory. Similarly, Spin allows processes to be specified and supports the creation of channels for communication. Despite this, none of the model checkers discussed, include message-passing as a first-class construct. To reason about message-passing models, such as the actor model, work has to be done to formalise actor-based constructs. This makes specifying actor-based systems, such as systems written in Elixir, a non-trivial task.
-\subsection{Additional Verification Techniques}
-Alongside model checking, there are other techniques that can be used in system verification, which are worth briefly mentioning. 
-\subsubsection{Theorem Proving}
-Theorem proving is another process to verify programs. In theorem proving, axioms are applied to a set of statements to determine if a particular statement holds. For example, Z3 \cite{z3} is a satisfiability modulo theories (SMT) solver developed by Microsoft that can verify propositional logic assertions.
-\subsubsection{Hoare Logic}
-Hoare Logic was discovered in 1969 by Tony Hoare \cite{hoare_logic}. Hoare Logic defines the Hoare Triple, an essential idea in describing how code execution changes the state of a computation. A Hoare Triple is composed of a pre-condition assertion $P$, a post-condition assertion $Q$, and a command $C$.
-\[
-\{P\} C \{Q\}
-\]
-\\ \\
-Hoare Logic provides axioms and inference rules required to construct a simple imperative programming language. If $P$ holds in the given state and $C$ terminates, then $Q$ will hold after. Below is an example of a simple Hoare Triple for the \texttt{skip} command, which leaves the program state unchanged.
-\[
-    \{P\} \text{skip} \{P\}
-\]
-Note how the post-condition is the same as the precondition for this command.
-\\ \\
-Hoare describes many more rules that allow for assignment, composition, consequence and so forth. These rules have led to the development of modern-day theorem provers, such as Z3.
-\\ \\
-To help understand, we show a concrete example of a Hoare Triple. In this example, the pre-condition $P$ and post-condition $Q$ represent the known program state for a variable, $x$. We informally describe a command $C$ as an assignment to $x$ that modifies the known state of the program.
-\[
-\{ x \rightarrow 1 \} \text{ x := x + 1 } \{ x \rightarrow 2 \}
-\]
-To formalise this notation, we should define rules for commands, but for brevity, these have been omitted.
 
-\section{Existing Work} \label{sec:existing_work}
+\section{Related Work} \label{sec:existing_work}
 Much work has gone into model checking, theorem-proving and verifying the implementations of systems. For Elixir, there are tools such as dialyzer \cite{dialyzer}, which statically analyse Elixir programs for type errors or dead code. Whilst these tools provide Elixir developers better guarantees, it does not verify the correctness of a system as a whole. Elixir also has libraries for property-based testing, such as PropEr \cite{proper}, which can be used to generate random test cases for a system. Property-based testing randomly generates inputs to test a system, which can be useful for finding edge cases that unit tests may not cover. However, property-based testing does not provide guarantees about the correctness of a system, instead, it is used to find bugs in code. Work has also gone into verifying message-passing in Elixir, using binary session types \cite{binary_session_types}. This approach ensures two processes, communicating over compatible protocols, avoid certain communication errors (i.e. hanging messages), but has not been extended to multiparty session types, so is not appropriate for verifying all actor-based systems.
 \\ \\
-There is also existing work in the greater verification of real-world software. Much of this is done on sequentially executed programs as concurrency introduces a new level of complexity. For example, both C programs and GO programs have previously been targetted as good options for model checking \cite{gomela, c_to_promela}. While these tools provide system guarantees, they primarily focus on detecting deadlocks or dataraces within a system and do not support other safety or liveness properties.  
+There is also existing work in the greater verification of real-world software. Much of this is done on sequentially executed programs as concurrency introduces a new level of complexity. For example, both C programs and GO programs have previously been targetted as good options for model checking \cite{gomela, c_to_promela}. While these tools provide system guarantees, they primarily focus on detecting deadlocks or dataraces within a system and do not support other safety or liveness properties.
+\subsection{Theorem Proving}
+Theorem proving takes a formal approach to program verification. In theorem proving, axioms are applied to a set of statements to determine if a particular statement holds. For example, Z3 \cite{z3} is a satisfiability modulo theories (SMT) solver developed by Microsoft that can verify propositional logic assertions.
+\subsection{Design by Contract}
+Design by Contract (DbC) is an approach to software design, where software components are defined using formal specifications \cite{dbc}. A contract is composed of three elements.
+\begin{itemize}
+    \item \textbf{Pre-condition}: A condition that must be true before a function is executed.
+    \item \textbf{Post-condition}: A condition that must be true after a function is executed.
+    \item \textbf{Invariant}: A condition that must be true before and after a function is executed.
+\end{itemize}
+These properties are known as assertions. Some programming languages directly support assertions, such as Eiffel \cite{eiffel}. When formalising a contract, an agreement is established between two parties, the client and the contractor. The client is entitled to receive a result that satisfies the post-condition. Similarly, the contractor is protected by the pre-condition, such that, no unintended behaviour occurs.
+\\ \\
+Design by contract is a contribution to software reliability. In modern languages, the client and contractor are often functions or methods, which call one another. Verification-aware languages such as Dafny \cite{dafny_paper} support the specification of contracts, on methods, which can be verified.
 \subsection{Verification-aware Languages}
 Verification-aware languages are a new trend in programming languages, where the language is designed to support proving the correctness of a program. Examples of these include Lean, Dafny and Boogie. We will explore some of these languages in detail to understand how verification-aware languages can be a powerful tool to reason about the correctness of a system. The conventional alternatives involve either disregarding formal methods entirely or hand translating a program into a specification language, such as TLA+. A good verification-aware language should naturally integrate the system specification with the implementation. The aim is to reduce the burden on programmers to maintain separate specifications alongside evolving codebases.
 \subsubsection{Lean}

@@ -1,5 +1,5 @@
-\chapter{Concurrent Programming and Verification}
-In chapter \ref{chap:verlixir}, we will introduce the Verlixir tool. Verlixir involves the parsing of Elixir programs, which are translated into a formal model. This model is written in Process Meta Language (Promela). This chapter will introduce both Elixir and Promela. We will go through the core concepts and syntactic elements that Verlixir relies upon to provide a verification-aware Elixir. 
+\chapter{Promela and Elixir} \label{chap:promela_elixir}
+In chapter \ref{chap:verlixir}, we will introduce the Verlixir tool. Verlixir involves the parsing of Elixir programs, which are translated into a formal model. This model is written in Process Meta Language (Promela). This chapter will introduce both Promela and Elixir. We will go through the core concepts and syntactic elements that Verlixir relies upon to provide a verification-aware Elixir. 
 \section{Promela} \label{sec:promela}
 Promela is the verification modelling language used by the Spin model checker, to specify concurrent processes modelling distributed systems \cite{spin}. This section will discuss some of the core features that allow systems to be modelled and verified with Spin. This section aims to give an overview of the syntax and control of Promela, so any specifications in later sections or the code artifact can be read.
 \subsection{Types and Variables}
@@ -9,17 +9,38 @@ Promela is statically typed. Variables can be declared once within the current s
 \text{int a} = 2;
 \end{aligned}
 \]
-\subsection{Control Flow}
-Promela supports some basic control flow concepts. Firstly, the \texttt{skip} expression can be used with no effect when executed, other than possibly changing the control of an executing process. The selection construct \texttt{if} can be used to evaluate expressions and execute sequences based on the evaluation of these expressions. The syntax of an if statement is unique in comparison to a typical programming language.
+Promela supports \textbf{arrays}. Arrays are typed and declared with a fixed size. Array bounds are constant, so the size cannot change. Only single dimensional arrays are supported. The syntax for declaring an array is as follows.
 \[
 \begin{aligned}
-& \text{if} \\
-& :: \text{exp\_1 ->} \dots \\
-& :: \text{exp\_2 ->} \dots \\
-& \text{fi} \\
-\end{aligned}    
+\text{int array[10];}
+\end{aligned}
 \]
-Repetition can be achieved either through the \texttt{do} construct, through the use of labels or with \texttt{for} loops.
+We can also extend the basic types using \texttt{typedef}. This allows us to define records of multiple nested types. We use these records to build a Promela library, to support model checking Elixir programs, using \textbf{embedded C} code and Promela \textbf{inlines}. Embedded C code cannot be model checked, but Promela inlines can be. These features allow us to extend Promela, and avoid some of the limitations discussed in section \ref{sec:promela_limitations} 
+\subsection{Control Flow}
+Promela supports some basic control flow concepts. Firstly, the \texttt{skip} expression can be used with no effect when executed, other than possibly changing the control of an executing process. The selection construct \texttt{if} can be used to evaluate expressions and execute sequences based on the evaluation of these expressions. The syntax of an if statement is unique in comparison to a typical programming language.
+\begin{lstlisting}[language=promela, xleftmargin=.3\linewidth]
+if
+    :: 1 + 1 < 3 ->
+        printf("Condition 1...");
+    :: else -> 
+        printf("No conditions matched");
+fi
+\end{lstlisting}
+In Promela, $else$ is a reserved keyword that can be used in any condition. An $else$ condition will negate all the previous conditions.
+Repetition can be achieved either through the \texttt{do} construct, through the use of labels or with \texttt{for} loops. We will primarily focus on \texttt{do}, as it is the most suitable for our modelling needs.
+\begin{lstlisting}[language=promela, xleftmargin=.3\linewidth]
+do
+    :: a < 10 -> 
+        a = a + 1;
+    :: a < 10 ->
+        a = a + 2;
+    :: else -> 
+        break;
+od
+\end{lstlisting}
+Unlike \texttt{if}, which selects sequentially, \texttt{do} will non-deterministically select a true branch to execute. This means for the above example, for a given execution, we cannot say how many iterations are performed. The \texttt{break} keyword is reserved for explicitly breaking out of the loop.
+\\ \\
+An important concept in contract specification is the \textbf{assert} keyword. An assertion is a logical statement that is expected to be true at a given point in the program. If an assertion is false, a violation is reported.
 \subsection{Processes}
 An imperative component of understanding the power of the Spin model checker is understanding how processes can run concurrently. Every Promela model requires an initial process that is spawned in the initial system state and determines the control of the program from the initial state. The \texttt{init} keyword is reserved for this purpose. Other processes can be defined using the \texttt{proctype} keyword and then spawned with \texttt{run}. Each process is assigned a process id (pid) which can be accessed within the context of a process using globally defined read-only variable \texttt{\_pid}. We can now define two processes, a process active in the initial state and a second process that is spawned.
 \begin{lstlisting}[language=promela, xleftmargin=.3\linewidth, caption={Defining and spawning processes in Promela}., label={fig:promela_processes}]
@@ -35,9 +56,11 @@ An imperative component of understanding the power of the Spin model checker is 
         printf("Process 1 spawned at %d\n", p1);
     }
 \end{lstlisting}
-Multiple processes can be declared to run in the initial state by marking them as \texttt{active} processes. Processes run independently of one another, so a parent process terminating will not necessarily result in the termination of a child. Spin sets a limit of 255 concurrently executing processes. Multiple processes can be spawned in a single transition by using the \texttt{atomic} construct, which will ensure that no spawning process is scheduled, until all atomic processes have been scheduled. Similarly to atomicity, \texttt{d\_step} can be used to enforce multiple statements are treated as a single indivisible step. Unlike \texttt{atomic}, \texttt{d\_step} cannot block or jump.
+Processes run independently of one another, so a parent process terminating will not necessarily result in the termination of a child. Spin sets a limit of 255 concurrently executing processes. Multiple processes can be spawned in a single transition by using the \textbf{atomic} construct, which will ensure that no spawning process is scheduled, until all atomic processes have been scheduled. Similarly to atomicity, \texttt{d\_step} can be used to enforce multiple statements are treated as a single indivisible step. Unlike \texttt{atomic}, \texttt{d\_step} cannot block or jump.
+\\ \\
+Instead of \texttt{init}, we could have used an \textbf{active proctype}. Every \textbf{active proctype} is spawned in the initial state, allowing for more than one process to initially run.
 \subsection{Channels}
-The final concept to briefly discuss, is the asynchronous communication primitive, channels. Recall Hoare's definition of channels \ref{csp_section}, defining a channel $c$ that can input and output values. Promela echos this definition, allowing channels to be specified using the predefined data type \texttt{chan}. To correctly specify communication, we often need to allow messages of multiple types to be written to channels. For this reason, Promela introduces \texttt{mtype} that allows for the introduction of symbolic names for constant values.
+The final concept to briefly discuss, is the asynchronous communication primitive, channels. Promela allows channels to be specified using the predefined data type \texttt{chan}. To correctly specify communication, we often need to allow messages of multiple types to be written to channels. For this reason, Promela introduces \texttt{mtype} that allows for the introduction of symbolic names for constant values.
 \[
 \text{mtype = \{ BROADCAST \};}
 \]
@@ -56,8 +79,44 @@ Similarly, we read messages from the channel in a first-in, first-out (FIFO) ord
 & \text{global\_broadcast ? BROADCAST, x;}
 \end{aligned}
 \]
-Where the variable $x$ stores the resulting \texttt{int}, assuming the first message in the channel is of type \texttt{BROADCAST}.
-\subsection{Limitations}
+Where the variable $x$ stores the resulting \texttt{int}, assuming the first message in the channel is of type \texttt{BROADCAST}. Sending and receiving from channels also supports an alternative flavour. The (!!) and (??) operators are used for sorted insertion and random selection. \textbf{Sorted insertion} (!!), will insert a message into the channel in a sorted order, based on the first field of the message. \textbf{Random receive} (??), is not random. As opposed to FIFO, it will select the first message in the channel that matches a given pattern. We call this first-in, first-fireable-out (FIFFO).
+\subsection{Promela Example}
+We will now provide a simple example of a Promela specification. The specification models Dijkstra's Semaphore. It consists of two labelled processes, and an initial process to coordinate the system. A shared channel is used, with a buffer size of 0, which means the channel is blocking (rendezvous). Listing \ref{lst:dijkstra_semaphore} shows the Promela specification.
+\begin{lstlisting}[language=promela, xleftmargin=.3\linewidth, caption={Dijkstra's Semaphore in Promela}, label={lst:dijkstra_semaphore}]
+#define p	0
+#define v	1
+
+chan sema = [0] of { bit };
+
+proctype dijkstra() {	
+    byte count = 1;
+
+    do
+    :: (count == 1) ->
+        sema!p; count = 0
+    :: (count == 0) ->
+        sema?v; count = 1
+    od	
+}
+
+proctype user() {	
+    do
+    :: sema?p;
+        /* critical section */
+    sema!v;
+        /* non-critical section */
+    od
+}
+
+init {	
+    run dijkstra();
+    run user();
+    run user();
+    run user()
+}
+\end{lstlisting}
+The semaphore guarantees that only one of the user processes can enter its critical section at a time.
+\subsection{Limitations} \label{sec:promela_limitations}
 Promela is a powerful language for modelling concurrent systems, but it has limitations for capturing the full complexity of a real-world system. In general, hand-translations of a system into Promela can avoid some of these limitations with careful design. However, we are approaching this limits from an Elixir perspective, where features of Elixir may not be easily translated into Promela.
 \begin{itemize}
     \item \textbf{Compute}: Promela is not designed to model complex computations. It does not support floating-point arithmetic, so we are limited to working with integers.
@@ -67,6 +126,7 @@ Promela is a powerful language for modelling concurrent systems, but it has limi
     \item \textbf{Probability}: there is no mechanism for modelling probabilistic behaviour, all correctness claims are checked unconditionally.
     \item \textbf{Time}: there is no notion of a system block, or related time properties in Promela. This means we cannot model sleeping threads.
 \end{itemize}
+In chapter \ref{chap:design}, we will discuss how we can overcome some of these limitations. In particular, how we overcome the lack of functions and dynamic memory, by introducing a Promela library, which handles these features.
 \subsection{Summary}
 This basic introduction to the syntax of the Promela modelling language, aims to make the reader familiar with the syntax involved in writing Promela specifications. It is not an exhaustive guide but should form a basis for understanding specifications present in a later section or the code artifact.
 

@@ -167,14 +167,14 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Potential todos.md",
+                "file": "last meeting.md",
                 "mode": "source",
                 "source": false
               }
             }
           }
         ],
-        "currentTab": 8
+        "currentTab": 13
       }
     ],
     "direction": "vertical"
@@ -300,12 +300,12 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "f475edbff1f142c9",
+  "active": "0a04873970cf7644",
   "lastOpenFiles": [
+    "Potential todos.md",
     "last meeting.md",
     "Report Todos.md",
     "Random notes.md",
-    "Potential todos.md",
     "Verification of Elixir paper.md",
     "Limitations.md",
     "error.md",
