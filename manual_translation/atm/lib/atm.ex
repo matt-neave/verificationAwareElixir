@@ -1,6 +1,6 @@
 defmodule User do
 
-  @v_entry true
+  @init true
   @spec start() :: :ok
   def start do
     possible_amounts = [1500, 300]

@@ -8,7 +8,7 @@ end
 
 defmodule Coordinator do
   @spec start() :: :ok
-  @v_entry true
+  @init true
   def start do
     spawn(Client, :start_client, [])
     receive do

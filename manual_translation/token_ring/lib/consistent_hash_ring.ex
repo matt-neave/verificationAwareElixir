@@ -65,7 +65,7 @@ end
 
 defmodule Client do
 
-  @v_entry true
+  @init true
   @spec start() :: :ok
   @ltl "[](r1 -> <>(p1))"
   @ltl "[](r2 -> <>(p3))"

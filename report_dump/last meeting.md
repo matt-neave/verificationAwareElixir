@@ -3,7 +3,7 @@ Abstract needs to be much stronger. Sell the achievements
 - ITS GOOD THAT PRE AND POST CONDITIONS WORK AT RUNTIME!!!!!!!!!!!!!!!!!
 - Remove all floyd-hoare logic with contract.. mention how floyd-hoare logic was an inspiration...
 - Use italics use italics use italics
-- @v_entry => @init
+- @init => @init
 - give predicates names
 - use contracts going forward instead of floyd-hoare and verified function
 - which big tools have been verified? CompSearch (C Compiler)
@@ -38,7 +38,7 @@ It's overworded... between sequential nodes ... => sequential processes
 - Not sure about the diagram... (just remove it)!  ✅
 
 
-#### Background
+#### Background ✅
 - Not sure why the CSP section is used. The notion of actors and message-passing is, but not the formal math.  ✅
 - Could compare and contract shared memory and message passing styles (i.e. CSP to shared memory). ✅
 - The formal math is never used. ✅
@@ -99,27 +99,27 @@ It's overworded... between sequential nodes ... => sequential processes
 
 - Want to talk about ElixirV, the verification aware version.
 - Too verbose.
-- The verifiable feature set could appear in chapter 4... whereas chapter 3 covers more general elixir...
-- any programs written in this style,,, we can automatically detect deadlocks for ANY program with ONE line... free of charge!
+- The verifiable feature set could appear in chapter 4... whereas chapter 3 covers more general elixir... 
+- any programs written in this style,,, we can automatically detect deadlocks for ANY program with ONE line... free of charge! ✅
 REstructure:
-- mention the feature set
-- this is a useful feature set to build distributed algorithms
-- can capture all async communication, or free (Without doing anything)
+- mention the feature set ✅
+- this is a useful feature set to build distributed algorithms ✅
+- can capture all async communication, or free (Without doing anything) ✅
 - go into the example with 3 clients and 1 server
-- introduce both modes (simulation and verification)
-- feasible to do some simulation with randomness
-- 3 modes of operation for the tool. 
+- introduce both modes (simulation and verification) ✅
+- feasible to do some simulation with randomness 
+- 3 modes of operation for the tool.  
 - include all this in the introduction to the chapter, then build up the examples!!!!!!
-- By chapter 5,we should know everything...!
+- By chapter 5,we should know everything...! 
 - too verbose, cut down.
 - the simple examples can be short af
 - **SELL simulator mode!**
-- SELL the MODES!!
+- SELL the MODES!! 
 - explanations need a bit shortering
 - **function types deserver their own section**!!!!!!!1
 - **TYPES should be in the verifiable feature set!!!**
-- mention how types are a requirement
-- **REMOVE THE ADD EXAMPLE**
+- mention how types are a requirement  ✅
+- **REMOVE THE ADD EXAMPLE**  ✅
 - Wants to see the check\_clients code too! good example of recursion!
 - Move types to own section( could go into the chapter 3, mention its a requirement)!!!!!!!!!!! mentioned theyre not used by the elixir compiler, but they are used by special tools like elixirV and dialyzer.
 - Remove the "generating trace"... or show "..." and "mention why the trace is omitted".

@@ -1,5 +1,5 @@
 defmodule BasicDeadlock do
-  @v_entry true
+  @init true
   @spec start_1() :: :ok
   def start_1 do
     IO.puts "BasicDeadlock running"

@@ -96,7 +96,7 @@ end
 
 
 defmodule Coordinator do
-  @v_entry true
+  @init true
   @spec start() :: :ok
   def start do
     n = 2

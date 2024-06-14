@@ -1,5 +1,5 @@
 defmodule Server5 do
-  @v_entry true
+  @init true
   @spec start_server() :: :ok
   @ltl "<>(alive_clients == 1)"
   def start_server do

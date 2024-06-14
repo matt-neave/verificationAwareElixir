@@ -112,7 +112,7 @@ end
 defmodule Learner7 do
 
   @spec start() :: :ok
-  @v_entry true
+  @init true
   def start do
     n_acceptors = 3
     quorum = 2

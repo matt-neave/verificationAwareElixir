@@ -48,7 +48,7 @@ defmodule RaftNode3 do
 end
 
 defmodule Client3 do
-  @v_entry true
+  @init true
   @spec start() :: :ok
   @ltl """
   !<>[](elected_term == previously_elected_term)

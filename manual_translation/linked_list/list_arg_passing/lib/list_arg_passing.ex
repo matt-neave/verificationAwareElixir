@@ -1,5 +1,5 @@
 defmodule ListArgPassing do
-  @v_entry true
+  @init true
   @spec start() :: :ok
   def start do
     ls = [1,2,3]

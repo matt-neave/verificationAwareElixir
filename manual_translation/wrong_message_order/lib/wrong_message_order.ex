@@ -1,5 +1,5 @@
 defmodule WrongMessageOrder do
-  @v_entry true
+  @init true
   def start do
     client = spawn(Client, :start_client, [])
     send client, {:wrong}

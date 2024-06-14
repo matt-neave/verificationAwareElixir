@@ -1,5 +1,5 @@
 defmodule Server do
-  @v_entry true
+  @init true
   def start_server do
     client = spawn(Client, :start_client, [])
   end

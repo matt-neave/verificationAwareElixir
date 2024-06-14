@@ -1,5 +1,5 @@
 defmodule ElixirList do
-  @v_entry true
+  @init true
   def start do
     ls = [1,2,3]
     x = Enum.at(ls, 2)

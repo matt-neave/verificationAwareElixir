@@ -1,6 +1,6 @@
 defmodule PassedFor do
   @spec start() :: :ok
-  @v_entry true
+  @init true
   def start do
     ls = for i <- 1..3 do
       i

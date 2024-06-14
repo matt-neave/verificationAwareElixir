@@ -5,13 +5,12 @@
 \contentsline {lstlisting}{\numberline {3.2}Dijkstra's Semaphore in Promela}{21}{lstlisting.3.2}%
 \contentsline {lstlisting}{\numberline {3.3}An example of spawn/1 and spawn/4 in Elixir for spawning a new lightweight process and a new Elixir node}{23}{lstlisting.3.3}%
 \contentsline {lstlisting}{\numberline {3.4}An example of spawn/1 and spawn/4 in Elixir for spawning a new lightweight process and a new Elixir node}{23}{lstlisting.3.4}%
-\contentsline {lstlisting}{\numberline {4.1}{Elixir definition for a server and client module}.}{25}{lstlisting.4.1}%
-\contentsline {lstlisting}{\numberline {4.2}{Declaring an entry point to the system}.}{26}{lstlisting.4.2}%
-\contentsline {lstlisting}{\numberline {4.3}{A simple Elixir system with a deadlock}.}{26}{lstlisting.4.3}%
-\contentsline {lstlisting}{\numberline {4.4}{Valid type specification examples}.}{28}{lstlisting.4.4}%
-\contentsline {lstlisting}{\numberline {4.5}Example LTL property}{29}{lstlisting.4.5}%
-\contentsline {lstlisting}{\numberline {4.6}Example usage of pre- and post-conditions in LTLixir}{30}{lstlisting.4.6}%
-\contentsline {lstlisting}{\numberline {4.7}Example of declaring concurrency parameters in specification.}{31}{lstlisting.4.7}%
+\contentsline {lstlisting}{\numberline {3.5}{Valid type specification examples}.}{24}{lstlisting.3.5}%
+\contentsline {lstlisting}{\numberline {4.1}{Elixir definition for a server and client module}.}{26}{lstlisting.4.1}%
+\contentsline {lstlisting}{\numberline {4.2}{Declaring an entry point to the system}.}{27}{lstlisting.4.2}%
+\contentsline {lstlisting}{\numberline {4.3}{A simple Elixir system with a deadlock}.}{27}{lstlisting.4.3}%
+\contentsline {lstlisting}{\numberline {4.4}Example LTL property}{29}{lstlisting.4.4}%
+\contentsline {lstlisting}{\numberline {4.5}Example of declaring concurrency parameters in specification.}{31}{lstlisting.4.5}%
 \contentsline {lstlisting}{\numberline {5.1}{Example of the \texttt {defv} syntax}.}{35}{lstlisting.5.1}%
 \contentsline {lstlisting}{\numberline {5.2}{Representing variable declarations using the match operator}.}{39}{lstlisting.5.2}%
 \contentsline {lstlisting}{\numberline {5.3}{The structure of a list}.}{43}{lstlisting.5.3}%

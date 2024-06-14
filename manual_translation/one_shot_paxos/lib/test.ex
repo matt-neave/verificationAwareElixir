@@ -1,7 +1,7 @@
 defmodule Test do
 
   @spec start() :: :ok
-  @v_entry true
+  @init true
   def start do
     a = 1
     b = 2

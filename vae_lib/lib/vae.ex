@@ -1,8 +1,8 @@
 defmodule Vae do
-  @v_entry true
-  defmacro v_entry?() do
+  @init true
+  defmacro init?() do
     quote do
-      Module.get_attribute(__MODULE__, :v_entry)
+      Module.get_attribute(__MODULE__, :init)
     end
   end
 end

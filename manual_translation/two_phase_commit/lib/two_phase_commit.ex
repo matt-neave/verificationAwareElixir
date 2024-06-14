@@ -128,7 +128,7 @@ defmodule Participant do
 end
 
 defmodule Client do
-  @v_entry true
+  @init true
   @spec start() :: :ok
   def start do
     n_participants = 3

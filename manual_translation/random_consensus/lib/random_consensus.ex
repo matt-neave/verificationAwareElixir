@@ -1,6 +1,6 @@
 defmodule Server do
 
-  @v_entry true
+  @init true
   def main do
     p1 = spawn(Node, :start, [])
     p2 = spawn(Node, :start, [])

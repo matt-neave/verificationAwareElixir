@@ -2,7 +2,7 @@ import VaeLib
 
 defmodule Predicates do
 
-  @v_entry true
+  @init true
   @ltl "<>[](p)"
   def hello do
     awake = 10

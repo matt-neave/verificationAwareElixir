@@ -1,5 +1,5 @@
 defmodule OneShotPaxos do
-  @v_entry true
+  @init true
   @spec run_example() :: :ok
   def run_example do
     # Start acceptors

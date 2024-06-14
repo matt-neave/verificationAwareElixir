@@ -46,7 +46,7 @@ defmodule RaftNode do
 end
 
 defmodule Client do
-  @v_entry true
+  @init true
   @spec start() :: :ok
   def start do
     # follower -> 0, candidate -> 1, leader -> 2

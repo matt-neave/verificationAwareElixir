@@ -170,5 +170,24 @@ Everything in Elixir is an expression. This means that every piece of code retur
     \item \textbf{Message passing}: Elixir's actor model supports message passing. Messages are sent and received between actors and their mailboxes.
     \item \textbf{Control flow structures}: Elixir supports many control flow expressions. For example, $if$, $case$, $unless$ and $for$. All of these introduce a new scope. They are expressions and can be matched on.
 \end{itemize}
+The feature set supported has been shown expressive enough to support real-world systems in chapter \ref{chap:eval}. We omit some features of Elixir. For example, data structures like sets and maps are not supported. We determined lists sufficient for our purposes. The supported feature set can be easily extended to support other data structures.
+\subsection{Type Specifications}
+Type specifications are imperative for the correctness of Verlixir specifications. Verlixir supports some basic types such as \texttt{integer()}, \texttt{boolean()}, \texttt{atom()} and \texttt{pid()}. 
+\\ \\
+In type specifications, message types are typed as \texttt{atom()}. The atom \texttt{:ok} is reserved to identify a \textbf{non-returning function}. In Elixir, all functions return a value, so in this context, a `non-returning function', is a function that's value is never matched. We briefly demonstrate the type specifications for two functions, the first, is a non-returning function with no arguments and the second function, takes two arguments and returns an integer.
+\begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={Valid type specification examples}.]
+    (*@\fbox{@spec bind\_server() :: :ok}@*)
+    def bind_server do
+        ...
+    end
+
+    (*@\fbox{@spec add(integer(), integer()) :: integer()}@*)
+    def add a, b do
+        ...
+    end
+\end{lstlisting}
+Notice ($::$) marks the return type of the function. If these values are matched in the function body, they should not be matched to a different type.
+\\ \\
+Within a correct Verlixir specification, any message should also be typed. To ensure this, any instance of a message should begin with an atom which we will refer to as the \textbf{message type}. For example, \texttt{\{:bind\}} and \texttt{\{:calculate, 10, 20\}} are valid specification messages. The message, \texttt{\{false, 15\}}, would be ignored by Verlixir, as it does not begin with an atom. 
 \subsection{Summary}
 In this chapter, we learned about Elixir, the programming language built on top of Erlang and we explored some basic approaches to designing concurrent systems with it. The next section will explore how these core tools can be used in tandem, to provide developers guarantees over large-scale, distributed Elixir-based systems.

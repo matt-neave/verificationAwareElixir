@@ -1,5 +1,5 @@
 defmodule BasicArray do
-  @v_entry true
+  @init true
   def main do
     x = [1, 2]
     y = [1 | x]

@@ -2,7 +2,7 @@ import VaeLib
 
 defmodule Parameterization do
 
-  @v_entry true
+  @init true
   @spec start() :: :ok
   def start do
     done = run_program()

@@ -6,7 +6,7 @@
   import VaeLib
 
   defmodule Server do
-    @v_entry true
+    @init true
     @ltl "(q)U([]p)"
     @spec start_server() :: :ok
     @params {:number_of_rounds}
@@ -175,7 +175,7 @@ end
 defmodule Learner do
 
   @spec start() :: :ok
-  @v_entry true
+  @init true
   def start do
     n_acceptors = 3
     quorum = 2
@@ -414,7 +414,7 @@ spin: trail ends after 826 steps
     defmodule Learner do
     
       @spec start() :: :ok
-      @v_entry true
+      @init true
       def start do
         n_acceptors = 3
         quorum = 2
@@ -611,7 +611,7 @@ spin: trail ends after 826 steps
   
   defmodule Client do
   
-    @v_entry true
+    @init true
     @spec start() :: :ok
     @ltl "[](r1 -> <>(p1))"
     @ltl "[](r2 -> <>(p3))"
@@ -1030,7 +1030,7 @@ ltl ltl_4 { [](r3 && n_nodes==4 -> <>(p4)) };
   
   defmodule ClientB do
   
-    @v_entry true
+    @init true
     @spec start() :: :ok
     @ltl "[](r1 -> <>(p1))"
     @ltl "[](r2 -> <>(p3))"
@@ -1291,7 +1291,7 @@ The program is livelocked, or an ltl property was violated. Generating trace.
   end
   
   defmodule Client do
-    @v_entry true
+    @init true
     @spec start() :: :ok
     def start do
       n_participants = 3
@@ -1573,7 +1573,7 @@ end
 
 
 defmodule Coordinator do
-  @v_entry true
+  @init true
   @spec start() :: :ok
   def start do
     n = 4
@@ -2039,7 +2039,7 @@ end
 end
 
 defmodule Client3 do
-  @v_entry true
+  @init true
   @spec start() :: :ok
   @ltl """
   !<>[](elected_term == previously_elected_term)

@@ -1,5 +1,5 @@
 defmodule Student do
-  @v_entry true
+  @init true
   def start do
     c_p = spawn(Calculator, :add, [])
     #tep send?(atom(), integer(), integet(), integer())
