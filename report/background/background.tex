@@ -140,11 +140,10 @@ Unlike the previous example, this process can always make progress so will not r
 \]
 This is a simple example of a specification, that we can write in a specification language and use in tandem with our model to check the correctness of using a model checker. For a given model $M$ and a property $\phi$, we formally define model checking as the process of computing if $M \models \phi$ (satisfiability).
 \subsection{A Comparison Of Model Checkers}
-Many model checkers have been invented for this reason, each with different focuses and specification languages. This section will comment on some of the more common model checkers and discuss their functionalities. We first provide an overview of the capabilities and limitations of many model checkers, before providing a more in-depth look into model checkers best aligned with the goals of this report.
+Many model checkers have been invented for this reason, each with different focuses and specification languages. This section will comment on some of the more common model checkers and discuss their functionalities. We first provide an overview of the capabilities and limitations of many model checkers, before providing a more in-depth look into model checkers best aligned with the goals of this report. Table \ref{tab:model_checkers} provides a comparison of some available model checkers.
 \\ \\
-\subsubsection{Overview}
-
-\begin{table}[ht]
+The table compares support for Linear Temporal Logic (LTL) and Computation Tree Logic (CTL). It also shows which model checkers support probabilistic systems. For example, some systems exhibit random behaviour, such as wireless sensor networks, which rely on random wait times \cite{bluetooth}. Finally, it shows which systems support modelling concurrent behaviour.
+\begin{table}[H]
     \centering
     \begin{tabular}{|>{\raggedright\arraybackslash}p{3cm}|
         >{\centering\arraybackslash}p{2cm}|
@@ -170,6 +169,7 @@ Many model checkers have been invented for this reason, each with different focu
         \hline
     \end{tabular}
     \caption{Comparison of Model Checkers}
+    \label{tab:model_checkers}
     \end{table}
 \subsubsection*{\textbf{PAT}}
 Process Analysis Toolkit (PAT) is a self-contained framework to support composing, simulating and reasoning of concurrent, real-time systems \cite{pat}. PAT is based on Tony Hoare's CSP and extends the language using its library called CSP\#. CSP\# is a superset language of the original CSP, hence all classical CSP models can be verified with PAT. PAT has shown to be capable of verifying classical concurrent algorithms such as the dining philosophers problem. Alongside its verification capabilities, the PAT toolkit can be used to simulate real-world scenarios over specifications. 
@@ -184,8 +184,11 @@ Where BLAST differs from PAT, is that it no longer relies on process algebra. Th
 BLAST falls short when model-checking large C programs. More importantly, it is unable to provide any guarantees on concurrent programs. We are primarily concerned with concurrent systems in this report, as Elixir is a language that is designed for building concurrent systems.
 
 \subsubsection*{\textbf{PRISM}}
-PRISM is a probabilistic model checker, a tool for formal modelling and analysis of systems that exhibit random behaviour or probabilistic behaviour \cite{prism}. It has been used to analyse systems implementing randomised distributed algorithms.
-
+PRISM is a probabilistic model checker, a tool for formal modelling and analysis of systems that exhibit random behaviour or probabilistic behaviour \cite{prism}. It has been used to analyse systems implementing randomised distributed algorithms. PRISM relies on Markov decision processes and probabilistic automata to model systems which are both probabilistic and concurrent.
+\\ \\
+PRISM also supports specifications with temporal logic. This means that PRISM can be used to specify liveness properties under probabilities. For example, we could specify a property, that the probability of a crash is at most 0.01, using the formula: $\text{P}_{\leq 0.01} \text{[ F "crash" ]}$.
+\\ \\
+PRISM has support for many features that are ideal for verifying systems. The main limitation of PRISM, is that the modelling language is not true to modern programming languages. It models a high-level system design, and would not support some of the intricacies of a modern language such as Elixir, naturally.
 \subsubsection*{\textbf{TLC}}
 In 1980, Leslie Lamport formulated the Temporal Logic of Action (TLA) \cite{tla}. TLA is a logic system for specifying and reasoning about concurrent systems. Both the systems and their properties are represented in the same logic, so that the assertion that a system meets its specification, can be expressed by a logical implication.
 \\ \\
@@ -194,16 +197,22 @@ TLA is capable of specifying complex systems but in a typically verbose manner. 
 Furthering on from Leslie Lamport's discovery of these specification languages, Lamport created TLC \cite{tlc}, a model checker for the verification of TLA+ specifications. Similarly to BLAST, TLC builds a finite-state machine from the specification so the model checker can verify and debug invariance properties over it. TLC has been used to verify many large-scale, real-world systems specified in TLA+. Not only does it verify temporal properties of TLA+ specifications, but it can also model check PlusCal \cite{pluscal} algorithms. PlusCal is an algorithm language aimed to resemble that of pseudocode, but PlusCal algorithms can be automatically translated to TLA+ specifications to be reasoned about formally with TLC. We have already come across the concept of model-checking algorithms as opposed to specifications with BLAST, but instead of being strictly bound to the C programming language, PlusCal provides a more general framework agnostic of a choice of programming language allowing developers to separate reasoning about algorithms from their respective programs.
 
 \subsubsection*{\textbf{SPIN}}
-Spin is an efficient verification system for models of distributed software systems. It has been used to detect design errors in applications ranging from high-level descriptions of distributed algorithms to detailed code \cite{spin}. Spin has a specification language, Process Meta Language (Promela), which the model checker uses to prove the correctness of asynchronous process interactions. Spin supports asynchronous process communication through channels, where processes can send and receive messages. Spin constructs labelled transition systems for respective processes from Promela specifications, which it goes on to use for scheduling and to reason about properties of the model. Because many programming languages, such as GO \cite{go} rely on the creation of channels for asynchronous communication between processes, Promela becomes a natural solution to modelling these systems.
+Spin is an efficient verification system for models of distributed software systems. It has been used to detect design errors in applications ranging from high-level descriptions of distributed algorithms to detailed code \cite{spin}. Spin has a specification language, Process Meta Language (Promela), which the model checker uses to prove the correctness of asynchronous process interactions. Spin supports asynchronous process communication through channels, where processes can send and receive messages. Spin constructs labelled transition systems for respective processes from Promela specifications, which it goes on to use for scheduling and to reason about properties of the model. Because many programming languages, such as Go \cite{go} rely on the creation of channels for asynchronous communication between processes, Promela becomes a natural solution to modelling these systems.
 \subsubsection{Summary}
 We have discussed a selection of model-checkers and what their primary focus is. Many existing model-checkers have been originally designed to prove specifications over sequential models. Some have taken this further and applied model checking directly over programming languages, such as BLAST. Other model-checkers have introduced some primitives for reasoning about concurrency. TLC allows for the specification of processes and using structures can begin to specify shared memory. Similarly, Spin allows processes to be specified and supports the creation of channels for communication. Despite this, none of the model checkers discussed, include message-passing as a first-class construct. To reason about message-passing models, such as the actor model, work has to be done to formalise actor-based constructs. This makes specifying actor-based systems, such as systems written in Elixir, a non-trivial task.
 
 \section{Related Work} \label{sec:existing_work}
 Much work has gone into model checking, theorem-proving and verifying the implementations of systems. For Elixir, there are tools such as dialyzer \cite{dialyzer}, which statically analyse Elixir programs for type errors or dead code. Whilst these tools provide Elixir developers better guarantees, it does not verify the correctness of a system as a whole. Elixir also has libraries for property-based testing, such as PropEr \cite{proper}, which can be used to generate random test cases for a system. Property-based testing randomly generates inputs to test a system, which can be useful for finding edge cases that unit tests may not cover. However, property-based testing does not provide guarantees about the correctness of a system, instead, it is used to find bugs in code. Work has also gone into verifying message-passing in Elixir, using binary session types \cite{binary_session_types}. This approach ensures two processes, communicating over compatible protocols, avoid certain communication errors (i.e. hanging messages), but has not been extended to multiparty session types, so is not appropriate for verifying all actor-based systems.
 \\ \\
-There is also existing work in the greater verification of real-world software. Much of this is done on sequentially executed programs as concurrency introduces a new level of complexity. For example, both C programs and GO programs have previously been targetted as good options for model checking \cite{gomela, c_to_promela}. While these tools provide system guarantees, they primarily focus on detecting deadlocks or dataraces within a system and do not support other safety or liveness properties.
+There is also existing work in the greater verification of real-world software. Much of this is done on sequentially executed programs as concurrency introduces a new level of complexity. For example, both C programs and Go programs have previously been targetted as good options for model checking \cite{gomela, c_to_promela}. While these tools provide system guarantees, they primarily focus on detecting deadlocks or dataraces within a system and do not support other safety or liveness properties.
 \subsection{Theorem Proving}
+This report discusses model checking as a solution to software verification. An important alternative to model checking is theorem proving, in particular with proof assistants.
+\\ \\
 Theorem proving takes a formal approach to program verification. In theorem proving, axioms are applied to a set of statements to determine if a particular statement holds. For example, Z3 \cite{z3} is a satisfiability modulo theories (SMT) solver developed by Microsoft that can verify propositional logic assertions.
+\\ \\
+In both model-based and proof-based verification approaches, we begin with a formula $\phi$. For a set of formulas $\Gamma$, a proof-based approach consists of finding a proof that $\Gamma \vdash \phi$. Provability holds if and only if semantic entailment ($\Gamma \models \phi$) holds. That means, to show provability, we must show that $\phi$ holds for all models. In a model-based approach, we instead want to show that $\phi$ holds for a single model. Hence, model-based approaches can be simpler that proof-based approaches \cite{logic_in_cs}.
+\\ \\
+That being said, some existing verification-aware languages take proof-based approaches, for example, Dafny, which will be discussed later in the chapter.
 \subsection{Design by Contract}
 Design by Contract (DbC) is an approach to software design, where software components are defined using formal specifications \cite{dbc}. A contract is composed of three elements.
 \begin{itemize}
@@ -256,12 +265,23 @@ procedure add(a: int, b: int) returns (c: int)
 }
 \end{lstlisting}
 
-\subsection{Deadlock Detection}
-Alongside research into verification-aware languages, there has been work into detecting deadlocks in concurrent systems. These approaches typically involve the use of model checkers to determine if a system can reach a deadlock state. For example, Java Pathfinder \cite{jpf} is a model checker for Java programs. It can be used to detect deadlocks and data races. The initial version of Java Pathfinder was a translator from Java to Promela. Since, Java Pathfinder now uses a Java Virtual Machine (JVM) implementation directly to model check Java programs.
+\subsection{Gomela}
+Alongside research into verification-aware languages, there has been work into detecting deadlocks in concurrent systems. These approaches typically involve the use of model checkers to determine if a system can reach a deadlock state. For example, Java Pathfinder \cite{jpf} is a model checker for Java programs. It can be used to detect deadlocks and data races. The initial version of Java Pathfinder was a translator from Java to Promela. At present, Java Pathfinder now uses a Java Virtual Machine (JVM) implementation directly to model check Java programs.
 \\ \\
-There has also been work into detecting deadlocks in GO programs. Gomela \cite{gomela} was proven to catch more deadlocks than GCatch \cite{gcatch} and Godel2 \cite{godel2}. Gomela focuses on channeled communication between goroutines. Similarly, deadlock detection has been researched for C programs \cite{c_to_promela}. 
+There has also been work into detecting deadlocks in Go programs. Gomela \cite{gomela} was proven to catch more deadlocks than GCatch \cite{gcatch} and Godel2 \cite{godel2}. Gomela focuses on channeled communication between goroutines. Similarly, deadlock detection has been researched for C programs \cite{c_to_promela}. 
 \\ \\
-None of these approaches capture the semantics involved in a pure message-based, actor model. They also do not provide guarantees about the liveness properties of a system. This is a limitation in existing research of verification tools concerning modern programming languages.
+We have identified Gomela as the most closely related work to that of our objectives. Gomela is not truly verification-aware, as it does not support inlining of specifications, in the manner that Dafny or Boogie do. However, Gomela translates programs to Promela models, which can be verified by Spin. This report takes a similar approach, but instead targets Elixir programs, and also extends Elixir to be truly verification-aware.  
+\\ \\
+To understand some of the challenges of modelling Elixir programs, which Gomela avoided, we can draw a few comparisons between the two:
+\begin{itemize}
+    \item Go communication channels can be bounded, whereas Elixir mailboxes are unbounded. Naturally, unbounded queues can lead to more complex verification problems (state-space explosion).
+    \item Go is statically typed, whereas Elixir is dynamically typed.
+    \item Go has support for shared memory, Elixir's actor model strictly enforces all information sharing to be handled by message-passing.
+    \item Elixir process state is immutable, whereas Go has mutable state.
+\end{itemize}
+These comparisons lead to challenges that need to be addressed in this report. However, the above points are also reasons why Elixir is an interesting target language, both for designing real-world systems and for verifying.
+\\ \\
+None of the existing approaches capture the semantics involved in a pure message-based, actor model. They also do not provide guarantees about the liveness properties of a system. This is a limitation in existing research of verification tools concerning modern programming languages.
 \section{Summary}
-This chapter has provided an overview of core concepts related to concurrent programs and verification of them. We saw process algebra that can be used to model and reason about concurrent processes, as well as Hoare Logic and its definition of the Hoare Triple as a fundamental property in verification. We also looked at applications based on this theory, such as model checkers, theorem provers and programming languages. Much work relating to the topic of verifying programming languages was explored, but importantly, we learned about SPIN. We also learned about Boogie, the intermediate verification language that can verify programmatic assumptions using Z3. This chapter also discussed some of the limitations in existing research, such as a need for new techniques to verify the liveness properties of real-world systems. The next chapter will discuss the Elixir programming language.
+This chapter has provided an overview of core concepts related to concurrent programs and verification of them. We looked at tools such as model checkers and verification-aware programming languages. In particular, we saw the model checker Spin. This chapter also discussed some of the limitations in existing research, such as a need for new techniques to verify the liveness properties of real-world systems. The next chapter will introduce the Elixir programming language and Promela modelling language.
 

@@ -35,7 +35,7 @@ It's overworded... between sequential nodes ... => sequential processes
 
 #### Contributions
 - Need to provide a sense of the challenges that are addressed. be direct / proud of the achievements... help express the problem space. 
-- Not sure about the diagram... (just remove it)!
+- Not sure about the diagram... (just remove it)!  ✅
 
 
 #### Background
@@ -45,30 +45,30 @@ It's overworded... between sequential nodes ... => sequential processes
 - Explain how Elixir and Go are inspired by CSP. ✅
 - CSP should be mentioned, but not formally introduced? ✅
 - CSP and Elixir are very different.  ✅
-- Would rather focus on the title straight away... verification-awareness and actor based message passing. 
+- Would rather focus on the title straight away... verification-awareness and actor based message passing.  ✅
 
-- Solution is verification is typically model checking. But also proof assistants are a solution. 
+- Solution is verification is typically model checking. But also proof assistants are a solution. . ✅
 - Concurrency ok. LTL ok. Safety and liveness ok. Fairness ok. ✅
 
 - 'By using both safety and liveness properties, we can define a 'correct' system, through the evaluation of these temporal formulae.' could go at the start too!! very important to the definition of distributed algorithms.
 
-- Didnt explain what probabilistic and concurrent support mean in the model checking section. Explain before / after the table what they mean, why they are relevant.. why some systems care about them. Why the need and want them in wireless sensor networks for example
-- PRIMSM sub too short. Bulk it out
-- give an example of what PRISM and BLAST can give answers to
+- Didnt explain what probabilistic and concurrent support mean in the model checking section. Explain before / after the table what they mean, why they are relevant.. why some systems care about them. Why the need and want them in wireless sensor networks for example ✅
+- PRIMSM sub too short. Bulk it out ✅
+- give an example of what PRISM and BLAST can give answers to ✅
 -  random distributed algorithms WRONG => should say "randomised distributed algorithms" ✅
 - Don't use X discovered Y... use formulate / create / designed ect.. ✅
 - Forget about TLA, only mention TLA+.
 - Say 'for example'!  
-- instead of 2.3.2, give it a title (i.e. proof assistants)
-- Hoare logic: naranker doesnt understand. Remove hoare logic. My PRE and POST conditions dont really mean the same as his... 
+- instead of 2.3.2, give it a title (i.e. proof assistants) ✅
+- Hoare logic: naranker doesnt understand. Remove hoare logic. My PRE and POST conditions dont really mean the same as his...   ✅
 - **Could argue the notion of defv as a CONTRACT like in the CONTRACT PARADIGM! 'design by contract' is the name!, early languages use eiffel by bertrand meyer.** ✅
 - Use 'related work' instead of 'existing work'. ✅
-- Remove the examples of dafny, lean ect.
+- Remove the examples of dafny, lean ect.  
 - Dont bother with the forall quantifer.... get rid of the listings....
 
-- Gomela deserves it's own section... move the introduction part on Gomela to it's own "related work" section.
+- Gomela deserves it's own section... move the introduction part on Gomela to it's own "related work" section.✅
 
-- Add design by contract to related work too. Add more about proof assitants to related work. We can remove 'Additional Verication Techniques' and push proof assisants and contracts to related. 
+- Add design by contract to related work too. Add more about proof assitants to related work. We can remove 'Additional Verication Techniques' and push proof assisants and contracts to related.   ✅
 
 # Chapter 3
 - Doesn't like the title.  ✅
@@ -174,15 +174,15 @@ REstructure:
 # Evaluation
 collect the examples, into a table to show what has been processed.
 show promela and elixir for all in appendix.
-think of a good table / comparison
-call raft, raft election instead of consensus
+think of a good table / comparison for comparing the 5 algos
+call raft, raft election instead of consensus  ✅
 use 1 and 2 instead of one and two
 
 put performance before translation
 
-not translation reults => comparison!
+not translation reults => comparison! ✅
 
----forward---  optimisations
+---forward---  optimisations ✅
 
 
 # Conclusion

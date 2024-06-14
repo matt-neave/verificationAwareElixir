@@ -228,7 +228,7 @@ The trace in listing \ref{lst:dp_deadlock} shows four $pickup$ messages being se
 \\ \\
 We can see that if we map the process identifiers for philosophers and forks to the numbering system we used in the process algebra, the trace aligns with our operational semantics for the system. This gives us confidence that Verlixir is correctly identifying deadlocks in the system.
 
-\subsection{Raft Consensus} \label{sec:raft}
+\subsection{Raft Leader Election} \label{sec:raft}
 The final algorithm we will use in the evaluation of Verlixir's expressiveness is Raft \cite{raft}. The Raft consensus algorithm was introduced to be a simpler consensus algorithm than Paxos. It is a consensus algorithm for managing a replicated log. The result produced is similar to multi-Paxos and is as efficient as Paxos. Unlike Paxos, Raft explicitly coordinates through a leader.
 \\ \\
 We split the design of Raft into two components: leader election and log replication. We will primarily be focusing on leader election in this evaluation. The Raft design involves four process types: clients, followers, candidates and leaders. Clients communicate directly with leaders to propose log entries for replication. Leaders will commit these log messages and forward them onto followers. There can be multiple leaders at any moment, however, the Raft algorithm is divided into `terms'. If multiple leaders forward log entries to a follower, it will only respect the leader elected for the highest term. If a follower does not receive a message from a leader within a certain time frame, it will mark itself as a candidate and initiate a new leader election.
@@ -313,7 +313,7 @@ To give a higher level overview of where Verlixir differentiates itself from exi
     \caption{Comparison of Verlixir to existing tools.}
     \label{table:vs}
 \end{table}
-\subsection{Translation Results}
+\subsection{Verlixir vs. Related Work}
 A large component of Verlixir is the translation of Elixir to Promela. As Verlixir is the first of its kind, we have no benchmark to evaluate the translation progress. However, we can provide insights into the translation process, results, and future work.
 \\ \\
 Verlixir was primarily designed to suit any backend. In particular, concurrent model checkers such as SPIN, PAT or PRISM. Given SPIN is the targetted model checker, we introduced some SPIN specific optimisations to the design in order to reduce the state space and time complexity of model checking. For example, consider how we optimised the modelling over the Elixir mailbox over multiple iterations:
@@ -332,7 +332,7 @@ We have avoided an in-depth analysis of the performance of the models produced b
     \item \textbf{State Vector}: the state vector is 18168 bytes. This exceeds the default state vector SPIN uses (1024 bytes). Because of the available state vector compression techniques, increasing the limit by a large factor is no concern.
 \end{itemize}
 We did not perform analysis on alternative backends, so no direct comparison could be made. However, the results produced by SPIN are sufficient for our purposes.
-\subsubsection{Forward Optimisations}
+\subsubsection{Future Optimisations}
 There is lots of scope to further optimise the translation process. The existing framework has been designed such that this is easy to achieve. For example, we currently translate all Elixir functions to Promela functions. This incurs an overhead that may not be strictly necessary. By statically analysing the behaviour of a recursive function, we could apply heuristics to unroll the recursion and inline the function using an imperative style loop.
 \\ \\
 As alluded to earlier, there is room to replace the SPIN backend with another model checker. Although we identified SPIN sufficient for our purposes, as explored in section \ref{sec:model_checking}, other model checkers support features that SPIN does not. For example, probabilistic model checkers can more accurately model systems that involve randomness, such as gossip protocols. We aim for the design of the IR to be flexible enough to support swapping out backends. 
