@@ -6,7 +6,7 @@ Verlixir supports three modes of operation: simulation, verification and paramet
 This chapter aims to inform the reader of the constructs defined in Verlixir. Section \ref{sec:ltlixir} introduces the Verlixir language. Section \ref{sec:verifiable} provides an example of specifying a verifiable system and how Verlixir can be used to detect violations of a specification. The subsequent subsections provide further details of more features of Verlixir, such as specifying temporal properties.
 \\ \\
 \section{LTLixir} \label{sec:ltlixir}
-LTLixir is the multi-purpose specification language that compiles to BEAM byte-code and is supported for verification by Verlixir. Primarily, LTLixir is a subset of Elixir, supporting both sequential and concurrent execution. This subset is expressive enough to implement well-known distributed algorithms such as basic Paxos \cite{basic_paxos} and the alternating-bit protocol \cite{ab_protocol}. LTLixir extends Elixir with constructs for specifying temporal properties, specifically LTL properties (where LTLixir derives its name) as well as Floyd-Hoare style logic for specifying pre- and post-conditions. Specifications can be parameterized to identify violations of properties on specific configurations. 
+LTLixir is the multi-purpose specification language that compiles to BEAM byte-code and is supported for verification by Verlixir. Primarily, LTLixir is a subset of Elixir, supporting both sequential and concurrent execution. This subset is expressive enough to implement well-known distributed algorithms such as basic Paxos \cite{basic_paxos} and the alternating-bit protocol \cite{ab_protocol}. LTLixir extends Elixir with constructs for specifying temporal properties, specifically LTL properties (where LTLixir derives its name) as well as function contracts for specifying pre- and post-conditions. Specifications can be parameterized to identify violations of properties on specific configurations. 
 \\ \\
 \section{Constructing a Verifiable Elixir Program} \label{sec:verifiable}
 This section will walk through the basic construction of an Verlixir program, and show how we can verify the properties of the program using Verlixir. To begin, we define a server and client process. The server is responsible for creating clients and communicating with them. 
@@ -23,7 +23,7 @@ This section will walk through the basic construction of an Verlixir program, an
         end
     end
 \end{lstlisting}
-The server spawns a single client process, which writes to standard output. To ensure correctness when verifying properties of the system, we remove ambiguity by being particular in our naming of the functions \texttt{start\_server} and \texttt{start\_client}. Notice, we could name both functions \texttt{start}, but this ambiguity can make it more difficult to digest a trail produced by Verlixir. With the system implemented, we must now declare an entry point to the system, that Verlixir will use to begin verification. For this example, we can define \texttt{Server.server\_start} as the entry point using an attribute \texttt{\@init}.
+Given the implementation, we must now declare an entry point to the system, that Verlixir will use to begin verification. For this example, we can define \texttt{Server.server\_start} as the entry point using \textbf{\@init}.
 
 \begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={Declaring an entry point to the system}., label={fig:init}]
     (*@\fbox{@init}@*)
@@ -31,21 +31,21 @@ The server spawns a single client process, which writes to standard output. To e
         client = spawn(Client, :start_client, [])
     end
 \end{lstlisting}
-Although we set the attribute \texttt{init} to \texttt{true}, it is not required that other functions are set to \texttt{false}; this is already implied. With an entry point specified, we can begin using the available tools. By default, Verlixir reports the presence of deadlocks and livelocks in the system. When specifying systems in Verlixir, we do not lose the capability to compile our program to BEAM byte-code, hence the system can still run as a regular Elixir program.
+With an entry point specified, we can begin using the available tools. By default, Verlixir reports the presence of deadlocks and livelocks in the system. When specifying systems in Verlixir, we do not lose the capability to compile our program to BEAM byte-code, hence the system can still run as a regular Elixir program.
 \\ \\
-More interestingly, we can now use Verlixir before the Erlang Run-Time System (ERTS) to verify the system adheres to our specification. With no additional properties defined, by running Verlixir, we are ensuring that every possible execution results in a program termination. The presence of a deadlock or livelock will be reported. We can run Verlixir, by passing optional arguments as the path to the specification file. For example, we use the simulator flag $-s$ to run a single simulation of the system.
+More interestingly, we can now use Verlixir before the Erlang Run-Time System (ERTS) to verify the system adheres to our specification. With no additional properties defined, by running Verlixir, we are ensuring that every possible execution results in a program termination. The presence of a deadlock or livelock will be reported. We first run a simulation of the system.
 \begin{lstlisting}[language=bash, xleftmargin=.3\linewidth]
     $ ./verlixir -s basic_example.ex 
     Client booted
 \end{lstlisting}
-Alternatively, we can use the $-v$ flag to run the verifier on the specification.
+Alternatively, we can run the verifier on the specification.
 \begin{lstlisting}[language=bash, xleftmargin=.3\linewidth]
     $ ./verlixir -v basic_example.ex 
     Model checking ran successfully. 0 error(s) found.
     The verifier terminated with no errors.
 \end{lstlisting}
 \subsection{Detecting a Deadlock} \label{sec:deadlock}
-Now we have a basic understanding of what is required to write a specification, we will use Verlixir to detect a deadlock in the system. By default, the verifier will detect the presence of deadlocks and livelocks in the system. Deadlocks in Elixir programs can be introduced by circular waits, where two simultaneously executing processes, are both waiting for a message from the other. To demonstrate this, we modify the existing client and server, by introducing a circular wait. The server will now spawn the process, and expect to receive a message from the client, meanwhile, the client will expect to receive a message from the server. The resulting server and client processes are modelled below.
+Now we have a basic understanding of what is required to write a specification, we will use Verlixir to detect a deadlock in the system. Deadlocks in Elixir programs can be introduced by circular waits, where two simultaneously executing processes, are both waiting for a message from the other. 
 \begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={A simple Elixir system with a deadlock}.]
     defmodule Server do
     (*@\fbox{@init}@*)
@@ -67,32 +67,30 @@ Now we have a basic understanding of what is required to write a specification, 
 \end{lstlisting}
 In this example, any execution of the system will result in a deadlock; the system can be considered deterministic in this regard. In many real-world systems with multiple processes, the presence of a deadlock can be difficult to detect due to multiple interleavings.
 \\ \\
-The simulator terminates, reporting a timeout. Already, running our specification using Verlixir, provides more information than running the Elixir program. Let's now run the verifier.
-\begin{lstlisting}[language=bash, xleftmargin=.2\linewidth]
+A simulation of the system using Verlixir will report a timeout (something which the ERTS would not report). Already, running our specification using Verlixir, provides more information than running the Elixir program. Let's now run the verifier.
+\begin{lstlisting}[language=bash, xleftmargin=.1\linewidth]
     $ ./verlixir -v basic_example.ex
     Model checking ran successfully. 1 error(s) found.
     The program likely reached a deadlock. Generating trace.
-    [8] (proc_0) init:4 [receive do]
-    [9] (proc_0) init:4 [receive do]
-    [10] (proc_0) init:5 [{:im_alive} -> IO.puts "Client is alive"]
+    [8] (proc_0) start_server:4 [receive do]
+    [9] (proc_0) start_server:4 [receive do]
+    [10] (proc_0) start_server:5 [{:im_alive} -> IO.puts "Client is alive"]
     [13] (proc_1) start_client:13 [{:binding} -> IO.puts "Client bound"]
     <<< END OF TRAIL, FINAL STATES: >>>
     [14] (proc_1) start_client:13 [{:binding} -> IO.puts "Client bound"]
-    [15] (proc_0) init:5 [{:im_alive} -> IO.puts "Client is alive"]
+    [15] (proc_0) start_server:5 [{:im_alive} -> IO.puts "Client is alive"]
 \end{lstlisting}
-The first line of the output informs us that the verifier successfully terminated on the input, along with how many errors were found. If an error is found, Verlixir will profile the type of error; in this case, it has determined the program likely deadlocked. Once determining the error type, an error trail is produced to debug the source of the error. The underlying model derived from the Verlixir specification does not have a one-to-one mapping to the original Elixir code, hence, heuristics are applied, to determine where in the Elixir program the trail is produced from. In this case, we can see reference to \texttt{init}, the entry point to the system (annotated previously by \texttt{@init}).
+If an error is found, Verlixir will profile the type of error; in this case, it has determined the program likely deadlocked. Once determining the error type, an error trace is produced to debug the source of the error. The underlying model derived from the Verlixir specification does not have a one-to-one mapping to the original Elixir code, hence, heuristics are applied, to determine where in the Elixir program the trail is produced from.
 \\ \\
-Alongside the process name, we can see the line number in the Elixir file. With the exception of the system entry point, all other function names are labelled as in the original program, for example, $start\_client$.
+Alongside the process name, we can see the line number in the Elixir file. The remaining information on a trail line, is less relevant to most users. The first number on a line is the step number (some of these may be omitted for simplicity). The \texttt{proc\_n} refers either to a process number or function call stack depth.
 \\ \\
-The remaining information on a trail line, is less relevant to most users. The first number on a line is the step number (some of these may be omitted for simplicity). The \texttt{proc\_n} refers either to a process number or function call stack depth.
+Alongside the error trace, Verlixir also reports a trace of all messages being sent and received through the system. If we take a look at the messages produced in this case, we see that no messages were ever sent. This could give a further indication as to why the deadlock has arisen.
 \\ \\
-Alongside the error trace, Verlixir also reports a trace of all messages being sent and received through the system. These messages contain a lot of information, so may not always be easy to understand. However, if we take a look at the messages produced in this case, we see that no messages were ever sent. This could give a further indication as to why the deadlock has arisen.
-\\ \\
-Now we understand how to read a single line of the trail, we can read the trail in sequential order to learn the interleaving that resulted in the error. In this instance, we can see the server reaches line 5 where it waits for an \texttt{:im\_alive} message from the client and similarly, the client is waiting for a \texttt{:binding} message.
+We can read the trail in sequential order to learn the interleaving that resulted in the error. In this instance, we can see the server reaches line 5 where it waits for an \texttt{:im\_alive} message from the client and similarly, the client is waiting for a \texttt{:binding} message.
 \subsection{Linear Temporal Logic}
 We now introduce Linear Temporal Logic (LTL) to our systems to allow us to write more interesting Verlixir specifications.
 \\ \\
-Let's re-design the server and client processes, so we can introduce temporal properties to reason about. The server will now spawn $n$ clients, bind the clients to itself and then await a response from all three clients. To achieve this, we introduce two variables \texttt{client\_n} and \texttt{alive\_clients} that will later be used in our temporal specification.
+Let's re-design the server and client processes, so we can introduce temporal properties to reason about. The server will now spawn $n$ clients, bind the clients to itself and then await a response from all three clients.
 \begin{lstlisting}[language=Elixir, xleftmargin=.2\linewidth]
     def start_server do
         client_n = 3
@@ -104,7 +102,7 @@ Let's re-design the server and client processes, so we can introduce temporal pr
         alive_clients = check_clients(client_n, alive_clients)
     end
 \end{lstlisting}
-The implementation of the client process and the \texttt{check\_clients/2} function have been omitted. Without understanding their implementation, we can still use our specification to verify the system acts as intended. We introduce our first LTL formula, which verifies that eventually, the number of alive clients is equal to $n$. To introduce an LTL formula, we can use \textbf{@ltl}. The attribute assigns an LTL formula, as a string, to a function. The LTL grammar is defined as the following.
+The implementation of the client process and the \texttt{check\_clients/2} function have been omitted. Without understanding their implementation, we can still use our specification to verify the system acts as intended. We introduce our first LTL formula, which verifies that eventually, the number of alive clients is equal to $n$. To introduce an LTL formula, we can use \textbf{@ltl}. An LTL formula is assigned, as a string, to a function. The LTL grammar is defined as the following.
 \begin{bnf*}
     \bnfprod{ltl}
       {\bnfpn{operand} \bnfor ( \bnfpn{ltl} ) \bnfor \bnfpn{ltl} \bnfpn{binop} \bnfpn{ltl} \bnfor \bnfpn{unop} \bnfpn{ltl}}\\
@@ -135,22 +133,20 @@ We can update the LTL formula, by replacing \texttt{clients\_n} with the number 
     $ ./verlixir -v basic_example.ex
     Model checking ran successfully. 1 error(s) found.
     The program is livelocked, or an ltl property was violated. Generating trace.
+    ... trace omitted ...
 \end{lstlisting}
-The examples show how LTL properties can be specified and used to verify the system. Given the first LTL property was accepted, we know the formula holds. This is likely because the implementations of the client and \texttt{check\_clients/2} are correct, but we should also specify properties to check the validity of these functions, instead of making this assumption.
-\\ \\
-To help with readability, we can define inline predicates to use in LTL formulae. The predicates that can be defined are formed from a subset of the LTL grammar, without the temporal modalities. Inline predicates can refer to variables in the scope of the function. For example, we can define a predicate \( p \) as $alive\_clients \equiv client\_n$. To help construct our example, let's also define a predicate \( q \) and set it to \( \neg p \). Using these predicates, we can strengthen our LTL formula to \( (q) \mathcal{U} (\square p) \). Informally, this formula states that there is a moment in time where $alive\_clients \equiv client\_n$, and from that moment onwards, this property holds until termination. We can update our \texttt{start\_server} function to reflect this.
+To help with readability, we can define inline predicates to use in LTL formulae. The predicates that can be defined are formed from a subset of the LTL grammar, without the temporal modalities. Inline predicates can refer to variables in the scope of the function. For example, we can define a predicate \( all\_alive \) as $alive\_clients \equiv client\_n$. Using this predicate, we can strengthen our LTL formula to \( (!all\_alive) \ \mathcal{U} \ (\square all\_alive) \). Informally, this formula states that there is a moment in time where $alive\_clients \equiv client\_n$, and from that moment onwards, this property holds until termination. We can update our \texttt{start\_server} function to reflect this.
 \begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth]
-    (*@\fbox{@ltl "(q)U([]p)"}@*)
+    (*@\fbox{@ltl "(!all\_alive)U([]all\_alive)"}@*)
     def start_server do
       client_n = 3
       alive_clients = 0
-      predicate p, alive_clients == client_n
-      predicate q, !p
+      (*@\fbox{predicate all\_alive, alive\_clients == client\_n}@*)
       ...
     end
 \end{lstlisting}
-\subsection{Pre- and Post-Conditions} 
-Verlixir also supports Design by Contracts, using pre- and post-conditions in function definitions. These are particularly useful for ensuring proper bounds on the system, that help define correct execution. Consider a process that should send and receive a single message each round. We can define a pre-condition on a bounded parameter to ensure the process does not run indefinitely. Let us refactor the client process, to complete a number of rounds (determined by the server) before terminating. The client will receive a \texttt{:bind} message from the server, deciding how many rounds to complete and then will recurse until it has completed all the rounds.
+\subsection{Contracts} 
+Verlixir also supports Design by Contracts, using pre- and post-conditions in function definitions. These are particularly useful for ensuring proper bounds on the system, that help define correct execution. Consider a process that should send and receive a single message each round. We can define a pre-condition on a bounded parameter to ensure the process does not run indefinitely. Let us refactor the client process, to complete a number of rounds (determined by the server) before terminating.
 \begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth]
     defmodule Client do
         @spec start_client() :: :ok
@@ -182,31 +178,31 @@ We can run Verlixir on the system to verify the pre-condition holds for every po
     Model checking ran successfully. 1 error(s) found.
     An LTL, pre- or post-condition was violated. Generating trace.
     Violated: assertion violated (rounds>=0) (at depth 45).
+    ... trace omitted ...
 \end{lstlisting}
-Verlixir reports an error, in particular, it notes the violation of an assertion. An assertion violation can be a violation of an LTL formula, and pre-condition or a post-condition. In this case, it outputs the assertion that was violated \texttt{rounds >= 0}, which we are aware is our pre-condition. The depth refers to how many transitions were taken in the execution path before violation; to most users this information is not useful.
+Verlixir reports an error, in particular, it notes the violation of an assertion. An assertion violation can be a violation of an LTL formula, and pre-condition or a post-condition. In this case, it outputs the assertion that was violated \texttt{rounds >= 0}, which we are aware is our pre-condition.
 \subsection{Parameterized Systems}
 Up to this point, we have declared various system properties such as \texttt{client\_n}, \texttt{alive\_client} and \texttt{rounds}. In reality, the value assigned to these properties could be determined by many factors and it may not be known to the developer at the time of writing the specification. To support this, Verlixir allows us to declare these properties as parameters, in particular, we want to declare concurrency parameters. We define concurrency parameters as variables that impact the behaviour of a distributed system (we will simply refer to them as parameters going forward). For example, in a consensus algorithm such as Paxos, we may have variables to determine the number of acceptors, proposers and size of a quorum. We can declare these variables as parameters in the specification in order to verify the system for multiple possible configurations. Typically, the values used in these auto-generated configurations, will be small values, as large values may lead to a state-space that becomes difficult to explore.
 \\ \\
-To mark a variable as a parameter, we again make use of attributes. The \texttt{@params} attribute takes a tuple of atoms referencing variables in the function scope. For example, \texttt{@params \{:x, :y\}} declares that $x$ and $y$ are configurable parameters that the verifier will explore. We can apply this definition to our existing server process.
+We use \texttt{@model} to mark variables as parameters. It takes a tuple of atoms referencing variables in the function scope. We can apply this definition to our existing server process.
 \begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={Example of declaring concurrency parameters in specification.}]
-    (*@\fbox{@params \{:client\_n, :number\_of\_rounds\}}@*)
+    (*@\fbox{@model \{:client\_n, :number\_of\_rounds\}}@*)
     def start_server do
       client_n = 3
       number_of_rounds = 2
-      predicate p, alive_clients == client_n * number_of_rounds
+      predicate all_alive, alive_clients == client_n * number_of_rounds
       ...
     end
 \end{lstlisting}
-We can declare as many parameters as required. The values matched in the declaration of the variables will be ignored if we run Verlixir in parameterized mode. To run the verifier, we can use the $-p$ flag. The verifier will calculate an acceptance confidence, \(\alpha \in [0, 1]\), where an $\alpha$ of 1, indicates all configurations were accepted by the verifier and an $\alpha$ of 0, indicates no configurations were accepted. In the case $\alpha < 1$, the verifier will output configurations that lead to violations in the system. Then, the system can run in verification mode, to reproduce a trail that results in the violation. To run the parameterized verification, we use the same command but with the $-p$ flag.
+We can declare as many parameters as required. The values matched in the declaration of the variables will be ignored if we run Verlixir in parameterized mode. To run the verifier, we can use the $-p$ flag. To run the parameterized verification, we use the same command but with the $-p$ flag.
 \begin{lstlisting}[language=bash, xleftmargin=.1\linewidth]
-    $ ./verlixir -p basic_example.ex 
+    $ ./verlixir -p 3 basic_example.ex 
     Generating models.
     Generated 9 models.
-    Acceptance confidence: 1.
 \end{lstlisting}
 We can introduce a bug into our program that will cause a violation of the specification, to show the output of the verifier under these circumstances. To introduce a bug, we are going to conditionally call \texttt{check\_clients/2} if \texttt{client\_n > 1} holds.
 \begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
-    (*@\fbox{@params \{:number\_of\_rounds\}}@*)
+    (*@\fbox{@model \{:number\_of\_rounds\}}@*)
     def start_server do
         ...
         alive_clients = if number_of_rounds > 1 do
@@ -216,16 +212,15 @@ We can introduce a bug into our program that will cause a violation of the speci
         end
     end
 \end{lstlisting}
-This will now result in cases where the temporal property is violated, as $\texttt{alive\_clients} \equiv \texttt{client\_n} * \texttt{number\_of\_rounds}$ will not hold for all configurations. Note, that we have reduced the parameters down to just \texttt{\{number\_of\_rounds\}}. The system is theoretically capable of handling any number of parameters in its search. However, the computational cost of exploring the state-space grows exponentially with the number of parameters. Hence, in reality, we should use our understanding of the system to determine which parameters to test at a time.
+This will now result in cases where the temporal property is violated, as $\texttt{alive\_clients} \equiv \texttt{client\_n} * \texttt{number\_of\_rounds}$ will not hold for all configurations. Note, that we have reduced the parameters down to just \texttt{\{number\_of\_rounds\}}. The system is theoretically capable of handling any number of parameters in its search. However, the computational cost of exploring the state-space grows exponentially with the number of parameters.
 \begin{lstlisting}[language=bash, xleftmargin=.1\linewidth]
 $ ./verlixir -p 3 basic_example.ex
 Generating models.
 Generated 3 models.
-Acceptance confidence: 0.6666666666666667.
 Violations found in models:
 Model with params: {"number_of_rounds": '1'}
 Assign these parameters to the system and re-run the verifier in verification mode to gather a trace.
 \end{lstlisting}
-The system found a violation for the assignment of 1 to \texttt{number\_of\_rounds}. To investigate, we could run the verifier using the $-v$ flag on this configuration. We also now see our acceptance confidence has dropped below 1, due to an error produced by one of the configurations. It's also useful to note that Verlixir was executed with $-p 3$, this sets the range of values for the parameter, large numbers are not recommended and most users will find 3 sufficient. 
+The system found a violation for the assignment of 1 to \texttt{number\_of\_rounds}. To investigate, we could run the verifier on this configuration. It's also useful to note that Verlixir was executed with $-p 3$, this sets the range of values, from 0 to (p-1), for each parameter. 
 \section{Summary}
 We have now given a high-level overview of Verlixir, the verification toolchain capable of verifying Elixir programs written, using the LTLixir specification. We saw how to use Verlixir to simulate executions of the system; verify our system's adherence to a specification and parameterize concurrency parameters for exploration. This chapter also explained how to use LTLixir constructs, to reason about temporal properties, as well as how pre- and post-conditions can drive functional correctness. The next chapter will begin to explore the implementation behind Verlixir.

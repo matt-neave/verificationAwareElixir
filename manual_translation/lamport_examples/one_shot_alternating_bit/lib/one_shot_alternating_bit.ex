@@ -9,7 +9,7 @@ defmodule OneShotAlternatingBit do
   @init true
   @spec start() :: :ok
   @ltl "<>[](finished==limit)"
-  @params {:limit, :test}
+  @model {:limit, :test}
   def start do
     finished = 0
     limit = 2

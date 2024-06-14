@@ -172,7 +172,7 @@ Everything in Elixir is an expression. This means that every piece of code retur
 \end{itemize}
 The feature set supported has been shown expressive enough to support real-world systems in chapter \ref{chap:eval}. We omit some features of Elixir. For example, data structures like sets and maps are not supported. We determined lists sufficient for our purposes. The supported feature set can be easily extended to support other data structures.
 \subsection{Type Specifications}
-Type specifications are imperative for the correctness of Verlixir specifications. Verlixir supports some basic types such as \texttt{integer()}, \texttt{boolean()}, \texttt{atom()} and \texttt{pid()}. 
+Type specifications are imperative for the correctness of Verlixir specifications. Verlixir supports some basic types such as \texttt{integer()}, \texttt{boolean()}, \texttt{atom()} and \texttt{pid()}. Type specifications are not enforced by the Elixir compiler, but tools such as Dialyzer and Verlixir rely them.
 \\ \\
 In type specifications, message types are typed as \texttt{atom()}. The atom \texttt{:ok} is reserved to identify a \textbf{non-returning function}. In Elixir, all functions return a value, so in this context, a `non-returning function', is a function that's value is never matched. We briefly demonstrate the type specifications for two functions, the first, is a non-returning function with no arguments and the second function, takes two arguments and returns an integer.
 \begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={Valid type specification examples}.]

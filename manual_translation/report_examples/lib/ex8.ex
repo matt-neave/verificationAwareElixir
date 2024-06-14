@@ -4,7 +4,7 @@ defmodule Server8 do
   @init true
   @ltl "(q)U([]p)"
   @spec start_server() :: :ok
-  @params {:client_n, :number_of_rounds}
+  @model {:client_n, :number_of_rounds}
   def start_server do
     client_n = 3
     number_of_rounds = 1

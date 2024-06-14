@@ -9,7 +9,7 @@
     @init true
     @ltl "(q)U([]p)"
     @spec start_server() :: :ok
-    @params {:number_of_rounds}
+    @model {:number_of_rounds}
     def start_server do
       predicate p, alive_clients == client_n * number_of_rounds
       predicate q, !p

@@ -108,33 +108,33 @@ REstructure:
 - go into the example with 3 clients and 1 server
 - introduce both modes (simulation and verification) ✅
 - feasible to do some simulation with randomness 
-- 3 modes of operation for the tool.  
-- include all this in the introduction to the chapter, then build up the examples!!!!!!
+- 3 modes of operation for the tool.   ✅
+- include all this in the introduction to the chapter, then build up the examples!!!!!! 
 - By chapter 5,we should know everything...! 
-- too verbose, cut down.
-- the simple examples can be short af
+- too verbose, cut down. ✅
+- the simple examples can be short af 
 - **SELL simulator mode!**
 - SELL the MODES!! 
 - explanations need a bit shortering
-- **function types deserver their own section**!!!!!!!1
-- **TYPES should be in the verifiable feature set!!!**
+- **function types deserver their own section**!!!!!!!1 ✅
+- **TYPES should be in the verifiable feature set!!!** ✅
 - mention how types are a requirement  ✅
 - **REMOVE THE ADD EXAMPLE**  ✅
 - Wants to see the check\_clients code too! good example of recursion!
-- Move types to own section( could go into the chapter 3, mention its a requirement)!!!!!!!!!!! mentioned theyre not used by the elixir compiler, but they are used by special tools like elixirV and dialyzer.
-- Remove the "generating trace"... or show "..." and "mention why the trace is omitted".
-- predicate p => all\_alive
-- predicate q STUPID GET RID OF IT
+- Move types to own section( could go into the chapter 3, mention its a requirement)!!!!!!!!!!! mentioned theyre not used by the elixir compiler, but they are used by special tools like elixirV and dialyzer. ✅
+- Remove the "generating trace"... or show "..." and "mention why the trace is omitted".  ✅
+- predicate p => all\_alive  ✅
+- predicate q STUPID GET RID OF IT ✅
 - Show an example of a "quorum" predicate where "maj >= n / 2"
-- add a post condition to show rounds decreasing instead of the dumb add function
-- put trace omitted
-- simplify the start\_client function, no need to assign LOL
-- **Put the deafult -p value in** to make it very clear
-- highlight the three modes... make the param version more interesting!!!!!!
-- make the modes more explicit. Place in the evaluation the three modes of simulation / evaluation / parameteriation
-- @params => @model?
-- **Delete the acceptance confidence from the codebase.**
-- -p 2
+- add a post condition to show rounds decreasing instead of the dumb add function ✅
+- put trace omitted ✅
+- simplify the start\_client function, no need to assign LOL ✅
+- **Put the deafult -p value in** to make it very clear ✅
+- highlight the three modes... make the param version more interesting!!!!!!✅
+- make the modes more explicit. Place in the evaluation the three modes of simulation /  ✅evaluation / parameteriation ✅
+- @params => @model? ✅
+- **Delete the acceptance confidence from the codebase.** ✅
+- -p 2 ✅
 
 
 # Chapter 5
@@ -177,6 +177,7 @@ show promela and elixir for all in appendix.
 think of a good table / comparison for comparing the 5 algos
 call raft, raft election instead of consensus  ✅
 use 1 and 2 instead of one and two
+evaluate all 3 modes of operation
 
 put performance before translation
 
@@ -196,3 +197,4 @@ APPENDIX FOR EACH ALGORITHM!
 
 # TODOs
 Replace all Floyd-Hoare style => contracts
+name predicates everywhere 
