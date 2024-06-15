@@ -13,7 +13,7 @@ The system's liveness requirement is that a proposed value is eventually chosen 
 \subsubsection{Informal Specification}
 There are many flavours to the Paxos algorithm. We will informally present a basic, one-shot Paxos. We introduce three roles in the system: proposer, acceptor and learner. The Paxos algorithm performs two steps: prepare and accept. A proposer will broadcast a prepare message to all the acceptors, who will respond with a promise. When the proposer has received a promise from a quorum $q$ of acceptors, it will broadcast an accept message. If more than q acceptors accept, then the value is chosen, and the learners are informed.
 \\ \\
-To evaluate the expressiveness of Verlixir, we first must write the Paxos specification in LTLixir. The specifications of proposer, acceptor and learner are similar to those presented in pseudocode by Marzullo, Mei and Meling \cite{Paxos_pseudocode}. We now present the key differences in our Elixir specification to a traditional Paxos design.
+To evaluate the expressiveness of Verlixir, we first must write the Paxos specification in LTLixir. The specifications of proposer, acceptor and learner are similar to those presented in pseudocode by Marzullo, Mei and Meling \cite{paxos_pseudocode}. We now present the key differences in our Elixir specification to a traditional Paxos design.
 %  For the remainder of the specification, we use the notations $A, \alpha, P, \pi, L, \lambda$ to respectively represent either a set or individual acceptor, proposer or learner.
 \\ \\
 All processes contain two functions, a start function to introduce relevant initial configuration and a main loop to process messages. Every acceptor initializes an accepted proposal, value and minimum proposal to $-1$ and then processes $prepare$ and $accept$ messages until receiving a $terminate$ message, signifying consensus has been reached. A termination clause is important to ensure the completion of a round of Paxos. A proposer receives its configuration in the form of a $bind$ message, before executing its protocol. If during phase two, when asking acceptors to accept a value, a quorum of acceptors rejects the proposal, the proposer will inform the system it has reached consensus on value $0$. Traditionally, the proposer would retry with a higher proposal number, but we aim to avoid infinite paths so instead introduce this terminating condition. The learner awaits a $learn$ message from all proposers. We only ever consider a single learner and the learner is also responsible for spawning the proposers and acceptors, choosing their values and assigning proposal numbers for the single round of Paxos. We finally setup the learner such that it spawns three acceptors and two proposers. The learner decides the values the proposers will propose, which for this example will be $31$ and $42$. Of course, in a different context, these values may come from other sources within a larger system, however, notional values are sufficient for our purposes.
@@ -21,19 +21,20 @@ All processes contain two functions, a start function to introduce relevant init
 With our implementation complete, we introduce the three safety requirements established. To achieve this, we introduce a value $final\_value$ which the learner receives from proposers. This value is initialized to $0$ and set to the agreed value of consensus. Let's specify the temporal formula required to express our safety requirements. We first introduce four predicates into our specification (note the use of $0$ both represents a state where consensus is unreached, or a value received from a rejected proposer).
 \[
 \begin{array}{l}
-\text{predicate p: final\_value} == 31 \\
-\text{predicate q: final\_value} == 42 \\
-\text{predicate r: final\_value} \neq 0 \\
-\text{predicate s: final\_value} == 0 \ \lor \ \text{final\_value} == 31 \ \lor \ \text{final\_value} == 42 \\
+\text{predicate chooseA: final\_value} == 31 \\
+\text{predicate chooseB: final\_value} == 42 \\
+\text{predicate chosen: final\_value} \neq 0 \\
+\text{predicate learned: final\_value} == 0 \ \lor \ \text{final\_value} == 31 \ \lor \ \text{final\_value} == 42 \\
 \end{array}
 \]
 We can now use the predicates to simplify the formulation of the safety requirements.
 \begin{multicols}{2}
     \[
     \begin{aligned}
-    &\textbf{SR1}: \lozenge r \\
-    &\textbf{SR2}: \square \left( p \rightarrow \neg \lozenge q \right) \land \left( q \rightarrow \neg \lozenge p \right) \\
-    &\textbf{SR3}: \square s \\
+    &\textbf{SR1}: \lozenge \ \text{chosen} \\
+    &\textbf{SR2}: \square \left( \text{chooseA} \rightarrow \neg \lozenge \text{chooseB} \right) \\ 
+    &\quad \quad \quad \quad \land \left( \text{chooseB} \rightarrow \neg \lozenge \text{chooseA} \right) \\
+    &\textbf{SR3}: \square \ \text{learned} \\
     \end{aligned}
     \]
     \vline
@@ -41,6 +42,7 @@ We can now use the predicates to simplify the formulation of the safety requirem
     \begin{aligned}
     &\text{Only a proposed value is chosen} \\
     &\text{Only a single value is chosen} \\
+    & \\
     &\text{Only proposed values are learned} \\
     \end{aligned}
     \]
@@ -51,7 +53,7 @@ We now have a complete specification of the basic Paxos algorithm in LTLixir. No
     The verifier terminated with no errors.
 \end{lstlisting}
 This gives a good indication that the expressiveness of Verlixir is sufficient to model and verify distributed systems. However, we also should investigate how Verlixir can express errors for a more complex system such as Paxos. 
-\subsubsection{Counter-example one}
+\subsubsection{Counter-example 1}
 We introduce a bug into the proposer's protocol. The proposer will now wait for a majority of acceptors to accept the proposal and only be rejected if a majority of acceptors reject the proposal. This is a violation of the protocol, as we only need a single rejection (within the accepting quorum) for a proposer to retry with a higher proposal number. We can now run the verifier on the model again to see if the bug is detected. Verlixir reports a violation of SR2, which is expected. In particular, we are told there is a violation SR2 due to $( final\_value == 31 )$. We can infer that the learner was informed the chosen value is $42$, but a later proposer informed the learner the chosen value is $31$. Verlixir detects this bug, informing us that SR2 was violated and then produces its counterexample. Digesting this counterexample can take some time, as the interleaving of process communication that triggers this bug involves approximately 50 messages and 800 steps. The full message log is available in the appendix. We will provide a simpler interpretation to help reason that Verlixir has correctly identified the bug (derived from the message log) in figure \ref{fig:Paxos_1}.
 \begin{figure}[h]
     \centering
@@ -59,7 +61,7 @@ We introduce a bug into the proposer's protocol. The proposer will now wait for 
     \caption{Violation of Paxos specification due to proposer bug. Note that the figure only shows the ordering of $receive$ events. We see that $p1$ forms a quorum of $accepted$ messages from $\{a1, a2\}$. Although one of these acceptors rejects the proposal (by sending a higher proposal number than $p1$ expected), the bug would require a majority of acceptors to have rejected the proposal, so $p1$ asks the learner to learn its value regardless.}
     \label{fig:Paxos_1}
 \end{figure}
-\subsubsection{Counter-example two}
+\subsubsection{Counter-example 2}
 We now explore a second counter-example, again, the Paxos specification and message log can be found in the appendix. This time, we introduce a bug into the proposer, such that if the proposer receives a $\{prepared, proposalNumber, value\}$ message from an acceptor with a higher proposal number, it propagates this proposal number forward. A correct Paxos implementation should keep the same proposal number, but propagate the value forward. We again get a violation of SR2, where the mutual exclusion of values is violated. The violation is the same as counter-example one but caused by a different interleaving. 
 \\ \\
 \subsection{Consistent Hash Ring}
@@ -70,8 +72,8 @@ We will look at a simple version of a consistent hash ring involving a handler a
 To model the system, we are primarily concerned with one liveness property. Every incoming request should eventually be forwarded to the correct node in the ring. A more detailed implementation may involve the nodes communicating to determine the correct node for requests, identify faults and handoff information when nodes join or leave the ring. We will abstract this behaviour within our ring manager for now, and introduce some temporal properties to specify the system's correctness. Firstly, we will introduce some predicates to help simplify the LTL formulae.
 \[
     \begin{aligned}
-    & \forall i \in \{1..4\} \ \text{predicate p\textsubscript{i}: assigned\_node == node\textsubscript{i}} \\
-    & \forall j \in \{1..3\} \ \text{predicate r\textsubscript{j}: next\_request == V[j]} \\
+    & \forall i \in \{1..4\} \ \text{predicate pos\textsubscript{i}: assigned\_node == node\textsubscript{i}} \\
+    & \forall j \in \{1..3\} \ \text{predicate req\textsubscript{j}: next\_request == V[j]} \\
     & \text{where } V = \{1 \rightarrow 42, 2 \rightarrow 31, 3 \rightarrow 25\}
     \end{aligned}
 \]
@@ -80,10 +82,10 @@ These predicates $p_i$ specify assignments of a value to a node in the ring and 
 \begin{multicols}{2}
     \[
         \begin{aligned}
-        & \phi_1: \square ( r1 \rightarrow \lozenge p1 ) \\
-        & \phi_2: \square ( r2 \rightarrow \lozenge p3 ) \\
-        & \phi_3: \square ( r3 \land n\_nodes == 3 \rightarrow \lozenge p1 ) \\
-        & \phi_4: \square ( r3 \land n\_nodes == 4 \rightarrow \lozenge p4 ) \\
+        & \phi_1: \square ( \text{req1} \rightarrow \lozenge \text{pos1} ) \\
+        & \phi_2: \square ( \text{req2} \rightarrow \lozenge \text{pos3} ) \\
+        & \phi_3: \square ( \text{req3} \land n\_nodes == 3 \rightarrow \lozenge \text{pos1} ) \\
+        & \phi_4: \square ( \text{req3} \land n\_nodes == 4 \rightarrow \lozenge \text{pos4} ) \\
         \end{aligned}
     \]
     \vline
@@ -124,17 +126,17 @@ The protocol involves a coordinator and multiple participants. The coordinator i
 We informally specify the system with a safety and liveness property. The safety property is that all participants must agree on the same outcome of the transaction. The liveness property is that eventually, an outcome is agreed on. We can now formalise these by constructing predicates and LTL formulae.
 \[
 \begin{array}{l}
-\text{predicate p: commit\_count == participant\_count} \\
-\text{predicate q: abort\_count == participant\_count} \\
+\text{predicate commit: commit\_count == participant\_count} \\
+\text{predicate abort: abort\_count == participant\_count} \\
 \end{array}
 \]
 The $commit\_count$ is the number of participants that have committed the transaction and similarly, the $abort\_count$ is the number of participants that have aborted the transaction. The $participant\_count$ is a property specified by the system. We will reason about the protocol using a system with three participants. We can now introduce the LTL formulae to specify the system.
 \begin{multicols}{2}
     \[
     \begin{aligned}
-    &\textbf{SR1}: \square \left( p \rightarrow \neg \lozenge q \right) \\
-    &\textbf{SR2}: \square \left( q \rightarrow \neg \lozenge p \right) \\
-    &\textbf{LR1}: \lozenge \square p \lor \lozenge \square q \\
+    &\textbf{SR1}: \square \left( \text{commit} \rightarrow \neg \lozenge \text{abort} \right) \\
+    &\textbf{SR2}: \square \left( \text{abort} \rightarrow \neg \lozenge \text{commit} \right) \\
+    &\textbf{LR1}: \lozenge \square \ \text{commit} \lor \lozenge \square \ \text{abort} \\
     \end{aligned}
     \]
     \vline
@@ -297,7 +299,7 @@ To give a higher level overview of where Verlixir differentiates itself from exi
         \hline
         Temporal logic & \cmark & \xmark & \xmark & \xmark & \xmark \\
         \hline
-        Model checking & \text{SPIN} & \text{Built in} & \text{SPIN} & \xmark & \xmark \\
+        Model checking & \text{Spin} & \text{Built in} & \text{Spin} & \xmark & \xmark \\
         \hline
         Theorem proving & \xmark & \xmark & \xmark & \text{Z3} & \text{Built in} \\
         \hline
@@ -316,25 +318,29 @@ To give a higher level overview of where Verlixir differentiates itself from exi
 \subsection{Verlixir vs. Related Work}
 A large component of Verlixir is the translation of Elixir to Promela. As Verlixir is the first of its kind, we have no benchmark to evaluate the translation progress. However, we can provide insights into the translation process, results, and future work.
 \\ \\
-Verlixir was primarily designed to suit any backend. In particular, concurrent model checkers such as SPIN, PAT or PRISM. Given SPIN is the targetted model checker, we introduced some SPIN specific optimisations to the design in order to reduce the state space and time complexity of model checking. For example, consider how we optimised the modelling over the Elixir mailbox over multiple iterations:
+\subsubsection{Model Performance}
+We have avoided an in-depth analysis of the performance of the models produced by the translator as this was not an initial focus of the research. However, to provide some insight into the performance of the models produced, under the Spin model checker, we can examine the results produced by the Dining Philosophers deadlock example.
+\\ \\
+\begin{itemize}
+    \item \textbf{Depth}: the depth of the state-space explored is 198. Spin explores using a depth-first search. 
+    \item \textbf{Process Count}: the number of processes spawned by the model is 18. This is due to the implementation of function calls relying on process spawning. Spin only handles 255 concurrent processes, but no models we have produced so far have come close to this limit.
+    \item \textbf{Execution Time}: the execution time of the model for Dining Philosophers sits at 0.21 seconds. The state-space is being explored at a rate of 652 states per second.
+    \item \textbf{State Vector}: the state vector is 18168 bytes. This exceeds the default state vector Spin uses (1024 bytes). Because of the available state vector compression techniques, increasing the limit by a large factor is no concern.
+\end{itemize}
+System simulation has been pushed to the limits. The limiting factor for simulation is the concurrent process limit of 255. For example, we can run the algorithms we evaluated, with over 100 nodes, but any higher number could begin to reach the concurrent limit. 
+\\ \\
+It would not be feasible to verify systems of this size. We do not propose a process limit for verification, as it depends for each system and for the hardware Verlixir is run on. We did not perform analysis on alternative backends, so no direct comparison could be made. However, the results produced by Spin are sufficient for our purposes.
+\subsubsection{Optimisations}
+Verlixir was primarily designed to suit any backend. In particular, concurrent model checkers such as Spin, PAT or PRISM. Given Spin is the targetted model checker, we introduced some Spin specific optimisations to the design in order to reduce the state space and time complexity of model checking. For example, consider how we optimised the modelling over the Elixir mailbox over multiple iterations:
 \begin{itemize}
     \item \textbf{Singular Mailbox}: the original mailbox was designed such that every process has its own mailbox (alike to Elixir). Receiving messages involved the same approach Elixir uses. Messages were stored in a FIFO queue. To receive a message, we scan the queue pushing to a stack, until we find a message that matches the pattern. We can then take the message from the queue, and re-apply the stack. 
     \item \textbf{Multiple Mailboxes}: we optimised this approach to reduce scanning by splitting the mailbox up such that each possible message type in the system has its own, per-process mailbox. This reduces the time required to search the state-space as channel orderings are more deterministic. 
     \item \textbf{Random read, sorted insert}: we further improve by moving from sequential select $?$ Promela's random select $??$ operator to match messages in the mailbox. We do this to reduce the number of process interleavings that need to be explored in the state-space. Finally, now we are using random select, we can also use sorted insert $!!$. Because we are reading randomly, the order of messages in the mailbox is not important, so by sorting the mailboxes we reduce the state-space. 
 \end{itemize}
-\subsubsection{Model Performance}
-We have avoided an in-depth analysis of the performance of the models produced by the translator as this was not an initial focus of the research. However, to provide some insight into the performance of the models produced, under the SPIN model checker, we can examine the results produced by the Dining Philosophers deadlock example.
-\\ \\
-\begin{itemize}
-    \item \textbf{Depth}: the depth of the state-space explored is 198. SPIN explores using a depth-first search. 
-    \item \textbf{Process Count}: the number of processes spawned by the model is 18. This is due to the implementation of function calls relying on process spawning. SPIN only handles 255 concurrent processes, but no models we have produced so far have come close to this limit.
-    \item \textbf{Execution Time}: the execution time of the model for Dining Philosophers sits at 0.21 seconds. The state-space is being explored at a rate of 652 states per second.
-    \item \textbf{State Vector}: the state vector is 18168 bytes. This exceeds the default state vector SPIN uses (1024 bytes). Because of the available state vector compression techniques, increasing the limit by a large factor is no concern.
-\end{itemize}
-We did not perform analysis on alternative backends, so no direct comparison could be made. However, the results produced by SPIN are sufficient for our purposes.
+
 \subsubsection{Future Optimisations}
 There is lots of scope to further optimise the translation process. The existing framework has been designed such that this is easy to achieve. For example, we currently translate all Elixir functions to Promela functions. This incurs an overhead that may not be strictly necessary. By statically analysing the behaviour of a recursive function, we could apply heuristics to unroll the recursion and inline the function using an imperative style loop.
 \\ \\
-As alluded to earlier, there is room to replace the SPIN backend with another model checker. Although we identified SPIN sufficient for our purposes, as explored in section \ref{sec:model_checking}, other model checkers support features that SPIN does not. For example, probabilistic model checkers can more accurately model systems that involve randomness, such as gossip protocols. We aim for the design of the IR to be flexible enough to support swapping out backends. 
+As alluded to earlier, there is room to replace the Spin backend with another model checker. Although we identified Spin sufficient for our purposes, as explored in section \ref{sec:model_checking}, other model checkers support features that Spin does not. For example, probabilistic model checkers can more accurately model systems that involve randomness, such as gossip protocols. We aim for the design of the IR to be flexible enough to support swapping out backends. 
 \section{Summary}
 This chapter has highlighted the expressiveness of Verlixir by modelling and verifying distributed algorithms that are frequently used in both industry and academia. We have shown the toolchain is capable of supporting these specifications, verifying properties over them and providing clear feedback when properties are violated. We have also compared Verlixir to existing tools, highlighting the differences in capabilities provided for various verification-aware languages. Finally, we have evaluated the translation process from Elixir to Promela, providing insights into the optimisations that have been made and the potential for future work.

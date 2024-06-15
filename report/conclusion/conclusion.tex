@@ -1,7 +1,13 @@
 \chapter{Conclusion}
-In this paper, we aimed to provide modelling and verification techniques for message-passing systems. To evaluate these techniques, we targetted Elixir, the actor-based, concurrent programming language. As part of our research, we introduced Verlixir, a framework to support a verification-aware Elixir.
+In this paper, we aimed to provide modelling and verification techniques for message-passing systems. To evaluate these techniques, we targetted Elixir, the actor-based, concurrent programming language. As part of our research, we introduced Verlixir, a verification-aware language for message-passing systems.
 \\ \\
-Verlixir supports verification of in-line specifications, written using predicate and temporal logic. We demonstrated that Verlixir is capable of verifying a multitude of safety and liveness properties specified for real-world distributed algorithms. 
+This project aimed to achieve some key objectives required for specifying and implementing distributed algorithms in a `correct' manner. The specification language supported by Verlixir, alongside Verlixir's operational modes, moves towards achieving these objectives.
+\\ \\
+Verlixir provides a simulator capable of simulating large-scale distributed systems. These systems can be implemented in a modern programming language, and simulated in a controlled environment. This allows developers to prototype complex systems and observe their behaviour before deploying them in a production environment. Because Verlixir directly integrates with Elixir, the system can be easily transferred from simulation to production.
+\\ \\
+We also have empowered developers to verify the behaviour of systems, ensuring formal safety and liveness properties are adhered to. These properties can be specified alongside the implementation of the system, and verified without the need for a separate model. Counterexamples are produced in an Elixir-friendly format, allowing developer to debug the system and understand why a property was violated; particularly focusing on the message-passing interleaving that caused the violation.
+\\ \\
+To extend confidence, Verlixir supports modelling systems across different configurations. This ensures systems behave consistently across different environments. This is particularly useful for distributed systems that are subject to network partitions, or systems that are required to scale up or down.
 \section{Future Work}
 Throughout the course of research, we have identified several areas for future work. We have indicated some of these areas previously, but we will discuss them in more detail here. An obvious extension would involve supporting a larger Elixir feature set, but we will go into depth on more unique extensions.
 \\ \\

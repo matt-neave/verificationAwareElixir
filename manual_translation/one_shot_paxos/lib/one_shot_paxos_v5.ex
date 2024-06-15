@@ -132,11 +132,9 @@ defmodule Learner7 do
   end
 
   @spec wait_learned(list(), integer(), integer()) :: :ok
-  @ltl """
-  []((p->!<>q) && (q->!<>p))
-  <>(r)
-  [](s)
-  """
+  @ltl "[]((p->!<>q) && (q->!<>p))"
+  @ltl"<>(r)"
+  @ltl"[](s)"
   def wait_learned(acceptors, p_n, learned_n) do
     predicate p, final_value == 31
     predicate q, final_value == 42

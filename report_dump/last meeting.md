@@ -140,46 +140,46 @@ REstructure:
 
 
 # Chapter 5
-- Sometimes wording was changed / heading was changes. some stuff referred to previous stuff ... sometimes things are repetititve... too much text
-- Just give intuition
-- Spec doesn't appear enough (i.e. is metaprogramming used?) 
-- bigger picture stuff is ok
+- Sometimes wording was changed / heading was changes. some stuff referred to previous stuff ... sometimes things are repetititve... too much text ✅
+- Just give intuition ✅
+- Spec doesn't appear enough (i.e. is metaprogramming used?) ✅
+-  bigger picture stuff is ok ✅
 - design diagrams should use boxes for the components labelled arrows for information passing ✅
 - "The" Elixir Compiler, Include the VaeLib in The Elixir Compiler. "Verlixir Translator". Label promela model, elixir program... Verlixir gets COMMAND LINE INPUTS / ELIXIR FILE / SPECIFICATION .... SPIN gets MY PROMELA LIBRARY / PROMELA CODE ...... ✅
 - Label the SPIN MODEL CHECKER in diagram ✅
 - diagrams should highlight the approach ✅
 
-- Show less concrete side by sides of translations?
-- Can i add more diagrams / more fragments of code instead of lots of text
-- **DONT CALL THEM ATTRIBUTES. JUST NAME THEM.**
-- Think about it as a slidedeck!
-- The design needs to be woven in
-- Need to explain where meta programming is used, where rust is used. ✅
-- Split the flow: upto the promela generator, is most of the information.... we do all the metaprogramming / rust IR first... and then codegen into a separate chapter????????
-- dont overelaborate on textual description
-- rename the pre and post- example as my own intermediate representation.
+- Show less concrete side by sides of translations? ✅
+- Can i add more diagrams / more fragments of code instead of lots of text ✅
+- **DONT CALL THEM ATTRIBUTES. JUST NAME THEM.** ✅
+- Think about it as a slidedeck! ✅
+- The design needs to be woven in ✅
+ - Need to explain where meta programming is used, where rust is used. ✅
+- Split the flow: upto the promela generator, is most of the information.... we do all the metaprogramming / rust IR first... and then codegen into a separate chapter???????? ✅
+- dont overelaborate on textual description ✅
+- rename the pre and post- example as my own intermediate representation. ✅
 - SHOW MORE OF THE PRE AND POST TURNSTILES FOR INTERMEDIATE REPRESENTATION ✅
 - dont show the intermediate representation ✅
-- maybe put the pest into the appendix 
-- dont explain what things are in chap5, ensure thats all done in chap4 ...
-- Move contracts (in the mapping table) up towards other functions haha
-- Remention what !! and ?? are in the table 
+- maybe put the pest into the appendix ✅
+- dont explain what things are in chap5, ensure thats all done in chap4 ... ✅
+- Move contracts (in the mapping table) up towards other functions haha ✅
+- Remention what !! and ?? are in the table  ✅
 - Restructure low level information -> highlight the key factor and then go more detail
 - Combine 5.3.4 with previous entry ✅
-- Simulation / verification
-- In the example in 4.5, show a better LTL example? use an exmaple where maj >= n/2 must always hold? (including renaming of p q r and s)
-- add \_\_ to all privates
-- Explain why !! and ?? in more detail!
-- talk about weak fairness can be invoked / handled
+- Simulation / verification 
+- In the example in 4.5, show a better LTL example? use an exmaple where maj >= n/2 must always hold? (including renaming of p q r and s) 
+- add \_\_ to all privates ✅
+- Explain why !! and ?? in more detail ! ✅
+- talk about weak fairness can be invoked / handled ✅
 - just show examples of the fairness and the strongfairness 
 
 # Evaluation
 collect the examples, into a table to show what has been processed.
-show promela and elixir for all in appendix.
+show promela and elixir for all in appendix. 
 think of a good table / comparison for comparing the 5 algos
 call raft, raft election instead of consensus  ✅
-use 1 and 2 instead of one and two
-evaluate all 3 modes of operation
+use 1 and 2 instead of one and two  ✅
+evaluate all 3 modes of operation 
 
 put performance before translation
 
@@ -198,8 +198,9 @@ APPENDIX FOR EACH ALGORITHM!
 
 
 # TODOs
-Replace all Floyd-Hoare style => contracts
-name predicates everywhere 
+Replace all Floyd-Hoare style => contracts ✅
+name predicates everywhere  ✅
 elixir chapter
 intro frontends
 talk about the match operator in detail in the Elixir section
+naranker doesnt like "Design of verlixir"

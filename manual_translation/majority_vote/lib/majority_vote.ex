@@ -9,10 +9,11 @@ defmodule MajorityVote do
   @ltl "<>(maj>1)"
   @spec run_consensus() :: :ok
   def run_consensus do
-    spawn(Voter, :vote, [self()])
-    spawn(Voter, :vote, [self()])
-    spawn(Voter, :vote, [self()])
-    maj = await_majority(3, 0)
+    n = 3
+    for _ <- 1..n do
+      spawn(Voter, :vote, [self()])
+    end
+    maj = await_majority(n, 0)
     if maj > 1 do
       IO.puts("Majority reached")
     else
