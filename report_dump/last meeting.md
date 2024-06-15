@@ -154,18 +154,18 @@ REstructure:
 - **DONT CALL THEM ATTRIBUTES. JUST NAME THEM.**
 - Think about it as a slidedeck!
 - The design needs to be woven in
-- Need to explain where meta programming is used, where rust is used.
+- Need to explain where meta programming is used, where rust is used. ✅
 - Split the flow: upto the promela generator, is most of the information.... we do all the metaprogramming / rust IR first... and then codegen into a separate chapter????????
 - dont overelaborate on textual description
 - rename the pre and post- example as my own intermediate representation.
-- SHOW MORE OF THE PRE AND POST TURNSTILES FOR INTERMEDIATE REPRESENTATION
-- dont show the intermediate representation
-- maybe put the pest into the appendix
-- dont explain what things are in chap5, ensure thats all done in chap4
+- SHOW MORE OF THE PRE AND POST TURNSTILES FOR INTERMEDIATE REPRESENTATION ✅
+- dont show the intermediate representation ✅
+- maybe put the pest into the appendix 
+- dont explain what things are in chap5, ensure thats all done in chap4 ...
 - Move contracts (in the mapping table) up towards other functions haha
-- Remention what !! and ?? are in the table
+- Remention what !! and ?? are in the table 
 - Restructure low level information -> highlight the key factor and then go more detail
-- Combine 5.3.4 with previous entry
+- Combine 5.3.4 with previous entry ✅
 - Simulation / verification
 - In the example in 4.5, show a better LTL example? use an exmaple where maj >= n/2 must always hold? (including renaming of p q r and s)
 - add \_\_ to all privates
