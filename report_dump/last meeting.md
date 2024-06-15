@@ -202,3 +202,4 @@ Replace all Floyd-Hoare style => contracts
 name predicates everywhere 
 elixir chapter
 intro frontends
+talk about the match operator in detail in the Elixir section

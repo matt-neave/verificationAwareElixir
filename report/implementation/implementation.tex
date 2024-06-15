@@ -66,7 +66,7 @@ To help understand the model generator, we begin by providing a high-level mappi
         \hline
         LTL & LTL & Promela supports LTL. However, any variables or Elixir expressions present have to be specially translated before we translate the LTL formula. \\
         \hline
-        Verifiable Functions & Assertions & Assertions are placed in process entry and exit points to ensure correctness. \\
+        Contracts & Assertions & Assertions are placed in process entry and exit points to ensure correctness. \\
         \hline
         Predicates & Global inlines & Predicates are recursively searched, and moved to the global scope as inlines. \\
         \hline
@@ -92,33 +92,38 @@ These three constructs are examples of the primary building blocks of an Elixir 
 \end{figure}
 \\ \\
 \subsubsection{Traversal, Scoping and Variable Declarations}
-So far, we assumed no expressions were matched to variables. To support assignment, we are required to track the execution of a scope in more detail. Let's first re-iterate Elixir's \texttt{match} operator and describe how the model generator handles it. Every expression in Elixir returns a value. We can match the entire expression to a single identifier, or use pattern matching to have more granular control on how the expression is deconstructed. We could also form guards for more complex checks used in conditional statements (such as \texttt{if} and \texttt{receive}). Elixir is a dynamically, strongly typed language. Dynamic typing enforces restrictions on the set of Elixir expressions we support.
+So far, we assumed no expressions were matched to variables. To support assignment, we are required to track the execution of a scope in more detail. In the intermediate representation, a match is represented as either a \textbf{declaration} or an \textbf{assignment}. Given a declaration, we can infer the variable type and assign this in the symbol table. Now the variable is declared, any subsequent match in the same scope level is considered an assignment.
 \\ \\
-In the intermediate representation (IR), a match is represented as either a declaration or an assignment. Given a declaration, we can infer the variable type and assign this in the symbol table. Now the variable is declared, any subsequent match in the same scope level is considered an assignment.
-\\ \\
-If we now match on an expression that introduces a new child scope (such as a receive or if), we must explore every possible branch, determine the returning expression of the branch and use the relevant identifiers to assign the return value to the parent scope. To achieve this, the expression is traversed in using a depth-first search with a stack of lists. The stack manages the scope nesting and the lists manage the variable identifiers. Let's explore an example.
+If we now match on an expression that introduces a new child scope (such as a receive or if), we must explore every possible branch, determine the \textbf{returning expression} of the branch and use the relevant identifiers to assign the return value to the parent scope. To achieve this, the expression is traversed in using a depth-first search with a stack of lists. The stack manages the scope nesting and the lists manage the variable identifiers. Let's explore an example.
 \begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth, caption={Representing variable declarations using the match operator}.]
     {player, action} = receive do
-        {:move, player, direction} -> {player, "moved #{direction}"}
-        {:attack, player, target} -> 
+        {:move, player, direction} -> 
+            {player, "moved #{direction}"}
+        {:attack, player, target}  -> 
             send health, {target, -2}
             {player, "attacked #{target}"}
     end
 \end{lstlisting}
-In the example, we are matching with a tuple. We push $player$ and $action$ to the identifier list and then descend into the first guard (conditioned by the \texttt{:move} atom). This is a singular expression, so it must be the return value of this guard. We can peek the scope stack to access the list of variables, and iterate through them assigning the relevant values. Assuming this is a declaration, we also add the identifiers to the current scopes symbol table. We can mark direction as a $string$ as this is easily inferred, but we leave $player$ as $unknown$ until we can gather more information about the type. We now traverse the second branch. This follows the \texttt{block} construct, so we require pushing an empty list to the stack. We recursively apply this process until we reach the last expression in the block. Reaching the last expression, we can pop the stack (removing the child scope level) and then peek the stack to access the list of variables from the parent scope. We assign these using the same method, this time asserting the types align with the symbol table, or inferring more information about $unknown$ types if possible. Figure \ref{fig:scope_hierarchy2} shows the stack and lists for the second receive guard.\\ \\
+In the example, we are matching with a tuple. We push $player$ and $action$ to the \textbf{identifier list} and then descend into the first guard (conditioned by the \texttt{:move} atom). This is a singular expression, so it must be the return value of this guard. We can peek the scope stack to access the list of variables, and iterate through them assigning the relevant values. Assuming this is a declaration, we also add the identifiers to the \textbf{current scopes symbol table}. We can mark direction as a $string$ as this is easily inferred, but we leave $player$ as $unknown$ until we can gather more information about the type. 
+\\ \\
+We now traverse the second branch. This follows the \texttt{block} construct, so we require pushing an empty list to the stack. We recursively apply this process until we reach the last expression in the block. Reaching the last expression, we can pop the stack (removing the child scope level) and then peek the stack to access the list of variables from the parent scope. We assign these using the same method, this time asserting the types align with the symbol table, or inferring more information about $unknown$ types if possible. Figure \ref{fig:scope_hierarchy2} shows the stack and lists for the second receive guard.\\ \\
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.7\textwidth]{images/var_stack.png}
+    \includegraphics[width=0.9\textwidth]{images/var_stack.drawio.png}
     \caption{Example variable stack and identifier lists. The stack relates to the scope level, we push and pop as we traverse the receive guard. Only values waiting assignment are added to the identifier list.}
     \label{fig:scope_hierarchy2}
 \end{figure}
-\subsubsection{Functions, Type Specifications and Return Types}
-Like the other constructs, functions introduce a new scope level. Multiple functions within a module can be used to determine the control flow for a process. Before we discuss about how the functions are represented, we must quickly discuss types again. A correct LTLixir specification should provide type information for all function arguments and the return type. These properties are used to aid the type inference. The return type also determines how we model our function. If the return type is \texttt{:ok}, the function is non-returning, and we can treat the function as a standard sequential execution (but with its own local internal representation). If a return type is provided, we use a similar technique, by recursively traversing expressions to determine all exit points of the function. 
+\subsubsection{Functions, Returning and Recursion}
+Like the other constructs, functions introduce a new scope level. Promela does not support functions. We model functions using Promela processes and rendezvous communication channels. To implement functions, we apply various techniques that implement the behaviour of Elixir functions. 
 \\ \\
-Promela does not support functions. We model functions using Promela processes and rendezvous communication channels. To implement functions using our writer, we apply various techniques that mimick how Elixir functions behave. Firstly, the caller must declare a new rendezvous communication channel (using a buffer size of 0). A rendezvous channel has no buffer and hence communication over the channel is entirely synchronous. We also declare a new variable to store the return value of the function, typed using the type specification of the callee. We can now spawn a new process (a process mocking the function) and pass two imperative arguments, alongside the arguments specified in the Elixir function. We first pass the channel, which acts as both a return value and signalling method for the function termination. We also pass a process identifier. All processes are identified by this process id; by passing this to the callee, the callee can take actions as if it were communicating as the parent process. We then pass the remaining arguments as if we were making an Elixir function call. The caller will now block until the callee sends a message over the signalling channel. The callee can proceed as normal, and by using the discussed traversal techniques, all exit points will send the final expression over the signalling channel. This approach easily extends to recursion, as the callee can spawn a new instance of itself and block until a signal is received. In figure \ref{fig:function_call}, we show an example of a recursive function call.
+Let's consider a function call. The caller must declare a new communication channel, used to output the return value on. We also declare a new variable to read the return value of the function call, typed using the type specification of the callee. We can now spawn a new process and pass the function arguments, alongside some additional information. 
+\\ \\
+We first pass the return channel, which is also used for determining the callee has terminated. By creating the return channel with a buffer size of 0, the caller will block until the callee returns. We also pass a process identifier. All processes are identified by this process id; by passing this to the callee, the callee can take actions as if it were communicating as the parent process. We then pass the remaining arguments as if we were making an Elixir function call. 
+\\ \\
+The caller will now block until the callee sends a message over the return channel. The callee can proceed as normal, and by using the discussed traversal techniques, all exit points will send the final expression over the return channel. This approach easily extends to \textbf{recursion}, as the callee can spawn a new instance of itself and block until a signal is received. In figure \ref{fig:function_call}, we show an example of a recursive function call.
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\textwidth]{images/function_call.png}
+    \includegraphics[width=0.8\textwidth]{images/function_call.drawio.png}
     \caption{An example of a recursive function call. In total, 9 processes are spawned to calculate the factorial of 4. Callers block until they rendezvous with callees. If we consider the call stack as a graph, it is traversed in a depth-first manner.}
     \label{fig:function_call}
 \end{figure}
@@ -128,19 +133,35 @@ Now we have explored the basics of modelling Elixir programs, we extend the idea
     \item Spawning processes.
     \item Sending messages.
     \item Receiving messages.
-    \item Bounding communication.
 \end{itemize}
-We will first explain how we model the spawning of a new process, before taking a deeper look into more complex concurrency primitives as well as a memory model to extend the existing capabilities of Promela. The Verlixir IR for spawning processes resembles the Elixir spawn very closely. We capture a function that acts as the entry to the process which we can then model as a Promela process. As with a function call, we pass a process identifier to the new child process. In this case, the process identifier is a reserved identifier that signals to the new process to take a unique process identifier assigned automatically by the system. This is an important mechanism to ensure all parents are uniquely identifiable, which is crucial for communication. This process identifier can be captured in the caller's symbol table and used to communicate with the process.
+We will first explain how we model the spawning of a new process, before taking a deeper look into more complex concurrency primitives as well as a memory model to extend the existing capabilities of Promela. 
 \\ \\
-
+Each Elixir \texttt{function} is already translated to a \texttt{proctype}. We need to tell apart functions calls from process spawns. During a spawn, we pass a process identifier to the new child process. In this case, the process identifier is a reserved identifier, which prompts the child to ask the scheduler for a new id. This ensures all parents are uniquely identifiable, which is crucial for communication. The process identifier can be captured in the caller's symbol table and used to communicate with the process.
 \subsubsection{Actors, Mailboxes and Message Passing}
-Once we have another process's identifier in our symbol table, we can begin communication between processes. Elixir implements this communication using the actor model, where each running process in the system is an actor that can send messages and receive messages using a mailbox. The mailbox can be considered a first-in-first-fireable-out queue. The IR must capture this ordering, otherwise it could misrepresent the execution of an Elixir program.
+Once we have another process's identifier in our symbol table, we can begin communication between processes. To model Elixir actors, we must model the three core components of an actor system: sending, receiving and spawning. We now look at sending and receiving.
 \\ \\
 \subsubsection{Constructing Messages}
-We begin by describing the design of a message. A message is comprised of two components, the \texttt{message type} and the \texttt{message body}. In Elixir, the message type is denoted with an atom, which the IR simply treats as a distinct type within the system. When the message type is used in the context of a send or receive it is added to a global set of message types. Tracking this set globally is important to model the entirety of the system. The message body consists of multiple message arguments. At this point, the IR does not refer to the message argument by its type but purely treats it as an argument, that is expected to be passed in communication. We can store any primitive type within a message argument by inferring the type from the send or receive expression. If a type cannot be inferred in the context, we reserve a byte array to store the message argument, but to avoid this causing memory issues, we limit the size of the byte array to a small fixed size.
+An message is internally comprised of two components: the \textbf{message type} and the \textbf{message body}. When a message type is used in the context of a send or receive it is added to a global set of message types. Tracking this set globally is important to model the entirety of the system. 
 \\ \\
-\subsubsection{Sending Message}
-Now that we can construct a message, we can begin to model how messages can be sent and received. The IR keeps close to the mailbox system the actor-based implementation uses. Using the global message type set, we construct a per-process mailbox for each message type. The per-process mailboxes are constructed by passing a process identifier, as an index on the channel, where the index aligns with the process identifiers we had previously been allocating. When a process sends a message, we triage which mailbox the message should be sent to, using the message type and use the process identifier from the symbol table, to index into the correct communication channel to attach the message.
+The message body consists of multiple message arguments. We can store any primitive type within a message argument by inferring the type from the send or receive expression. If a type cannot be inferred in the context, we reserve a byte array to store the message argument, but to avoid this causing memory issues, we limit the size of the byte array to a small fixed size.
+\\ \\
+\begin{lstlisting}[language=Promela, caption={Example of a message body, from the Verlixir Promela library.}]
+    typedef __MessageComponent {
+        byte data1[2];
+        int data2;
+        byte data3[2];
+        bool data4;
+        bit data5;
+    };
+    typedef __MessageBody {
+        __MessageComponent m1;
+        __MessageComponent m2;
+        __MessageComponent m3;
+        ...
+    };
+\end{lstlisting}
+\subsubsection{Sending Messages}
+Now that we can construct a message, we can begin to model how messages can be sent and received. Using the global message type set, we construct a mailbox for each message type. The mailboxes are indexed by using a process identifier. We use a \textbf{sorted insert} (!!), so that messages are grouped by their intended target. When a process sends a message, we triage which mailbox the message should be sent to, using the message type and use the process identifier from the symbol table. We also attach the message body to the mailbox. In figure \ref{fig:promela_mailbox}, we show an example of how a mailbox is used.
 \\ \\
 \begin{figure}[h]
     \centering
@@ -150,10 +171,24 @@ Now that we can construct a message, we can begin to model how messages can be s
 \end{figure}
 \\ \\
 \subsubsection{Receiving Messages}
-Receiving a message is a little more complex. We must now consider pattern matching in guard conditions. To begin pattern matching, we can again use the message type system to determine which mailbox to check. If more than just the message type is required in the pattern matching of a guard, we must pre-empt elements of the message body to determine which elements are important for pattern matching and which elements are identifiers that need assignments. In order to generate a model for the guards, we introduce a blocking statement consisting of multiple conditions. When one of the conditions is satisfied (i.e. a message has been pattern-matched) we stop blocking, execute the block relevant for the matched guard and then break out of the control structure. \\ \\
-Before we can execute the block, we must assign all the remaining identifiers from the receive guard, to the relevant values in the received message body. To do this, we first introduce a new dummy variable which is assigned the value of the entire message body. We can then access the dummy variable to assign the remaining identifiers from the guard. During the assignment, we have no indication of the type of the identifier. Hence, we can temporarily assign a message argument to the identifier, and extract the correct attribute from the message argument when we have more information about the type.
+Receiving a message is a little more complex. We must now consider pattern matching. To begin pattern matching, we can again use the message type to determine which mailbox to check. If more than just the message type is required in the pattern matching of a guard, we must pre-empt elements of the message body to determine which elements are important for pattern matching and which elements are identifiers that need assignments. 
+\\ \\
+In order to generate a model for the patterns, we introduce a blocking statement consisting of multiple conditions. When one of the conditions is satisfied (i.e. a message has been pattern-matched), we stop blocking, execute the block relevant for the matched guard and then break out of the control structure. 
+\\ \\
+Before we can execute the block, we must assign all the remaining identifiers from the receive pattern, to the relevant values in the received message body. To do this, we first introduce a new dummy variable which is assigned the value of the message body. We can then access the dummy variable to assign the remaining identifiers from the guard. During the assignment, we have no indication of the type of the identifier. Hence, we can temporarily assign a message argument to the identifier, and extract the correct attribute from the message argument when we have more information about the type.
 \\ \\
 Unlike Elixir actors, Verlixir bounds multiple communication primitives. This is to ensure state explosion in the model checker is less likely to occur. As mentioned, we are strict in the bounding of byte arrays that can be passed as message arguments. We also only supply a small number of mailboxes per message type, furthermore, we bound the number of messages that can buffer in a per-process mailbox.
+\\ \\
+Listing \ref{lst:receive_pattern} shows an example of a receive. We are receiving a $vote$ message. We always match on \texttt{\_\_pid}, to ensure the message is intended for the current process. We read the body into \texttt{\_\_rec\_v\_0} and then extract the individual components. We 
+\begin{lstlisting}[language=Promela, caption={Example of a receive pattern. Translation of \texttt{\{:vote, x\}.}}, label={lst:receive_pattern}, xleftmargin=.4\linewidth]
+    __MessageBody __rec_v_0;
+    do
+    :: __VOTE ?? eval(__pid), __rec_v_0 ->
+        __MessageComponent x = __rec_v_0.m1.data2;
+        ... body ...
+        break;
+    od
+\end{lstlisting}
 \subsubsection{Dynamic Memory Allocation}
 Although not a direct fallout of the Elixir concurrency prinicples, Promela does not support dynamic memory allocation such as memory allocations or memory de-allocations. This lack of support has lead to design choices in the generation of Elixir lists that if mishandled could lead to a mis-representation of Elixir concurrency in the target specification language. Immutability is a core feature of the Elixir runtime, hence the Elixir list operations introduce behaviours that must be carefully handled. For example, the \texttt{++} operator can be used to append or prepend elements to a list. If this is used to prepend, the operation is constant time, however the IR will represent this (as well as most list operations) as an operation in linear time. Let's explore the memory model to understand why. 
 \\ \\
@@ -161,13 +196,13 @@ The IR introduces two structures to handle all list operations across the system
 \\ \\
 First we describe the design of \texttt{linked\_list}. It is in fact not a traditional linked list, but it behaves similar as we can perform many operations on this structure that we could not perform on a statically size array. For example, we support prepending and appending in order to dynamically resize the list. In actuality, none of these operations resize the list. A list has an upper bound in it's size, which is statically set for all model generation. Let's name this limit L.
 \begin{lstlisting}[language=C, xleftmargin=.1\linewidth, caption={The structure of a list}.]
-typedef linked_list {
-    node vals[L];
+typedef __linked_list {
+    __node vals[L];
 }
 \end{lstlisting}
 For example for a limit, $10$, means the maximum number of elements that can be appended to the list is 10. The list starts as empty and is handled by the \texttt{node} nested structure.
 \begin{lstlisting}[language=C, xleftmargin=.1\linewidth, caption={Example of a list node typed `int'.}]
-typedef node {
+typedef __node {
     int val;
     bool allocated;
 }
@@ -178,8 +213,8 @@ Given this representation, we now see why all operations are in linear time. For
 \\ \\
 We now extend this implementation of a dynamically sized list to introduce dynamic memory. The implementation is similar to how lists are implemented. We now introduce a new field to \texttt{linked\_list} called \texttt{allocated}. This represents the allocation of a list in memory. We now similarly introduce memory.
 \begin{lstlisting}[language=C, xleftmargin=.1\linewidth, caption={Memory intermediate representation. Limit of M lists.}]
-typedef memory {
-    linked_list lists[M];
+typedef __memory {
+    __linked_list lists[M];
 }
 \end{lstlisting}
 With this structure, we introduce a single, globally defined instance of this structure named \texttt{\_\_memory}. All processes share this singular memory for their list allocations. All list operations are treated as a single, indivisible step so this does not introduce concurrent execution concerns. If an Elixir process declares a new list, the IR will represent this as a memory allocation. The model runtime will iterate through all the lists in memory, to find an unallocated list and return this as a pointer to the process. As dynamic memory allocations are not supported in Promela, this $pointer$ is generated as an \texttt{int}, which indexes into memory. 
