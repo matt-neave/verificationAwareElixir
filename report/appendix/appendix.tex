@@ -1,7 +1,6 @@
-\appendix
-\chapter{First Appendix}
+\appendix \label{app:code}
+\chapter{Full Code Listings}
 \section{Verlixir Example}
-
 \begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
   import VaeLib
 
@@ -62,7 +61,7 @@
 \end{lstlisting}
 
 \section{Paxos}
-\subsubsection{First paxos implementation with a bug}
+\subsection{First paxos implementation with a bug}
 \begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
 import VaeLib
 
@@ -223,7 +222,7 @@ end
 
 \end{lstlisting}
 
-\subsubsection{First paxos bug message log}
+\subsection{First paxos bug message log}
 \begin{lstlisting}[xleftmargin=.01\linewidth, xrightmargin=0.01\linewidth, caption={Message passing caused by the proposer's protocol bug.}, label={lst:paxos_bug}]
     Never claim moves to line 6     [(1)]
 138:    proc  7 (start_proposer:1) test_out.pml:314 Recv 7,BIND,0,0,2,0,0,0,0,0,1,0,0,0,0,0,42,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0        <- queue 20 (__BIND)
@@ -301,7 +300,7 @@ Never claim moves to line 15    [assert(!((final_value==31)))]
 spin: trail ends after 826 steps
 \end{lstlisting}
 
-\subsubsection{Second paxos implementation with a bug}
+\subsection{Second paxos implementation with a bug}
 \begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
     import VaeLib
 
@@ -458,7 +457,7 @@ spin: trail ends after 826 steps
     end
 \end{lstlisting}
 
-\subsubsection{Second paxos bug message log}
+\subsection{Second paxos bug message log}
 \begin{lstlisting}[xleftmargin=.01\linewidth, xrightmargin=0.01\linewidth, caption={Message passing caused by the proposer's protocol bug.}, label={lst:paxos_bug}]
     ltl ltl_1: [] (((! ((final_value==31))) || (! (<> ((final_value==42))))) && ((! ((final_value==42))) || (! (<> ((final_value==31))))))
     ltl ltl_2: <> ((final_value!=0))
@@ -542,7 +541,7 @@ spin: trail ends after 826 steps
 \end{lstlisting}
 
 \section{Consistent Hash Table}
-\subsubsection{Working Consistent Hash Table}
+\subsection{Working Consistent Hash Table}
 \begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
   import VaeLib
 
@@ -682,7 +681,7 @@ spin: trail ends after 826 steps
   end  
 \end{lstlisting}
 
-\subsubsection{Promela for Consistent Hash Table}
+\subsection{Promela for Consistent Hash Table}
 \begin{lstlisting}[xleftmargin=.01\linewidth, xrightmargin=0.01\linewidth, caption={Promela of consistent hash table}, label={lst:dht_promela}]
 int n_nodes;
 int ring_position;
@@ -962,7 +961,7 @@ ltl ltl_4 { [](r3 && n_nodes==4 -> <>(p4)) };
 
 \end{lstlisting}
 
-\subsubsection{Buggy Consistent Hash Table}
+\subsection{Buggy Consistent Hash Table}
 \begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
   import VaeLib
 
@@ -1097,7 +1096,7 @@ ltl ltl_4 { [](r3 && n_nodes==4 -> <>(p4)) };
   
 \end{lstlisting}
   
-\subsubsection{Buggy Hash Table Logs}
+\subsection{Buggy Hash Table Logs}
 
 \begin{lstlisting}[xleftmargin=.01\linewidth, xrightmargin=0.01\linewidth, caption={Message passing caused by the proposer's protocol bug.}, label={lst:paxos_bug}]
 The program is livelocked, or an ltl property was violated. Generating trace.
@@ -1159,7 +1158,7 @@ The program is livelocked, or an ltl property was violated. Generating trace.
 \end{lstlisting}
 
 \section{Two-Phase Commit}
-\subsubsection{LTLixir 2PC}
+\subsection{LTLixir 2PC}
 \begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
   import VaeLib
 
@@ -1331,7 +1330,7 @@ The program is livelocked, or an ltl property was violated. Generating trace.
   
 \end{lstlisting}
 
-\subsubsection{Buggy 2PC Logs}
+\subsection{Buggy 2PC Logs}
 \begin{lstlisting}[xleftmargin=.01\linewidth, xrightmargin=0.01\linewidth, caption={Message passing caused by the proposer's protocol bug.}, label={lst:paxos_bug}]
 The program is livelocked, or an ltl property was violated. Generating trace.
 <<<Message Events>>>
@@ -1377,7 +1376,7 @@ The program is livelocked, or an ltl property was violated. Generating trace.
 \end{lstlisting}
 
 \section{Dining Philosophers}
-\subsubsection{Dining Philosophers Deadlock Logs}
+\subsection{Dining Philosophers Deadlock Logs}
 \begin{lstlisting}[xleftmargin=.01\linewidth, xrightmargin=0.01\linewidth, caption={Dining Philosophers Verlixir Report.}, label={lst:dp_bug}]
   The program likely reached a deadlock. Generating trace.
   <<<Message Events>>>
@@ -1473,7 +1472,7 @@ The program is livelocked, or an ltl property was violated. Generating trace.
   [56] (proc_0) start:126 [{:done} -> :ok]
 \end{lstlisting}
 
-\subsubsection{Dining Philosophers in Elixir}
+\subsection{Dining Philosophers in Elixir}
 \begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
 defmodule Table do
   @spec table_loop() :: :ok
@@ -1615,7 +1614,7 @@ end
 
 \end{lstlisting}
 
-\subsubsection{Promela Translation of Dining Philosophers}
+\subsection{Promela Translation of Dining Philosophers}
 \begin{lstlisting}[xleftmargin=.001\linewidth, xrightmargin=0.001\linewidth, caption={Dining Philosophers Promela translation.}, label={lst:promela_dp}]
   proctype table_loop (chan ret;int __pid;int __ret_f) {
     chan ret1 = [1] of { int };/* 7*/ /* table_loop()*/ 
@@ -1987,7 +1986,7 @@ end
 
 \section{Raft}
 
-\subsubsection{Raft Consensus in Elixir}
+\subsection{Raft Consensus in Elixir}
 \begin{lstlisting}[language=Elixir, xleftmargin=.1\linewidth]
   defmodule RaftNode do
   @spec start_node(integer(), integer(), integer()) :: :ok

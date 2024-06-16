@@ -135,22 +135,26 @@
 \input{title/title.tex}
 
 \begin{abstract}
-    Distributed algorithms are difficult to prove and reason about. With the rapid rise in cloud-based clusters the need for developing robust distributed algorithms is seen as a critical requirement by service providers and has sparked new interest in developing tools for reasoning about distributed algorithms.
+    Distributed algorithms are difficult to prove and reason about. With the rapid rise in cloud-based clusters, the need for developing robust distributed algorithms is seen as a critical requirement by service providers and has sparked new interest in developing tools for reasoning about distributed algorithms.
     \\ \\
-    This project proposes and evaluates Verlixir, a verification-aware language for specifying and verifying message-passing systems. Verlixir supports three modes of operation. Simulation mode can be used to execute and observe the system in a controlled environment. Verification mode can be used to verify the system against a set of properties. Finally, parameterization mode can be used to guarantee the system behaves across different configurations.
+    This project proposes and evaluates Verlixir, a verification-aware language for specifying and verifying message-passing systems. Verlixir supports three modes of operation. Simulation mode can be used to execute and observe the system in a controlled environment. Verification mode can verify the system against a set of properties. Finally, parameterization mode can be used to guarantee the system behaves across different configurations.
     \\ \\
-    A qualitative evaluation of Verlixir demonstrates capability to detect violations of properties in distributed algorithms, such as, Paxos and Two-Phase Commit. Verlixir enhances Elixir programs with linear temporal logic properties, predicates and function contracts to specify the desired behaviour of systems. Property violations produce Elixir-friendly counterexamples that can be used to debug the system. Counterexamples show process interleaving as well as message-passing interleaving that results in a property violation.
+    A qualitative evaluation of Verlixir demonstrates the capability to detect violations of properties in distributed algorithms, such as Paxos and Two-Phase Commit. Verlixir enhances Elixir programs with linear temporal logic properties, predicates and function contracts to specify the desired behaviour of systems. Property violations produce Elixir-friendly counterexamples that can be used to debug the system. Counterexamples show process interleaving and message-passing interleaving that results in a property violation.
     \\ \\
     Verlixir enables developers to define message-passing systems in terms of safety and liveness. Distributed algorithms can be prototyped and verified in a safe environment. Verlixir replaces the need for writing complex models in bespoke specification languages, which have to be maintained alongside implementation in modern programming languages. This is all achieved while maintaining the original program semantics, such that, after verification, the system can be run in production.
 \end{abstract}
 \renewcommand{\abstractname}{Acknowledgements}
 \begin{abstract}
-Thanks mum!
+I am grateful to my supervisor, Dr. Naranker Dulay, for his guidance and support throughout this project. 
+\\ \\
+My sincerest gratitude goes to my family, for their continued support through my studies.
+\\ \\
+Finally, a word of thanks to my friends, for their encouragement and motivation.
 \end{abstract}
 
 \tableofcontents
-\listoffigures
-\lstlistoflistings
+% \listoffigures
+% \lstlistoflistings
 % \listoftables
 
 % \input{introduction/introduction.tex}

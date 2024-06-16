@@ -75,9 +75,9 @@ It's overworded... between sequential nodes ... => sequential processes
 # Chapter 3
 - Doesn't like the title.  ✅
 - It's a primer on Elixir and Promela.✅
-- Mention parts of Elixir that aren't supported?
+- Mention parts of Elixir that aren't supported? ✅
 - Call the chapter **'Elixir and Promela'**✅
-- Talk about unsupported features for both tools. (Liven some interest).
+- Talk about unsupported features for both tools. (Liven some interest). ✅
 - Add more to the Promela chapter. Talk about arrays ect... talk about things it has and I won't use. ✅
 - Control flow example is not good. Give a concrete example instead of the half baked one. ✅
 - Add else to the if statement. ✅
@@ -88,12 +88,12 @@ It's overworded... between sequential nodes ... => sequential processes
 - Add active proctypes, atomic (don't need their own sections) ✅
 - Mention what parts have been built into promela and what parts are pure limitations. At the end mention the key limitations that I have extended! ✅
 
-- Go through the language first and then the implementation? (PUSH 3.2.2 FIRST!!!!!!!!!!!!!!!!!)
-- Swap the order of the 3.2.2 and the intro / 3.2.1!!! want language features!!!!!!!!!!! 
-- Mention extra unsupported features!!!!!!!!!!!!!!1
-- Node.spawn is not relevant???????? wtf (talk about the elixir toolchain)
+- Go through the language first and then the implementation? (PUSH 3.2.2 FIRST!!!!!!!!!!!!!!!!!) ✅
+- Swap the order of the 3.2.2 and the intro / 3.2.1!!! want language features!!!!!!!!!!!  ✅
+- Mention extra unsupported features!!!!!!!!!!!!!!1 ✅
+- Node.spawn is not relevant???????? wtf (talk about the elixir toolchain) ✅
 - **3.2.1 SHOULD be in the BACKGROUND!!!!!!!**  ✅
-- If the elixir chapter becomes short, it could move into the subsequent chapter or the background chapter.
+- If the elixir chapter becomes short, it could move into the subsequent chapter or the background chapter. ✅
 
 - **Give the example of a promela program from the Promela manual. (Not one I care about)** ✅
 - **Similar for Elixir, show an Elixir program (not one I care about) to give examples of what these things look like. (could put the client server one)... or one from a book / the website..... could show half a page example and mention a few things about it alongside some discussion.** 3/4s of a page for each example.
@@ -175,13 +175,13 @@ REstructure:
 
 # Evaluation
 collect the examples, into a table to show what has been processed.
-show promela and elixir for all in appendix. 
+show promela and elixir for all in appendix. ✅
 think of a good table / comparison for comparing the 5 algos
 call raft, raft election instead of consensus  ✅
 use 1 and 2 instead of one and two  ✅
 evaluate all 3 modes of operation 
 
-put performance before translation
+put performance before translation ✅
 
 not translation reults => comparison! ✅
 
@@ -189,9 +189,9 @@ not translation reults => comparison! ✅
 
 
 # Conclusion
-Repeat everything we aimed to achieve in the conclusions(dont just reference them)
+Repeat everything we aimed to achieve in the conclusions(dont just reference them) ✅
 
-Lots of stuff in conclusions... reference everything we aimed to do, what we have done ect.!!
+Lots of stuff in conclusions... reference everything we aimed to do, what we have done ect.!! ✅
 
 
 APPENDIX FOR EACH ALGORITHM!
@@ -200,7 +200,7 @@ APPENDIX FOR EACH ALGORITHM!
 # TODOs
 Replace all Floyd-Hoare style => contracts ✅
 name predicates everywhere  ✅
-elixir chapter
-intro frontends
-talk about the match operator in detail in the Elixir section
-naranker doesnt like "Design of verlixir"
+elixir chapter 
+intro frontends 
+	talk about the match operator in detail in the Elixir section ✅  
+naranker doesnt like "Design of verlixir"✅

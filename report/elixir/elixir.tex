@@ -3,13 +3,13 @@ In chapter \ref{chap:verlixir}, we will introduce the Verlixir tool. Verlixir in
 \section{Promela} \label{sec:promela}
 Promela is the verification modelling language used by the Spin model checker, to specify concurrent processes modelling distributed systems \cite{spin}. This section will discuss some of the core features that allow systems to be modelled and verified with Spin. This section aims to give an overview of the syntax and control of Promela, so any specifications in later sections or the code artifact can be read.
 \subsection{Types and Variables}
-Promela is statically typed. Variables can be declared once within the current scope and then re-assigned throughout. Variables can be declared locally within the context of a process, or in the global scope, where memory is shared. The types available in Promela, and assignment to variables of these types is similar to many imperative programming languages. Promela supports the types bit, bool, byte, pid, short, int and unsigned. Variable declaration and assignment then naturally follows.
+Promela is statically typed. Variables can be declared once within the current scope and then re-assigned throughout. Variables can be declared locally within the context of a process, or in the global scope, where memory is shared. The types available in Promela, and assignment to variables of these types are similar to many imperative programming languages. Promela supports the types bit, bool, byte, pid, short, int and unsigned. Variable declaration and assignment then naturally follows.
 \[
 \begin{aligned}
 \text{int a} = 2;
 \end{aligned}
 \]
-Promela supports \textbf{arrays}. Arrays are typed and declared with a fixed size. Array bounds are constant, so the size cannot change. Only single dimensional arrays are supported. The syntax for declaring an array is as follows.
+Promela supports \textbf{arrays}. Arrays are typed and declared with a fixed size. Array bounds are constant, so the size cannot change. Only single-dimensional arrays are supported. The syntax for declaring an array is as follows.
 \[
 \begin{aligned}
 \text{int array[10];}
@@ -117,7 +117,7 @@ init {
 \end{lstlisting}
 The semaphore guarantees that only one of the user processes can enter its critical section at a time.
 \subsection{Limitations} \label{sec:promela_limitations}
-Promela is a powerful language for modelling concurrent systems, but it has limitations for capturing the full complexity of a real-world system. In general, hand-translations of a system into Promela can avoid some of these limitations with careful design. However, we are approaching this limits from an Elixir perspective, where features of Elixir may not be easily translated into Promela.
+Promela is a powerful language for modelling concurrent systems, but it has limitations for capturing the full complexity of a real-world system. In general, hand-translations of a system into Promela can avoid some of these limitations with careful design. However, we are approaching these limits from an Elixir perspective, where features of Elixir may not be easily translated into Promela.
 \begin{itemize}
     \item \textbf{Compute}: Promela is not designed to model complex computations. It does not support floating-point arithmetic, so we are limited to working with integers.
     \item \textbf{Memory}: Promela does not support dynamic memory allocation. This means we cannot model systems that require dynamic memory allocation, for example, linked lists.
@@ -137,17 +137,17 @@ BEAM is a virtual machine that executes user programs in the Erlang Runtime Syst
 \\ \\
 We have recently seen companies adopting Elixir in industry, in particular in domains such as telecoms and instant messaging. The Phoenix Framework \cite{phoenix} is a framework for building interactive web applications natively in Elixir, that can take advantage of Elixir's multi-processing and fault tolerance to build scalable web applications. The audio and video communication application Discord \cite{discord} uses Elixir to manage its 11 million concurrent users and the Financial Times \cite{ft} have begun migrating from Java to Elixir to enjoy the much smaller memory usage by comparison.
 \\ \\
-Elixir supports multi-processing in two key ways: nodes and processes. Each node is an instance of BEAM (a single operating system process), when an Elixir program is executed, a new instance of BEAM is instantiated for it to run on. In contrast, an Elixir process is not an operating system process. An Elixir process is lightweight in terms of memory and CPU usage (even in comparison to threads that many other programming languages favour). Elixir processes can run concurrently with one another and are completely isolated from one another. Elixir processes communicate via message passing.
-\begin{lstlisting}[language=Elixir, xleftmargin=.2\linewidth, caption={An example of spawn/1 and spawn/4 in Elixir for spawning a new lightweight process and a new Elixir node}]
+Elixir supports multi-processing in two key ways: nodes and processes. Each \textbf{Elixir node} is an instance of BEAM (a single operating system process). When an Elixir program is executed, a new instance of BEAM is instantiated for it to run on. In contrast, an \textbf{Elixir process} is lightweight in terms of memory and CPU usage (even in comparison to threads that many other programming languages favour). Elixir processes can run concurrently with one another and are completely isolated from one another. Elixir processes communicate via message passing.
+\\ \\
+\begin{lstlisting}[language=Elixir, xleftmargin=.2\linewidth, caption={An example of spawn/1 and spawn/4 in Elixir, for spawning a new lightweight process and a new Elixir node}]
     # Spawn a new process
     spawn(fn -> 1 + 2 end)
 
     # Create a new BEAM instance
     Node.spawn(:"node1@localhost", MyModule, :start, [])
 \end{lstlisting}
-
 In Elixir, a receive statement is used to read messages in the mailbox. The receive block looks through the mailbox for a message that matches a given pattern. If no messages match the pattern, the process will block until one does.
-\begin{lstlisting}[language=Elixir, xleftmargin=.4\linewidth, caption={An example of spawn/1 and spawn/4 in Elixir for spawning a new lightweight process and a new Elixir node}]
+\begin{lstlisting}[language=Elixir, xleftmargin=.4\linewidth, caption={Example of sending and receiving an Elixir message}]
     # Example send in Elixir
     send self(), {:hello, "world"}
 
@@ -159,20 +159,45 @@ In Elixir, a receive statement is used to read messages in the mailbox. The rece
 \subsection{Verifiable Feature Set} \label{sec:verifiable_feature_set}
 In chapter \ref{chap:verlixir}, we will introduce Verlixir. Verlixir is designed to support a reduced set of core Elixir constructs. We will introduce these constructs here to give an overview of what the tool is capable of supporting.
 \\ \\
-Everything in Elixir is an expression. This means that every piece of code returns a value. For example, an $if$ statement will return a value dependent on the branch taken. This means that any expression can be matched on, using Elixir's match (=) operator. We can use pattern matching to match on the shape of an expression's evaluation. The set of expressions supported by Verlixir are:
+Everything in Elixir is an expression. This means that every piece of code returns a value. For example, an $if$ statement will return a value dependent on the branch taken. This means that any expression can be matched on, using Elixir's match (=) operator. We can use pattern matching to match the shape of an expression's evaluation. The set of expressions supported by Verlixir are:
 \begin{itemize}
     \item \textbf{Values}: any value of a basic, primitive type such as integers and booleans. Elixir also has a concept of $atoms$. An atom is identified by a preceding colon (:), and is followed by letters, digits, `\_', `@' or a string.
     \item \textbf{Variables}: Elixir is dynamically, strongly typed. Variables are bound to using the match operator. Variable names start with lowercase letters. The `\_' character can be used to match an expression of any shape.
-    \item \textbf{Data structures}: structures such as lists and tuples are treated as values. Lists are dynamic, whereas tuples are fixed in size. Lists are written as [1, 2, 3] and tuples are written as \{1, 2, 3\}. We can match on the shape of these data structures using pattern matching.
-    \item \textbf{Pattern matching}: pattern matching can be used to match on the shape of an expression. In the context of a conditional guard, values can be used to evaluate the shape of an expression, where as variables can be used to bind to the value of an expression. For example, the pattern ${:ok, value}$, can be used to assign to the variable $value$ if the expression is a tuple shape, with an atom $ok$ as the first element.
+    \item \textbf{Data structures}: structures such as lists and tuples are treated as values. Lists are dynamic, whereas tuples are fixed in size. Lists are written as [1, 2, 3] and tuples are written as \{1, 2, 3\}. We can match the shape of these data structures using pattern matching.
+    \item \textbf{Pattern matching}: pattern matching can be used to match the shape of an expression. In the context of a conditional guard, values can be used to evaluate the shape of an expression, whereas variables can be used to bind to the value of an expression. For example, the pattern $\{:ok, value\}$, can be used to assign to the variable $value$ if the expression is a tuple shape, with an atom $ok$ as the first element.
     \item \textbf{Functions}: functions are defined using the $def$ keyword. Functions can group multiple sequentially executable expressions. Any function can be called or spawned as a new process or node.
     \item \textbf{Modules}: functions are grouped into modules.
     \item \textbf{Message passing}: Elixir's actor model supports message passing. Messages are sent and received between actors and their mailboxes.
-    \item \textbf{Control flow structures}: Elixir supports many control flow expressions. For example, $if$, $case$, $unless$ and $for$. All of these introduce a new scope. They are expressions and can be matched on.
+    \item \textbf{Control flow structures}: Elixir supports many control flow expressions. For example, $if$, $case$, $unless$ and $for$. All of these introduce a new scope. They are expressions and can be matched.
 \end{itemize}
 The feature set supported has been shown expressive enough to support real-world systems in chapter \ref{chap:eval}. We omit some features of Elixir. For example, data structures like sets and maps are not supported. We determined lists sufficient for our purposes. The supported feature set can be easily extended to support other data structures.
+\subsection{Matching}
+Elixir is dynamically typed. This means that the type of a variable is determined at runtime. Elixir relies on \textbf{patterns} to assign identifiers to values. In Elixir, everything is an expression. By extension, everything can be matched, with the \textbf{match operator} (=).
+\\ \\
+Combining patterns with the match operator, allows different data structures to be packed and unpacked in expressive ways. For example, we can match the shape of a list, to extract the first element and the rest of the list.
+\begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth]
+    [head | tail] = [1, 2, 3]
+    IO.puts head # 1
+    IO.puts tail # [2, 3]
+\end{lstlisting}
+This notion extends to branching constructs, such as $if$ and $receive$ statements. Consider the following example.
+\begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth]
+x = receive do
+    {:ok, value} ->
+        if value > 10 do
+            value
+        else
+            {:bad_value, value}
+        end
+    {:error} ->
+        [1,2,3]
+end
+\end{lstlisting}
+Notice firstly, that the entire $receive$ expression is assigned to $x$. Also notice, that each branch yields differently typed expressions. The expressiveness of Elixir's matching makes Elixir a powerful language for manipulating data flow. However, it presents challenges for modelling.
+\\ \\
+We cannot determine the type of an expression at compile time. We also have to consider how the value of x depends on the executed branch. 
 \subsection{Type Specifications}
-Type specifications are imperative for the correctness of Verlixir specifications. Verlixir supports some basic types such as \texttt{integer()}, \texttt{boolean()}, \texttt{atom()} and \texttt{pid()}. Type specifications are not enforced by the Elixir compiler, but tools such as Dialyzer and Verlixir rely them.
+Type specifications are imperative for the correctness of Verlixir specifications. Verlixir supports some basic types such as \texttt{integer()}, \texttt{boolean()}, \texttt{atom()} and \texttt{pid()}. Type specifications are not enforced by the Elixir compiler, but tools such as Dialyzer and Verlixir rely on them.
 \\ \\
 In type specifications, message types are typed as \texttt{atom()}. The atom \texttt{:ok} is reserved to identify a \textbf{non-returning function}. In Elixir, all functions return a value, so in this context, a `non-returning function', is a function that's value is never matched. We briefly demonstrate the type specifications for two functions, the first, is a non-returning function with no arguments and the second function, takes two arguments and returns an integer.
 \begin{lstlisting}[language=Elixir, xleftmargin=.3\linewidth, caption={Valid type specification examples}.]
