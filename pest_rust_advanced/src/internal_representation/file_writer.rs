@@ -894,9 +894,8 @@ impl FileWriter {
             self.function_body.last_mut().unwrap().push_str("int __tmp;\n");
             let new_var = String::from("__tmp");
             self.var_stack.push(vec![new_var]);
-        } else {
-            println!("Do something?");
         }
+        // TODO: Else, do something??
     }
 
     pub fn commit_range_for_loop(
